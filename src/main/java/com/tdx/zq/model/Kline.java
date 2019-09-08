@@ -1,6 +1,5 @@
 package com.tdx.zq.model;
 
-import com.tdx.zq.enums.LineDirectEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,31 +15,27 @@ import java.util.Objects;
 @AllArgsConstructor
 @ToString
 @Slf4j
-public class KLine {
+public class Kline {
 
-    private int code;
+    protected int code;
 
-    private int date;
+    protected int date;
 
-    private int open;
+    protected int open;
 
-    private int high;
+    protected int high;
 
-    private int low;
+    protected int low;
 
-    private int close;
+    protected int close;
 
     //成交额
-    private float amount;
+    protected float amount;
 
     //成交量
     private int volume;
 
-    //趋势
-    private LineDirectEnum direct = LineDirectEnum.BALANCE;
-
-
-    public KLine(byte[] bytes, int code) {
+    public Kline(byte[] bytes, int code) {
 
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -53,14 +48,24 @@ public class KLine {
         this.amount = bb.getFloat();
         this.volume = bb.getInt();
         this.code = code;
+    }
 
+    public Kline(Kline kline) {
+        this.date = kline.getDate();
+        this.open = kline.getOpen();
+        this.high = kline.getHigh();
+        this.low = kline.getLow();
+        this.close = kline.getClose();
+        this.amount = kline.getAmount();
+        this.volume = kline.getVolume();
+        this.code = kline.getCode();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        KLine kLine = (KLine) o;
+        Kline kLine = (Kline) o;
         return date == kLine.date &&
                 high == kLine.high &&
                 low == kLine.low;

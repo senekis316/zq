@@ -1,4 +1,5 @@
 package com.tdx.zq.enums;
 
-public class LineGapEnum {
+public enum LineGapEnum {
+    UP, DOWN, NONE;
 }

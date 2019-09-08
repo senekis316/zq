@@ -1,4 +1,7 @@
 package com.tdx.zq.enums;
 
-public class LineShapeEnum {
+public enum LineShapeEnum {
+
+    TOP, FLOOR, NONE;
+
 }
