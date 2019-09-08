@@ -24,9 +24,13 @@ public class PeakKlineService {
         //2.过滤不符合条件的峰值点
         //(1)过滤了2,3两个K线Break峰值点的情况
         List<PeakKline> noEnsureReservePeakKlineList = filterTwoThreeBreak(combineKlineList, allPeakKlineList);
-
         System.out.println("twoThreeBreakPeakKlineList: " +
                 JacksonUtils.toJson(noEnsureReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+
+        //3.跳空保留峰值点
+        List<PeakKline> jumpReservePeakKlineList = jumpReservePeak(combineKlineList, noEnsureReservePeakKlineList);
+        System.out.println("jumpReservePeakKlineList: " +
+                JacksonUtils.toJson(jumpReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
 
         return null;
     }
@@ -81,4 +85,42 @@ public class PeakKlineService {
         return noEnsureReservePeakKlineList;
     }
 
+
+    private List<PeakKline> jumpReservePeak(List<CombineKline> combineKlineList,
+                    List<PeakKline> noEnsureReservePeakKlineList) {
+
+        List<PeakKline> jumpReservePeakKlineList = new ArrayList<>();
+
+        for (int i = 0; i < noEnsureReservePeakKlineList.size(); i++) {
+            Integer index = noEnsureReservePeakKlineList.get(i).getCombineIndex();
+            Kline left = combineKlineList.get(index - 1).getKline();
+            Kline middle = combineKlineList.get(index).getKline();
+            Kline right = combineKlineList.get(index + 1).getKline();
+            Kline second = combineKlineList.get(index + 2).getKline();
+            Kline third = combineKlineList.get(index + 3).getKline();
+
+            if (middle.getLow() < right.getLow()) {
+                if (right.getHigh() < second.getLow() && second.getLow() < left.getHigh()) {
+                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    continue;
+                }
+                if (left.getHigh() < third.getLow() && right.getHigh() < third.getLow() && second.getHigh() < third.getLow()) {
+                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    continue;
+                }
+            } else if (middle.getHigh() > right.getHigh()) {
+                if (left.getLow() > second.getHigh() && right.getLow() > second.getHigh()) {
+                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    continue;
+                }
+                if (left.getLow() > third.getHigh() && right.getLow() > third.getHigh() && second.getLow() > third.getHigh()) {
+                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    continue;
+                }
+            }
+        }
+
+        return jumpReservePeakKlineList;
+
+    }
 }
