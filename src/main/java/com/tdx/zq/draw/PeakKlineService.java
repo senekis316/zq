@@ -42,6 +42,12 @@ public class PeakKlineService {
         System.out.println("ensureReservePeakKlineList: " +
                 JacksonUtils.toJson(ensureReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
 
+
+        //6.修正保留点
+        List<PeakKline> correctedPeakKlineList = correctedPeak(ensureReservePeakKlineList);
+        System.out.println("correctedPeakKlineList: " +
+                JacksonUtils.toJson(correctedPeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+
         return null;
     }
 
@@ -181,19 +187,23 @@ public class PeakKlineService {
     private List<PeakKline> ensureReservePeak(List<CombineKline> combineKlineList, List<PeakKline> tendencyReservePeakKlineList) {
         List<PeakKline> ensureReservePeakKlineList = new LinkedList(tendencyReservePeakKlineList.stream().filter(peak -> peak.getReserveType() != LineReserveTypeEnum.NONE).collect(Collectors.toList()));
         Iterator<PeakKline> peakKlineIterator = ensureReservePeakKlineList.iterator();
+        PeakKline parent = null;
         PeakKline prev = peakKlineIterator.next();
-
         while(peakKlineIterator.hasNext()) {
             PeakKline curr = peakKlineIterator.next();
             if (prev.getShapeType() == curr.getShapeType()) {
                 peakKlineIterator.remove();
-            } else if (curr.getCombineIndex() - prev.getCombineIndex() < 4 && curr.getReserveType() != LineReserveTypeEnum.JUMP) {
+            } else if (curr.getCombineIndex() - prev.getCombineIndex() < 4
+                    && curr.getReserveType() != LineReserveTypeEnum.JUMP
+                        && (curr.getShapeType() == LineShapeEnum.FLOOR && parent != null && parent.getCombineKline().getKline().getLow() <= curr.getCombineKline().getKline().getLow()
+                            || curr.getShapeType() == LineShapeEnum.TOP && parent != null && parent.getCombineKline().getKline().getHigh() >= curr.getCombineKline().getKline().getHigh())) {
                 peakKlineIterator.remove();
             } else if (prev.getShapeType() == LineShapeEnum.FLOOR && prev.getShapeType() != curr.getShapeType() && curr.getCombineKline().getKline().getHigh() < combineKlineList.get(prev.getCombineIndex() - 1).getKline().getHigh()) {
                 peakKlineIterator.remove();
             } else if (prev.getShapeType() == LineShapeEnum.TOP && prev.getShapeType() != curr.getShapeType() && curr.getCombineKline().getKline().getLow() > combineKlineList.get(prev.getCombineIndex() - 1).getKline().getLow()) {
                 peakKlineIterator.remove();
             } else {
+                parent = prev;
                 prev = curr;
             }
         }
@@ -201,6 +211,36 @@ public class PeakKlineService {
         return ensureReservePeakKlineList;
     }
 
+
+    private List<PeakKline> correctedPeak(List<PeakKline> ensureReservePeakKlineList) {
+        for (int i = 0; i < ensureReservePeakKlineList.size() - 3; i++) {
+            PeakKline peak1 = ensureReservePeakKlineList.get(i);
+            PeakKline peak2 = ensureReservePeakKlineList.get(i+1);
+            PeakKline peak3 = ensureReservePeakKlineList.get(i+2);
+            PeakKline peak4 = ensureReservePeakKlineList.get(i+3);
+
+            if (peak2.getCombineKline().getKline().getDate() == 20190610 || peak3.getCombineKline().getKline().getDate() == 20190610) {
+                System.out.println(20190610);
+            }
+
+            if (peak4.getCombineIndex() - peak3.getCombineIndex() < 4 && peak4.getReserveType() != LineReserveTypeEnum.JUMP ) {
+                if (peak1.getShapeType() == LineShapeEnum.TOP) {
+                    if (peak1.getCombineKline().getKline().getHigh() > peak3.getCombineKline().getKline().getHigh()
+                            && peak2.getCombineKline().getKline().getLow() > peak4.getCombineKline().getKline().getLow()) {
+                        peak2.setReserveType(LineReserveTypeEnum.DROP);
+                        peak3.setReserveType(LineReserveTypeEnum.DROP);
+                    }
+                } else {
+                    if (peak1.getCombineKline().getKline().getLow() < peak3.getCombineKline().getKline().getLow()
+                            && peak2.getCombineKline().getKline().getHigh() < peak4.getCombineKline().getKline().getHigh()) {
+                        peak2.setReserveType(LineReserveTypeEnum.DROP);
+                        peak3.setReserveType(LineReserveTypeEnum.DROP);
+                    }
+                }
+            }
+        }
+        return ensureReservePeakKlineList.stream().filter(peak -> peak.getReserveType() != LineReserveTypeEnum.DROP).collect(Collectors.toList());
+    }
 
 
 }
