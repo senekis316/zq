@@ -1,14 +1,14 @@
 package com.tdx.zq.draw;
 
+import com.tdx.zq.enums.LineReserveTypeEnum;
+import com.tdx.zq.enums.LineShapeEnum;
 import com.tdx.zq.model.CombineKline;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.PeakKline;
 import com.tdx.zq.utils.JacksonUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -28,9 +28,19 @@ public class PeakKlineService {
                 JacksonUtils.toJson(noEnsureReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
 
         //3.跳空保留峰值点
-        List<PeakKline> jumpReservePeakKlineList = jumpReservePeak(combineKlineList, noEnsureReservePeakKlineList);
-        System.out.println("jumpReservePeakKlineList: " +
-                JacksonUtils.toJson(jumpReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+        jumpReservePeak(combineKlineList, noEnsureReservePeakKlineList);
+        System.out.println("jumpBreakPeakKlineList: " +
+                JacksonUtils.toJson(noEnsureReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+
+        //4.趋势保留峰值点
+        List<PeakKline> tendencyReservePeakKlineList = tendencyReservePeak(combineKlineList, noEnsureReservePeakKlineList);
+        System.out.println("tendencyReservePeakKlineList: " +
+                JacksonUtils.toJson(tendencyReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+
+        //5.确定保留点
+        List<PeakKline> ensureReservePeakKlineList = ensureReservePeak(combineKlineList, tendencyReservePeakKlineList);
+        System.out.println("ensureReservePeakKlineList: " +
+                JacksonUtils.toJson(ensureReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
 
         return null;
     }
@@ -42,9 +52,9 @@ public class PeakKlineService {
             Kline middle = combineKlineList.get(i).getKline();
             Kline right = combineKlineList.get(i + 1).getKline();
             if (middle.getHigh() > left.getHigh() && middle.getHigh() > right.getHigh()) {
-                allPeakKlineList.add(new PeakKline(combineKlineList.get(i), i));
+                allPeakKlineList.add(new PeakKline(combineKlineList.get(i), i, LineShapeEnum.TOP));
             } else if (middle.getLow() < left.getLow() && middle.getLow() < right.getLow()) {
-                allPeakKlineList.add(new PeakKline(combineKlineList.get(i), i));
+                allPeakKlineList.add(new PeakKline(combineKlineList.get(i), i, LineShapeEnum.FLOOR));
             }
         }
         return allPeakKlineList;
@@ -56,7 +66,7 @@ public class PeakKlineService {
 
         List<PeakKline> noEnsureReservePeakKlineList = new ArrayList<>();
 
-        for (int i = 0; i < allPeakKlineList.size(); i++) {
+        for (int i = 0; i < allPeakKlineList.size() - 4; i++) {
             Integer index = allPeakKlineList.get(i).getCombineIndex();
             Kline middle = combineKlineList.get(index).getKline();
             Kline right = combineKlineList.get(index + 1).getKline();
@@ -86,10 +96,8 @@ public class PeakKlineService {
     }
 
 
-    private List<PeakKline> jumpReservePeak(List<CombineKline> combineKlineList,
+    private void jumpReservePeak(List<CombineKline> combineKlineList,
                     List<PeakKline> noEnsureReservePeakKlineList) {
-
-        List<PeakKline> jumpReservePeakKlineList = new ArrayList<>();
 
         for (int i = 0; i < noEnsureReservePeakKlineList.size(); i++) {
             Integer index = noEnsureReservePeakKlineList.get(i).getCombineIndex();
@@ -101,26 +109,98 @@ public class PeakKlineService {
 
             if (middle.getLow() < right.getLow()) {
                 if (right.getHigh() < second.getLow() && second.getLow() < left.getHigh()) {
-                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
                 if (left.getHigh() < third.getLow() && right.getHigh() < third.getLow() && second.getHigh() < third.getLow()) {
-                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
             } else if (middle.getHigh() > right.getHigh()) {
                 if (left.getLow() > second.getHigh() && right.getLow() > second.getHigh()) {
-                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
                 if (left.getLow() > third.getHigh() && right.getLow() > third.getHigh() && second.getLow() > third.getHigh()) {
-                    jumpReservePeakKlineList.add(noEnsureReservePeakKlineList.get(i));
+                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
             }
         }
 
-        return jumpReservePeakKlineList;
-
     }
+
+    private List<PeakKline> tendencyReservePeak(List<CombineKline> combineKlineList,
+                                                List<PeakKline> noEnsureReservePeakKlineList) {
+        for (int i = 0; i < noEnsureReservePeakKlineList.size(); i++) {
+            if (noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.JUMP) {
+                Integer index = noEnsureReservePeakKlineList.get(i).getCombineIndex();
+                Kline left = combineKlineList.get(index - 1).getKline();
+                Kline middle = combineKlineList.get(index).getKline();
+                Kline right = combineKlineList.get(index + 1).getKline();
+                Kline second = combineKlineList.get(index + 2).getKline();
+                Kline third = combineKlineList.get(index + 3).getKline();
+
+                if (middle.getLow() < right.getLow()) {
+                    int max = Arrays.stream(new int[]{left.getHigh(), middle.getHigh(), right.getHigh(), second.getHigh(), third.getHigh()}).max().getAsInt();
+                    for (int j = index + 4; j < combineKlineList.size(); j++) {
+                        if (max <= combineKlineList.get(j).getKline().getHigh()) {
+                            noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.TENDENCY);
+                            break;
+                        }
+                        if (middle.getLow() > combineKlineList.get(j).getKline().getLow()) {
+                            noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.DROP);
+                            break;
+                        }
+                    }
+                } else if (middle.getHigh() > right.getHigh()) {
+                    int min = Arrays.stream(new int[]{left.getLow(), middle.getLow(), right.getLow(), second.getLow(), third.getLow()}).min().getAsInt();
+                    for (int j = index + 4; j < combineKlineList.size(); j++) {
+                        if (min >= combineKlineList.get(j).getKline().getLow()) {
+                            noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.TENDENCY);
+                            break;
+                        }
+                        if (middle.getHigh() < combineKlineList.get(j).getKline().getHigh()) {
+                            noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.DROP);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        List<PeakKline> dropTendencyPeakKlineList = noEnsureReservePeakKlineList.stream().filter(peak -> peak.getReserveType() == LineReserveTypeEnum.DROP).collect(Collectors.toList());
+        System.out.println("dropTendencyPeakKlineList: " +
+                JacksonUtils.toJson(dropTendencyPeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+
+        return noEnsureReservePeakKlineList.stream()
+                    .filter(peak -> peak.getReserveType() != LineReserveTypeEnum.DROP)
+                        .collect(Collectors.toList());
+    }
+
+    private List<PeakKline> ensureReservePeak(List<CombineKline> combineKlineList, List<PeakKline> tendencyReservePeakKlineList) {
+        List<PeakKline> ensureReservePeakKlineList = new LinkedList(tendencyReservePeakKlineList.stream().filter(peak -> peak.getReserveType() != LineReserveTypeEnum.NONE).collect(Collectors.toList()));
+        Iterator<PeakKline> peakKlineIterator = ensureReservePeakKlineList.iterator();
+        PeakKline prev = peakKlineIterator.next();
+
+        while(peakKlineIterator.hasNext()) {
+            PeakKline curr = peakKlineIterator.next();
+            if (prev.getShapeType() == curr.getShapeType()) {
+                peakKlineIterator.remove();
+            } else if (curr.getCombineIndex() - prev.getCombineIndex() < 4 && curr.getReserveType() != LineReserveTypeEnum.JUMP) {
+                peakKlineIterator.remove();
+            } else if (prev.getShapeType() == LineShapeEnum.FLOOR && prev.getShapeType() != curr.getShapeType() && curr.getCombineKline().getKline().getHigh() < combineKlineList.get(prev.getCombineIndex() - 1).getKline().getHigh()) {
+                peakKlineIterator.remove();
+            } else if (prev.getShapeType() == LineShapeEnum.TOP && prev.getShapeType() != curr.getShapeType() && curr.getCombineKline().getKline().getLow() > combineKlineList.get(prev.getCombineIndex() - 1).getKline().getLow()) {
+                peakKlineIterator.remove();
+            } else {
+                prev = curr;
+            }
+        }
+
+        return ensureReservePeakKlineList;
+    }
+
+
+
 }

@@ -8,10 +8,9 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Slf4j
@@ -37,8 +36,6 @@ public class KLineDrawService implements InitializingBean {
         //2.获取所有的高低点
         List<Kline> peakLines = peakKlineService.computerPeakKlines(originalKLineMap, originalKLineList, combineKLineList);
         System.out.println("peakLines: " + JacksonUtils.toJson(combineKLineList));
-
-
 
         /*List<KLine> peakLines = peakKLines(combineKLines);
 
@@ -392,7 +389,22 @@ public class KLineDrawService implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        File file = new File(KLineDrawService.class.getResource("/sz300181.day").getFile());
+
+        File file = new File(KLineDrawService.class.getResource("/SZ300181_day.txt").getFile());
+        FileReader fileReader = new FileReader(file);
+        BufferedReader bufferedReader = new BufferedReader(fileReader);
+        List<String> klineStrList = bufferedReader.lines().collect(Collectors.toList());//.skip(2).limit(bufferedReader.lines().count() - 3).collect(Collectors.toList());
+        klineStrList.remove(klineStrList.size() - 1);
+        klineStrList.remove(0);
+        klineStrList.remove(0);
+        List<Kline> klineList = klineStrList.stream().map(str -> new Kline(str)).collect(Collectors.toList());
+        for(Kline kline : klineList) {
+            originalKLineList.add(kline);
+            originalKLineMap.put(kline.getDate(), kline);
+        }
+        compute();
+
+        /*File file = new File(KLineDrawService.class.getResource("/sz300181_2.day").getFile());
         //File file = new File(KLineDrawService.class.getResource("/sh600530.day").getFile());
         //File file = new File(KLineDrawService.class.getResource("/RU1909.day").getFile());
         InputStream inputStream = new FileInputStream(file);
@@ -402,6 +414,10 @@ public class KLineDrawService implements InitializingBean {
             originalKLineList.add(kLine);
             originalKLineMap.put(kLine.getDate(), kLine);
         }
-        compute();
+        compute();*/
     }
+
+
+
+
 }

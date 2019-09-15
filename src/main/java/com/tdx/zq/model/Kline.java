@@ -61,6 +61,17 @@ public class Kline {
         this.code = kline.getCode();
     }
 
+    public Kline(String klineStr) {
+        String[] strs = klineStr.split("\t");
+        this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
+        this.open = (int)(Float.valueOf(strs[1].trim()) * 100);
+        this.high = (int)(Float.valueOf(strs[2].trim()) * 100);
+        this.low = (int)(Float.valueOf(strs[3].trim()) * 100);
+        this.close = (int)(Float.valueOf(strs[4].trim()) * 100);
+        this.volume = Integer.valueOf(strs[5].trim());
+        this.amount = Float.valueOf(strs[6].trim());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
