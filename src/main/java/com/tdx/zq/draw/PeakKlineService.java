@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Component
 public class PeakKlineService {
 
-    public List<Kline> computerPeakKlines(Map<Integer, Kline> originalKLineMap, List<Kline> originalKlineList, List<CombineKline> combineKlineList) {
+    public List<PeakKline> computerPeakKlines(List<CombineKline> combineKlineList) {
 
         //1.获取所有的峰值点
         List<PeakKline> allPeakKlineList = this.computerAllPeakKline(combineKlineList);
@@ -46,6 +46,49 @@ public class PeakKlineService {
         List<PeakKline> correctedPeakKlineList = correctedPeak(ensureReservePeakKlineList);
         System.out.println("correctedPeakKlineList: " +
                 JacksonUtils.toJson(correctedPeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+
+        //7.加入一个未成形的波峰波谷点
+        PeakKline specialPeakKline = specialPeak(combineKlineList, correctedPeakKlineList);
+        List<PeakKline> addSpecialPeakKlineList = correctedPeakKlineList;
+        addSpecialPeakKlineList.add(specialPeakKline);
+        System.out.println("addSpecialPeakKlineList: " +
+                JacksonUtils.toJson(addSpecialPeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
+
+        return addSpecialPeakKlineList;
+    }
+
+    private PeakKline specialPeak(List<CombineKline> combineKlineList, List<PeakKline> peakKlineList) {
+        PeakKline lastPeakKline = peakKlineList.get(peakKlineList.size() - 1);
+        Kline lastKline = lastPeakKline.getCombineKline().getKline();
+        CombineKline specialCombineKline = null;
+        Integer specialIndex = null;
+        if (lastPeakKline.getShapeType() == LineShapeEnum.FLOOR) {
+            int max = lastKline.getHigh();
+            for (int i = lastPeakKline.getCombineIndex() + 1; i < combineKlineList.size(); i++) {
+                Kline currentKline = combineKlineList.get(i).getKline();
+                if (currentKline.getHigh() > max) {
+                    max = currentKline.getHigh();
+                    specialCombineKline = combineKlineList.get(i);
+                    specialIndex = i;
+                }
+            }
+        } else {
+            int min = lastKline.getLow();
+            for (int i = lastPeakKline.getCombineIndex() + 1; i < combineKlineList.size(); i++) {
+                Kline currentKline = combineKlineList.get(i).getKline();
+                if (currentKline.getLow() < min) {
+                    min = currentKline.getLow();
+                    specialCombineKline = combineKlineList.get(i);
+                    specialIndex = i;
+                }
+            }
+        }
+
+        LineShapeEnum lineShapeEnum = lastPeakKline.getShapeType() == LineShapeEnum.FLOOR  ? LineShapeEnum.TOP : LineShapeEnum.FLOOR;
+
+        if (specialCombineKline != null) {
+            return new PeakKline(specialCombineKline, specialIndex, lineShapeEnum);
+        }
 
         return null;
     }
