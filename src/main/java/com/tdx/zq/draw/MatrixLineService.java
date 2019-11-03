@@ -8,29 +8,54 @@ import com.tdx.zq.model.PeakKline;
 import com.tdx.zq.utils.JacksonUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 @Service
 public class MatrixLineService {
 
-    public List<MatrixLine> drawMatrix(List<PeakKline> peakLines) {
+    public List<MatrixLine> drawMatrix(List<PeakKline> peakKLines) {
 
-        //1.获取全部MatirxLine, 后期删除不符合条件的Matrix
-        List<MatrixLine> allMatrixLineList = getAllMatrixs(peakLines);
-        System.out.println("allMatrixLineList: " + JacksonUtils.toJson(allMatrixLineList));
+        //1.获取前置MatirxLine
+        List<MatrixLine> prevMatrixLineList = getPrevMatrixs(peakKLines);
+        System.out.println("prevMatrixLineList: " + JacksonUtils.toJson(prevMatrixLineList));
+
+        //2.获取后缀MatirxLine
+        List<MatrixLine> suffMatrixLineList = getSuffMatrixs(peakKLines, prevMatrixLineList);
+        System.out.println("suffMatrixLineList: " + JacksonUtils.toJson(suffMatrixLineList));
+
+        //3. 合并前置后置矩阵集合
+        List<MatrixLine> combineMatrixLineList =  getCombineMatrixList(prevMatrixLineList, suffMatrixLineList);
+        System.out.println("combineMatrixLineList: " + JacksonUtils.toJson(combineMatrixLineList));
 
         return null;
 
     }
 
+    private List<MatrixLine> getCombineMatrixList(List<MatrixLine> prevMatrixLineList, List<MatrixLine> suffMatrixLineList) {
+        List<MatrixLine> combineMatrixList = new ArrayList();
+        combineMatrixList.addAll(prevMatrixLineList);
+        combineMatrixList.addAll(suffMatrixLineList);
+        Collections.sort(combineMatrixList, new Comparator<MatrixLine>() {
+            @Override
+            public int compare(MatrixLine o1, MatrixLine o2) {
+                if (o1.getBegin() < o2.getBegin()) {
+                    return -1;
+                } else if (o1.getBegin() == o2.getBegin()) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            }
+        });
+        return combineMatrixList;
+    }
 
-    private List<MatrixLine> getAllMatrixs(List<PeakKline> peakKLines) {
+    private List<MatrixLine> getPrevMatrixs(List<PeakKline> peakKLines) {
 
         List<MatrixLine> matrixLineList = new ArrayList<>();
 
-        for (int index = 0; index < peakKLines.size() - 4; index++) {
+        for (int index = 1; index < peakKLines.size() - 4; index++) {
 
             PeakKline peak1 = peakKLines.get(index);
             PeakKline peak2 = peakKLines.get(index + 1);
@@ -44,12 +69,24 @@ public class MatrixLineService {
             Kline kline4 = peak4.getCombineKline().getKline();
             Kline kline5 = peak5.getCombineKline().getKline();
 
+            if (kline1.getDate() == 20190201) {
+                System.out.println(20190201);
+            }
+            if (kline2.getDate() == 20190201) {
+                System.out.println(20190201);
+            }
+            if (kline3.getDate() == 20190201) {
+                System.out.println(20190201);
+            }
+            if (kline4.getDate() == 20190201) {
+                System.out.println(20190201);
+            }
+            if (kline5.getDate() == 20190201) {
+                System.out.println(20190201);
+            }
+
             int begin = kline2.getDate();
             int end = kline5.getDate();
-
-            if (kline1.getDate() == 20190819) {
-                System.out.println(20190819);
-            }
 
             if (peak1.getShapeType().equals(LineShapeEnum.FLOOR)) {
                 int min = kline1.getLow();
@@ -59,11 +96,14 @@ public class MatrixLineService {
                     while (current < peakKLines.size()) {
                         Kline kline = peakKLines.get(current).getCombineKline().getKline();
                         if (kline.getHigh() >= max) {
+                            PeakKline prevPeakKline = peakKLines.get(index - 1);
+                            PeakKline lastPeakKline = peak5;
+                            PeakKline suffPeakKline = peakKLines.get(current);
                             int low = Math.max(kline3.getLow(), kline5.getLow());
                             int high = Math.min(kline2.getHigh(), kline4.getHigh());
-                            MatrixLine matrixLine = new MatrixLine(low, high, begin, end, MatrixLineType.UP);
+                            MatrixLine matrixLine = new MatrixLine(low, high, begin, end, prevPeakKline, lastPeakKline, suffPeakKline, MatrixLineType.UP);
                             matrixLineList.add(matrixLine);
-                            index = index + 5;
+                            index = index + 4;
                             break;
                         }
                         if (kline.getLow() < min) {
@@ -75,16 +115,19 @@ public class MatrixLineService {
             } else {
                 int min = Math.min(kline2.getLow(), kline4.getLow());
                 int max = kline1.getHigh();
-                if (kline3.getHigh() <= kline1.getHigh() && kline5.getHigh() <= kline1.getHigh() && kline5.getHigh() >= kline2.getLow()) {
+                if (kline3.getHigh() <= kline1.getHigh() && kline5.getHigh() <= kline1.getHigh() && kline5.getHigh() <= kline2.getLow()) {
                     int current = index + 5;
                     while (current < peakKLines.size()) {
                         Kline kline = peakKLines.get(current).getCombineKline().getKline();
                         if (kline.getLow() <= min) {
+                            PeakKline prevPeakKline = peakKLines.get(index - 1);
+                            PeakKline lastPeakKline = peak5;
+                            PeakKline suffPeakKline = peakKLines.get(current);
                             int low = Math.max(kline2.getLow(), kline4.getLow());
                             int high = Math.min(kline3.getHigh(), kline5.getHigh());
-                            MatrixLine matrixLine = new MatrixLine(low, high, begin, end, MatrixLineType.DOWN);
+                            MatrixLine matrixLine = new MatrixLine(low, high, begin, end, prevPeakKline, lastPeakKline, suffPeakKline, MatrixLineType.DOWN);
                             matrixLineList.add(matrixLine);
-                            index = index + 5;
+                            index = index + 4;
                             break;
                         }
                         if (kline.getHigh() > max) {
@@ -99,145 +142,43 @@ public class MatrixLineService {
     }
 
 
+    private List<MatrixLine> getSuffMatrixs(List<PeakKline> peakKLines, List<MatrixLine> prevMatrixLineList) {
 
-    /*private Boolean isValidMatrix(int min, int max, int index, List<PeakKline> peakKlines) {
+        List<MatrixLine> suffMatrixs = new ArrayList<>();
 
-    }*/
+        for(MatrixLine matrixLine: prevMatrixLineList) {
 
+            if (matrixLine.getSuffPeakKline().getPeakIndex() - matrixLine.getLastPeakKline().getPeakIndex() >= 5) {
+                int index =  matrixLine.getLastPeakKline().getPeakIndex();
+                PeakKline peak1 = peakKLines.get(index);
+                PeakKline peak2 = peakKLines.get(index + 1);
+                PeakKline peak3 = peakKLines.get(index + 2);
+                PeakKline peak4 = peakKLines.get(index + 3);
+                PeakKline peak5 = peakKLines.get(index + 4);
 
+                Kline kline2 = peak2.getCombineKline().getKline();
+                Kline kline3 = peak3.getCombineKline().getKline();
+                Kline kline4 = peak4.getCombineKline().getKline();
+                Kline kline5 = peak5.getCombineKline().getKline();
 
+                int begin = kline2.getDate();
+                int end = kline5.getDate();
 
-    /*public List<MatrixLine> drawMatrix(List<PeakKline> peakLines) {
-
-        List<MatrixLine> matrixLineList = new ArrayList<>();
-
-        for (int i = 0; i < peakLines.size(); i++) {
-
-            PeakKline beginPeakKline = peakLines.get(i);
-            Kline beginKline = beginPeakKline.getCombineKline().getKline();
-
-            if (beginKline.getDate() == 20190507) {
-                System.out.println(20190507);
-            }
-
-            MatrixLine matrixLine;
-
-            if  (i == 0) {
-                matrixLine = new MatrixLine(Integer.MIN_VALUE, Integer.MAX_VALUE, beginKline.getDate(), i, beginPeakKline.getShapeType());
-            } else {
-                PeakKline prevPeakKline = peakLines.get(i - 1);
-                Kline prevKline = prevPeakKline.getCombineKline().getKline();
-                if (beginPeakKline.getShapeType() == LineShapeEnum.TOP) {
-                    matrixLine = new MatrixLine(prevKline.getLow(), Integer.MAX_VALUE, beginKline.getDate(), i, beginPeakKline.getShapeType());
+                if (peak1.getShapeType().equals(LineShapeEnum.FLOOR)) {
+                    int min = Math.max(kline3.getLow(), kline5.getLow());
+                    int max = Math.min(kline2.getHigh(), kline4.getHigh());
+                    suffMatrixs.add(new MatrixLine(min, max, begin, end, matrixLine.getLastPeakKline(), peak5, matrixLine.getSuffPeakKline(), matrixLine.getMatrixLineType()));
                 } else {
-                    matrixLine = new MatrixLine(Integer.MIN_VALUE, prevKline.getHigh(), beginKline.getDate(), i, beginPeakKline.getShapeType());
-                }
-            }
-
-            for (int j = i + 1; j < peakLines.size(); j++) {
-
-                boolean isMinLengthMatrix = isMinLengthMatrix(i, j);
-                boolean isEndMatrix = isEndMatrix(peakLines, beginPeakKline, j);
-
-                if (!isMinLengthMatrix && isEndMatrix) {
-                    break;
-                }
-
-                if (isMinLengthMatrix && !matrixLine.isBreak()) {
-                    matrixLine.setBreak(isBreak(beginPeakKline, peakLines.get(j), matrixLine));
-                }
-
-                updateMatrixLine(peakLines, matrixLine, j);
-
-                if (isEndMatrix) {
-                    if (isValidMatrix(matrixLine)) {
-                        i = j + 1;
-                    }
-                    break;
-                }
-
-            }
-            if (isValidMatrix(matrixLine)) {
-                matrixLineList.add(matrixLine);
-            }
-        }
-
-        return matrixLineList;
-
-    }*/
-
-    /*private Boolean isBreak(PeakKline beginPeakKline, PeakKline peakKline, MatrixLine matrixLine) {
-        Kline kline = peakKline.getCombineKline().getKline();
-        if (beginPeakKline.getShapeType() == LineShapeEnum.TOP) {
-            return matrixLine.getLow() > kline.getLow();
-        } else {
-            return matrixLine.getHigh() < kline.getHigh();
-        }
-    }
-
-    private void updateMatrixLine(List<PeakKline> peakLines, MatrixLine matrixLine, int index) {
-        PeakKline prevPeakKline = peakLines.get(index - 1);
-        PeakKline currentPeakKline = peakLines.get(index);
-        Kline prevKline = prevPeakKline.getCombineKline().getKline();
-        Kline currentKline = currentPeakKline.getCombineKline().getKline();
-        if (currentPeakKline.getShapeType() == LineShapeEnum.TOP) {
-            matrixLine.setHigh(Math.min(matrixLine.getHigh(), currentKline.getHigh()));
-        } else {
-            matrixLine.setLow(Math.max(matrixLine.getLow(), currentKline.getHigh()));
-        }
-        matrixLine.setRight(index);
-        matrixLine.setEnd(currentKline.getDate());
-    }
-
-    private boolean isMinLengthMatrix(int begin, int end) {
-        return end - begin >= 5;
-    }
-
-    private boolean isValidMatrix(MatrixLine matrixLine) {
-        if (matrixLine.getRight() - matrixLine.getLeft() >= 5
-                && matrixLine.isBreak()
-                    && matrixLine.getLow() != Integer.MIN_VALUE
-                        && matrixLine.getHigh() != Integer.MAX_VALUE) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean isEndMatrix(List<PeakKline> peakKlines, PeakKline beginKline, int index) {
-
-        if (index < peakKlines.size() - 3) {
-
-            PeakKline prevPeakKline = peakKlines.get(index - 1);
-            PeakKline currPeakKline = peakKlines.get(index);
-            PeakKline afterPeakKline1 =  peakKlines.get(index + 1);
-            PeakKline afterPeakKline2 =  peakKlines.get(index + 2);
-            PeakKline afterPeakKline3 =  peakKlines.get(index + 3);
-
-            Kline currKline = currPeakKline.getCombineKline().getKline();
-            Kline prevKline = prevPeakKline.getCombineKline().getKline();
-            Kline afterKline1 = afterPeakKline1.getCombineKline().getKline();
-            Kline afterKline2 = afterPeakKline2.getCombineKline().getKline();
-            Kline afterKline3 = afterPeakKline3.getCombineKline().getKline();
-
-            if (beginKline.getShapeType() == LineShapeEnum.TOP) {
-                if (currPeakKline.getShapeType() == LineShapeEnum.TOP) {
-                    if (afterKline1.getLow() <= prevKline.getHigh()
-                            && afterKline2.getHigh() < currKline.getHigh()
-                            && afterKline3.getLow() <= afterKline1.getLow()) {
-                        return true;
-                    }
-                }
-            } else {
-                if (currPeakKline.getShapeType() == LineShapeEnum.FLOOR) {
-                    if (afterKline1.getHigh() >= prevKline.getLow()
-                            && afterKline2.getLow() > currKline.getLow()
-                            && afterKline3.getHigh() >= afterKline1.getHigh()) {
-                        return true;
-                    }
+                    int min = Math.max(kline2.getLow(), kline4.getLow());
+                    int max = Math.min(kline3.getHigh(), kline5.getHigh());
+                    suffMatrixs.add(new MatrixLine(min, max, begin, end, matrixLine.getLastPeakKline(), peak5, matrixLine.getSuffPeakKline(), matrixLine.getMatrixLineType()));
                 }
             }
         }
-        return false;
-    }*/
+
+        return suffMatrixs;
+    }
+
+
 
 }

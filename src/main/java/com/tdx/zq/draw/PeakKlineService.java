@@ -54,6 +54,11 @@ public class PeakKlineService {
         System.out.println("addSpecialPeakKlineList: " +
                 JacksonUtils.toJson(addSpecialPeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
 
+        //8. PeakKline index编号
+        for (int i = 0; i < addSpecialPeakKlineList.size(); i++) {
+            addSpecialPeakKlineList.get(i).setPeakIndex(i);
+        }
+
         return addSpecialPeakKlineList;
     }
 
@@ -156,7 +161,7 @@ public class PeakKlineService {
             Kline third = combineKlineList.get(index + 3).getKline();
 
             if (middle.getLow() < right.getLow()) {
-                if (right.getHigh() < second.getLow() && second.getLow() < left.getHigh()) {
+                if (right.getHigh() < second.getLow() && second.getLow() > left.getHigh()) {
                     noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
@@ -216,13 +221,17 @@ public class PeakKlineService {
         noEnsureReservePeakKlineList = deleteEqualDirectPeak(noEnsureReservePeakKlineList);
 
         for (int i = 0; i < noEnsureReservePeakKlineList.size(); i++) {
-            if (noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.JUMP) {
+            if (noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.JUMP && noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.DROP) {
                 Integer index = noEnsureReservePeakKlineList.get(i).getCombineIndex();
                 Kline left = combineKlineList.get(index - 1).getKline();
                 Kline middle = combineKlineList.get(index).getKline();
                 Kline right = combineKlineList.get(index + 1).getKline();
                 Kline second = combineKlineList.get(index + 2).getKline();
                 Kline third = combineKlineList.get(index + 3).getKline();
+
+                if (middle.getDate() == 20190307) {
+                    System.out.println(20190307);
+                }
 
                 if (middle.getLow() < right.getLow()) {
                     int max = Arrays.stream(new int[]{left.getHigh(), middle.getHigh(), right.getHigh(), second.getHigh(), third.getHigh()}).max().getAsInt();
@@ -232,6 +241,21 @@ public class PeakKlineService {
                             break;
                         }
                         if (middle.getLow() > combineKlineList.get(j).getKline().getLow()) {
+                            int rangeMin = middle.getLow();
+                            int rangeMax = Math.max(left.getHigh(), right.getHigh());
+                            int endDate = combineKlineList.get(j - 1).getKline().getDate();
+                            int temp = i + 1;
+                            while(true) {
+                                Kline kline = noEnsureReservePeakKlineList.get(temp).getCombineKline().getKline();
+                                if (kline.getDate() <= endDate) {
+                                    if (kline.getHigh() < rangeMax && kline.getLow() > rangeMin) {
+                                        noEnsureReservePeakKlineList.get(temp).setReserveType(LineReserveTypeEnum.DROP);
+                                    }
+                                } else {
+                                    break;
+                                }
+                                temp++;
+                            }
                             noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.DROP);
                             break;
                         }
@@ -244,6 +268,21 @@ public class PeakKlineService {
                             break;
                         }
                         if (middle.getHigh() < combineKlineList.get(j).getKline().getHigh()) {
+                            int rangeMax = middle.getHigh();
+                            int rangeMin = Math.min(left.getLow(), right.getLow());
+                            int endDate = combineKlineList.get(j-1).getKline().getDate();
+                            int temp = i + 1;
+                            while(true) {
+                                Kline kline = noEnsureReservePeakKlineList.get(temp).getCombineKline().getKline();
+                                if (kline.getDate() <= endDate) {
+                                    if (kline.getHigh() < rangeMax && kline.getLow() > rangeMin) {
+                                        noEnsureReservePeakKlineList.get(temp).setReserveType(LineReserveTypeEnum.DROP);
+                                    }
+                                } else {
+                                    break;
+                                }
+                                temp++;
+                            }
                             noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.DROP);
                             break;
                         }
@@ -292,7 +331,7 @@ public class PeakKlineService {
             PeakKline peak3 = ensureReservePeakKlineList.get(i+2);
             PeakKline peak4 = ensureReservePeakKlineList.get(i+3);
 
-            if (peak4.getCombineIndex() - peak3.getCombineIndex() < 4 && peak4.getReserveType() != LineReserveTypeEnum.JUMP) {
+            if (peak4.getCombineIndex() - peak3.getCombineIndex() < 4 && peak3.getReserveType() != LineReserveTypeEnum.JUMP) {
                 if (peak1.getShapeType() == LineShapeEnum.TOP) {
                     if (peak1.getCombineKline().getKline().getHigh() > peak3.getCombineKline().getKline().getHigh()
                             && peak2.getCombineKline().getKline().getLow() > peak4.getCombineKline().getKline().getLow()) {

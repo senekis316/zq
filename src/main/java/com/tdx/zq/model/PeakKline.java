@@ -15,6 +15,8 @@ public class PeakKline{
 
     private LineShapeEnum shapeType;
 
+    private int peakIndex;
+
     public PeakKline(CombineKline combineKline, int combineIndex, LineShapeEnum shapeType) {
         this.combineKline = combineKline;
         this.combineIndex = combineIndex;

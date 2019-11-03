@@ -1,5 +1,6 @@
 package com.tdx.zq.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tdx.zq.enums.LineShapeEnum;
 import com.tdx.zq.enums.MatrixLineType;
 import lombok.Data;
@@ -17,39 +18,27 @@ public class MatrixLine {
 
     private int end;
 
+    @JsonIgnore
     private MatrixLineType matrixLineType;
 
-   /* private int left;
+    @JsonIgnore
+    private PeakKline prevPeakKline;
 
-    private int right;
+    @JsonIgnore
+    private PeakKline lastPeakKline;
 
-    private boolean isBreak = false;
+    @JsonIgnore
+    private PeakKline suffPeakKline;
 
-    private MatrixLineType matrixLineType;*/
-
-    public MatrixLine(int low, int high, int begin, int end, MatrixLineType matrixLineType) {
+    public MatrixLine(int low, int high, int begin, int end, PeakKline prevPeakKline, PeakKline lastPeakKline, PeakKline suffPeakKline, MatrixLineType matrixLineType) {
         this.low = low;
         this.high = high;
         this.begin = begin;
         this.end = end;
+        this.prevPeakKline = prevPeakKline;
+        this.lastPeakKline = lastPeakKline;
+        this.suffPeakKline = suffPeakKline;
         this.matrixLineType = matrixLineType;
     }
-
-
-    /*public MatrixLine(int low, int high, int begin, int end, MatrixLineType matrixLineType) {
-        this.low = low;
-        this.high = high;
-        this.begin = begin;
-        this.end = end;
-        this.matrixLineType = matrixLineType;
-    }
-
-    public MatrixLine(int low, int high, int begin, int left, LineShapeEnum lineShapeEnum) {
-        this.low = low;
-        this.high = high;
-        this.begin = begin;
-        this.left = left;
-        this.matrixLineType = lineShapeEnum == LineShapeEnum.TOP ? MatrixLineType.DOWN : MatrixLineType.UP;
-    }*/
 
 }

@@ -112,9 +112,10 @@ public class KLineDrawService implements InitializingBean {
     public void afterPropertiesSet() throws Exception {
 
         //SZ300181 佐力药业	STANDK(K线)	日线	线段	定位1:值:4.67/时:20190806;定位2:值:5.84/时:20190910;
-
         //File file = new File(KLineDrawService.class.getResource("/SZ300181.txt").getFile());
-        File file = new File(KLineDrawService.class.getResource("/SZ300136.txt").getFile());
+        //File file = new File(KLineDrawService.class.getResource("/SZ300136.txt").getFile());
+        //File file = new File(KLineDrawService.class.getResource("/SZ300202.txt").getFile());
+        File file = new File(KLineDrawService.class.getResource("/SZ300468.txt").getFile());
         FileReader fileReader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         List<String> klineStrList = bufferedReader.lines().collect(Collectors.toList());
