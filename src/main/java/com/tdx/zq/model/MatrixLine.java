@@ -21,16 +21,22 @@ public class MatrixLine {
     @JsonIgnore
     private MatrixLineType matrixLineType;
 
-    @JsonIgnore
+    /*@JsonIgnore
     private PeakKline prevPeakKline;
 
     @JsonIgnore
     private PeakKline lastPeakKline;
 
     @JsonIgnore
-    private PeakKline suffPeakKline;
+    private PeakKline suffPeakKline;*/
 
-    public MatrixLine(int low, int high, int begin, int end, PeakKline prevPeakKline, PeakKline lastPeakKline, PeakKline suffPeakKline, MatrixLineType matrixLineType) {
+    @JsonIgnore
+    private PeakKline beginPeakKline;
+
+    @JsonIgnore
+    private PeakKline endPeakKline;
+
+    /*public MatrixLine(int low, int high, int begin, int end, PeakKline prevPeakKline, PeakKline lastPeakKline, PeakKline suffPeakKline, MatrixLineType matrixLineType) {
         this.low = low;
         this.high = high;
         this.begin = begin;
@@ -39,6 +45,16 @@ public class MatrixLine {
         this.lastPeakKline = lastPeakKline;
         this.suffPeakKline = suffPeakKline;
         this.matrixLineType = matrixLineType;
+    }*/
+
+    public MatrixLine(int low, int high, int begin, int end, MatrixLineType matrixLineType, PeakKline beginPeakKline, PeakKline endPeakKline) {
+        this.low = low;
+        this.high = high;
+        this.begin = begin;
+        this.end = end;
+        this.matrixLineType = matrixLineType;
+        this.beginPeakKline = beginPeakKline;
+        this.endPeakKline = endPeakKline;
     }
 
 }
