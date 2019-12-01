@@ -1,8 +1,6 @@
 package com.tdx.zq.draw;
 
-import com.tdx.zq.enums.LineShapeEnum;
-import com.tdx.zq.enums.MatrixLineType;
-import com.tdx.zq.model.Kline;
+import com.tdx.zq.model.Matrix;
 import com.tdx.zq.model.MatrixLine;
 import com.tdx.zq.model.PeakKline;
 import com.tdx.zq.utils.JacksonUtils;
@@ -15,11 +13,11 @@ import java.util.List;
 @Service
 public class MatrixLineService {
 
-    public List<MatrixLine> drawMatrix(List<PeakKline> peakKLines) {
+    public List<Matrix> drawMatrix(List<PeakKline> peakKLines) {
 
         //1.获取前置MatirxLine
-        List<MatrixLine> prevMatrixLineList = getPrevMatrixs(peakKLines);
-        System.out.println("prevMatrixLineList: " + JacksonUtils.toJson(prevMatrixLineList));
+        List<Matrix> baseMatixs = getBaseMatrixs(peakKLines);
+        System.out.println("baseMatixs: " + JacksonUtils.toJson(baseMatixs));
 
         //2.获取后缀MatirxLine
         //List<MatrixLine> suffMatrixLineList = getSuffMatrixs(peakKLines, prevMatrixLineList);
@@ -33,10 +31,34 @@ public class MatrixLineService {
 
     }
 
+    private List<Matrix> getBaseMatrixs(List<PeakKline> peakKLines) {
+        List<Matrix> matrixs= new ArrayList<>();
+        for (int i = 0; i < peakKLines.size() - 4;) {
+            MatrixLine matrixLine = new MatrixLine(i, peakKLines);
+            if (matrixLine.isValidMatrix()) {
+                matrixs.add(new Matrix(matrixLine));
+                i = matrixLine.getEnd();
+                /*if (i + 4 < matrixLine.getEnd()) {
+                    getBaseMatrixs(peakKLines.subList(i + 4, matrixLine.getEnd()));
+                }*/
+            } else {
+                i++;
+            }
+        }
+        return matrixs;
+    }
+
+    /*private void getFollowMatrixs(List<Matrix> matrixs) {
+
+        for (int i = 0; i < matrixs.size(); i++) {
+            matrix
+            getBaseMatrixs
+        }
+
+    }*/
 
 
-
-    private List<MatrixLine> getPrevMatrixs(List<PeakKline> peakKLines) {
+    /*private List<MatrixLine> getPrevMatrixs(List<PeakKline> peakKLines) {
 
         List<MatrixLine> matrixLineList = new ArrayList<>();
 
@@ -370,9 +392,9 @@ public class MatrixLineService {
             pointer++;
         }
 
-        return peakKLines.get(peakKLines.size() - 1);*/
+        return peakKLines.get(peakKLines.size() - 1);
 
-    }
+    }*/
 
 
     /*private List<MatrixLine> getFollowMatrixs(List<PeakKline> peakKLines, List<MatrixLine> prevMatrixLineList) {

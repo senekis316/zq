@@ -1,6 +1,6 @@
 package com.tdx.zq.enums;
 
-public enum MatrixLineType {
+public enum MatrixType {
 
     UP, DOWN;
 

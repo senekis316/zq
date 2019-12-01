@@ -1,60 +1,125 @@
 package com.tdx.zq.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tdx.zq.enums.LineShapeEnum;
-import com.tdx.zq.enums.MatrixLineType;
+import com.tdx.zq.enums.MatrixType;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.Iterator;
+import java.util.List;
 
 @Data
-@NoArgsConstructor
 public class MatrixLine {
 
-    private int low;
-
     private int high;
+
+    private int low;
 
     private int begin;
 
     private int end;
 
-    @JsonIgnore
-    private MatrixLineType matrixLineType;
+    private Kline kline1;
 
-    /*@JsonIgnore
-    private PeakKline prevPeakKline;
+    private Kline kline2;
 
-    @JsonIgnore
-    private PeakKline lastPeakKline;
+    private Kline kline3;
 
-    @JsonIgnore
-    private PeakKline suffPeakKline;*/
+    private Kline kline4;
 
-    @JsonIgnore
-    private PeakKline beginPeakKline;
+    private Kline kline5;
 
-    @JsonIgnore
-    private PeakKline endPeakKline;
+    private PeakKline peak1;
 
-    /*public MatrixLine(int low, int high, int begin, int end, PeakKline prevPeakKline, PeakKline lastPeakKline, PeakKline suffPeakKline, MatrixLineType matrixLineType) {
-        this.low = low;
-        this.high = high;
-        this.begin = begin;
-        this.end = end;
-        this.prevPeakKline = prevPeakKline;
-        this.lastPeakKline = lastPeakKline;
-        this.suffPeakKline = suffPeakKline;
-        this.matrixLineType = matrixLineType;
-    }*/
+    private PeakKline peak2;
 
-    public MatrixLine(int low, int high, int begin, int end, MatrixLineType matrixLineType, PeakKline beginPeakKline, PeakKline endPeakKline) {
-        this.low = low;
-        this.high = high;
-        this.begin = begin;
-        this.end = end;
-        this.matrixLineType = matrixLineType;
-        this.beginPeakKline = beginPeakKline;
-        this.endPeakKline = endPeakKline;
+    private PeakKline peak3;
+
+    private PeakKline peak4;
+
+    private PeakKline peak5;
+
+    private List<PeakKline> peaks;
+
+    private MatrixType matrixType;
+
+    public MatrixLine(int index, List<PeakKline> peaks) {
+        this.begin = index;
+        this.peaks = peaks;
+        this.peak1 = peaks.get(index);
+        this.peak2 = peaks.get(index + 1);
+        this.peak3 = peaks.get(index + 2);
+        this.peak4 = peaks.get(index + 3);
+        this.peak5 = peaks.get(index + 4);
+        this.kline1 = peak1.getCombineKline().getKline();
+        this.kline2 = peak2.getCombineKline().getKline();
+        this.kline3 = peak3.getCombineKline().getKline();
+        this.kline4 = peak4.getCombineKline().getKline();
+        this.kline5 = peak5.getCombineKline().getKline();
+        this.matrixType = peak1.getShapeType() == LineShapeEnum.FLOOR ? MatrixType.UP : MatrixType.DOWN;
     }
+
+    public boolean isValidMatrix() {
+        if (this.peak2.getCombineKline().getKline().getDate() == 20181116) {
+            System.out.println(20181116);
+        }
+        return hasPrevFigure() && hasEndPoint();
+    }
+
+    private boolean hasPrevFigure() {
+        if (matrixType == MatrixType.UP) {
+            if (kline2.getHigh() >= kline5.getLow()
+                    && kline3.getLow() > kline1.getLow()
+                    && kline5.getLow() > kline1.getLow()) {
+                return true;
+            }
+        } else {
+            if (kline5.getHigh() >= kline2.getLow()
+                    && kline3.getHigh() < kline1.getHigh()
+                    && kline5.getHigh() < kline1.getHigh()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hasEndPoint() {
+        if (matrixType == MatrixType.UP) {
+            int min = kline1.getLow();
+            int max = Math.max(kline2.getHigh(), kline4.getHigh());
+            for (int i = begin + 5; i < peaks.size(); i++) {
+                PeakKline currPeak = peaks.get(i);
+                Kline currKline = currPeak.getCombineKline().getKline();
+                if (currKline.getHigh() > max) {
+                    this.end = i;
+                    this.low = min;
+                    this.high = max;
+                    return true;
+                }
+                if (currKline.getLow() < min) {
+                    return false;
+                }
+            }
+        } else {
+            int min = Math.min(kline2.getLow(), kline4.getLow());
+            int max = kline1.getHigh();
+            for (int i = begin + 5; i < peaks.size(); i++) {
+                PeakKline currPeak = peaks.get(i);
+                Kline currKline = currPeak.getCombineKline().getKline();
+                if (currKline.getLow() < min) {
+                    this.end = i;
+                    this.low = min;
+                    this.high = max;
+                    return true;
+                }
+                if (currKline.getHigh() > max) {
+                    return false;
+                }
+            }
+        }
+        return false;
+    }
+
+
+
 
 }

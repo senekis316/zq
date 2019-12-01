@@ -63,6 +63,12 @@ public class PeakKlineService {
     }
 
     private PeakKline specialPeak(List<CombineKline> combineKlineList, List<PeakKline> peakKlineList) {
+        /*PeakKline lastPeakKline = peakKlineList.get(peakKlineList.size() - 1);
+        int specialIndex = combineKlineList.size() - 1;
+        CombineKline specialCombineKline = combineKlineList.get(specialIndex);
+        LineShapeEnum lineShapeEnum = lastPeakKline.getShapeType() == LineShapeEnum.FLOOR  ? LineShapeEnum.TOP : LineShapeEnum.FLOOR;
+        return new PeakKline(specialCombineKline, specialIndex, lineShapeEnum);*/
+
         PeakKline lastPeakKline = peakKlineList.get(peakKlineList.size() - 1);
         Kline lastKline = lastPeakKline.getCombineKline().getKline();
         CombineKline specialCombineKline = null;
@@ -159,6 +165,10 @@ public class PeakKlineService {
             Kline right = combineKlineList.get(index + 1).getKline();
             Kline second = combineKlineList.get(index + 2).getKline();
             Kline third = combineKlineList.get(index + 3).getKline();
+
+            if (middle.getDate() == 20190329) {
+                System.out.println(20190329);
+            }
 
             if (middle.getLow() < right.getLow()) {
                 if (right.getHigh() < second.getLow() && second.getLow() > left.getHigh()) {
@@ -306,10 +316,16 @@ public class PeakKlineService {
         while(peakKlineIterator.hasNext()) {
             PeakKline curr = peakKlineIterator.next();
 
+            if (curr.getCombineKline().getKline().getDate() == 20190404) {
+                System.out.println(20190404);
+            }
+
             if (curr.getCombineIndex() - prev.getCombineIndex() < 4
                     && curr.getReserveType() != LineReserveTypeEnum.JUMP
                         && (curr.getShapeType() == LineShapeEnum.FLOOR && parent != null && parent.getCombineKline().getKline().getLow() <= curr.getCombineKline().getKline().getLow()
-                            || curr.getShapeType() == LineShapeEnum.TOP && parent != null && parent.getCombineKline().getKline().getHigh() >= curr.getCombineKline().getKline().getHigh())) {
+                            || curr.getShapeType() == LineShapeEnum.TOP && parent != null && parent.getCombineKline().getKline().getHigh() >= curr.getCombineKline().getKline().getHigh())
+                            && (prev.getReserveType() != LineReserveTypeEnum.JUMP || curr.getReserveType() != LineReserveTypeEnum.TENDENCY)
+            ) {
                 peakKlineIterator.remove();
             } else if (prev.getShapeType() == LineShapeEnum.FLOOR && prev.getShapeType() != curr.getShapeType() && curr.getCombineKline().getKline().getHigh() < combineKlineList.get(prev.getCombineIndex() - 1).getKline().getHigh()) {
                 peakKlineIterator.remove();

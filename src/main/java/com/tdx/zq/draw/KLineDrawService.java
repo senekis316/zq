@@ -2,10 +2,7 @@ package com.tdx.zq.draw;
 
 import com.sun.org.apache.xml.internal.serialize.LineSeparator;
 import com.tdx.zq.enums.LineShapeEnum;
-import com.tdx.zq.model.CombineKline;
-import com.tdx.zq.model.Kline;
-import com.tdx.zq.model.MatrixLine;
-import com.tdx.zq.model.PeakKline;
+import com.tdx.zq.model.*;
 import com.tdx.zq.utils.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -48,7 +45,7 @@ public class KLineDrawService implements InitializingBean {
         System.out.println("peakLineList: " + JacksonUtils.toJson(peakLineList));
 
         //3.获取矩形信息
-        List<MatrixLine> matrixLineList = matrixLineService.drawMatrix(peakLineList);
+        List<Matrix> matrixLineList = matrixLineService.drawMatrix(peakLineList);
         System.out.println("matrixLineList" + JacksonUtils.toJson(matrixLineList));
 
         //4.保存画线信息
@@ -115,7 +112,7 @@ public class KLineDrawService implements InitializingBean {
         //File file = new File(KLineDrawService.class.getResource("/SZ300181.txt").getFile());
         //File file = new File(KLineDrawService.class.getResource("/SZ300136.txt").getFile());
         //File file = new File(KLineDrawService.class.getResource("/SZ300202.txt").getFile());
-        File file = new File(KLineDrawService.class.getResource("/SZ300468.txt").getFile());
+        File file = new File(KLineDrawService.class.getResource("/SZ300277.txt").getFile());
         FileReader fileReader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         List<String> klineStrList = bufferedReader.lines().collect(Collectors.toList());
