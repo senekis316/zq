@@ -41,7 +41,7 @@ public class KLineDrawService implements InitializingBean {
         System.out.println("combineKLineList: " + JacksonUtils.toJson(combineKLineList));
 
         //2.获取所有的高低点
-        List<PeakKline> peakLineList = peakKlineService.computerPeakKlines(combineKLineList);
+        List<PeakKline> peakLineList = peakKlineService.computerPeakKlines(combineKLineList, originalKLineList);
         System.out.println("peakLineList: " + JacksonUtils.toJson(peakLineList));
 
         //3.获取矩形信息

@@ -12,7 +12,39 @@ import java.util.List;
 @Component
 public class CombineKLineService {
 
+
     public List<CombineKline> computerCombineKlines(List<Kline> klineList) {
+
+        LineDirectEnum lineDirectEnum = LineDirectEnum.BALANCE;
+
+        List<CombineKline> combineKlineList = new LinkedList();
+        combineKlineList.add(new CombineKline(klineList.get(0), 0));
+
+        for (int i = 1; i < klineList.size(); i++) {
+            CombineKline combineKline = combineKlineList.get(combineKlineList.size() - 1);
+            Kline leftKline = combineKline.getKline();
+            Kline rightKline = klineList.get(i);
+            lineDirectEnum = computeDirect(leftKline, rightKline, lineDirectEnum);
+
+            if (leftKline.getDate() == 20190402) {
+                System.out.println(20190402);
+            }
+
+            if (lineDirectEnum != LineDirectEnum.BALANCE) {
+                if (isContain(leftKline, rightKline, lineDirectEnum)) {
+                    kLineCombine(leftKline, rightKline, lineDirectEnum);
+                    combineKline.getContains().add(new Kline(rightKline));
+                } else {
+                    combineKlineList.add(new CombineKline(rightKline, combineKlineList.size()));
+                }
+            }
+        }
+
+        return combineKlineList;
+
+    }
+
+    /*public List<CombineKline> computerCombineKlines(List<Kline> klineList) {
 
         LineDirectEnum lineDirectEnum = LineDirectEnum.BALANCE;
 
@@ -41,7 +73,7 @@ public class CombineKLineService {
 
         return combineKlineList;
 
-    }
+    }*/
 
     //1.判断K线涨跌趋势:
     //(1)如果右边的K线，High值比左边的High值高，Low值比左边的Low值高，则增长趋势。

@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Component
 public class PeakKlineService {
 
-    public List<PeakKline> computerPeakKlines(List<CombineKline> combineKlineList) {
+    public List<PeakKline> computerPeakKlines(List<CombineKline> combineKlineList, List<Kline> originalKLineList) {
 
         //1.获取所有的峰值点
         List<PeakKline> allPeakKlineList = this.computerAllPeakKline(combineKlineList);
@@ -28,7 +28,7 @@ public class PeakKlineService {
                 JacksonUtils.toJson(noEnsureReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
 
         //3.跳空保留峰值点
-        jumpReservePeak(combineKlineList, noEnsureReservePeakKlineList);
+        jumpReservePeak(combineKlineList, noEnsureReservePeakKlineList, originalKLineList);
         System.out.println("jumpBreakPeakKlineList: " +
                 JacksonUtils.toJson(noEnsureReservePeakKlineList.stream().map(peakKline -> peakKline.getCombineKline().getKline()).collect(Collectors.toList())));
 
@@ -156,7 +156,7 @@ public class PeakKlineService {
 
 
     private void jumpReservePeak(List<CombineKline> combineKlineList,
-                    List<PeakKline> noEnsureReservePeakKlineList) {
+                    List<PeakKline> noEnsureReservePeakKlineList, List<Kline> originalKLineList) {
 
         for (int i = 0; i < noEnsureReservePeakKlineList.size(); i++) {
             Integer index = noEnsureReservePeakKlineList.get(i).getCombineIndex();
@@ -166,25 +166,44 @@ public class PeakKlineService {
             Kline second = combineKlineList.get(index + 2).getKline();
             Kline third = combineKlineList.get(index + 3).getKline();
 
+            Kline origin2 = combineKlineList.get(index + 2).getContains().get(0);
+            Kline origin3 = combineKlineList.get(index + 3).getContains().get(0);
+
             if (middle.getDate() == 20190329) {
                 System.out.println(20190329);
             }
 
             if (middle.getLow() < right.getLow()) {
-                if (right.getHigh() < second.getLow() && second.getLow() > left.getHigh()) {
+                if (right.getHigh() < second.getLow()
+                        && second.getLow() > left.getHigh()
+                            && origin2.getLow() > right.getHigh()
+                                && origin2.getLow() > left.getHigh()) {
                     noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
-                if (left.getHigh() < third.getLow() && right.getHigh() < third.getLow() && second.getHigh() < third.getLow()) {
+                if (left.getHigh() < third.getLow()
+                        && right.getHigh() < third.getLow()
+                            && second.getHigh() < third.getLow()
+                                && origin3.getLow() > left.getHigh()
+                                    && origin3.getLow() > right.getHigh()
+                                        && origin3.getLow() > second.getHigh()) {
                     noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
             } else if (middle.getHigh() > right.getHigh()) {
-                if (left.getLow() > second.getHigh() && right.getLow() > second.getHigh()) {
+                if (left.getLow() > second.getHigh()
+                        && right.getLow() > second.getHigh()
+                            && right.getLow() > origin2.getHigh()
+                                && left.getLow() > origin2.getHigh()) {
                     noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
-                if (left.getLow() > third.getHigh() && right.getLow() > third.getHigh() && second.getLow() > third.getHigh()) {
+                if (left.getLow() > third.getHigh()
+                        && right.getLow() > third.getHigh()
+                            && second.getLow() > third.getHigh()
+                                && left.getLow() > origin3.getHigh()
+                                    && right.getLow() > origin3.getHigh()
+                                        && second.getLow() > origin3.getHigh()) {
                     noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
                     continue;
                 }
@@ -239,8 +258,8 @@ public class PeakKlineService {
                 Kline second = combineKlineList.get(index + 2).getKline();
                 Kline third = combineKlineList.get(index + 3).getKline();
 
-                if (middle.getDate() == 20190307) {
-                    System.out.println(20190307);
+                if (middle.getDate() == 20190329) {
+                    System.out.println(20190329);
                 }
 
                 if (middle.getLow() < right.getLow()) {
