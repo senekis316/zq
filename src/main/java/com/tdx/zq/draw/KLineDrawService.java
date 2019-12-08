@@ -1,6 +1,5 @@
 package com.tdx.zq.draw;
 
-import com.sun.org.apache.xml.internal.serialize.LineSeparator;
 import com.tdx.zq.enums.LineShapeEnum;
 import com.tdx.zq.model.*;
 import com.tdx.zq.utils.JacksonUtils;

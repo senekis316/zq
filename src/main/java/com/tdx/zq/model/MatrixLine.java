@@ -4,7 +4,6 @@ import com.tdx.zq.enums.LineShapeEnum;
 import com.tdx.zq.enums.MatrixType;
 import lombok.Data;
 
-import java.util.Iterator;
 import java.util.List;
 
 @Data
@@ -14,9 +13,9 @@ public class MatrixLine {
 
     private int low;
 
-    private int begin;
+    private PeakKline begin;
 
-    private int end;
+    private PeakKline end;
 
     private Kline kline1;
 
@@ -43,7 +42,7 @@ public class MatrixLine {
     private MatrixType matrixType;
 
     public MatrixLine(int index, List<PeakKline> peaks) {
-        this.begin = index;
+        this.begin = peaks.get(index);
         this.peaks = peaks;
         this.peak1 = peaks.get(index);
         this.peak2 = peaks.get(index + 1);
@@ -59,9 +58,6 @@ public class MatrixLine {
     }
 
     public boolean isValidMatrix() {
-        if (this.peak2.getCombineKline().getKline().getDate() == 20181116) {
-            System.out.println(20181116);
-        }
         return hasPrevFigure() && hasEndPoint();
     }
 
@@ -86,11 +82,11 @@ public class MatrixLine {
         if (matrixType == MatrixType.UP) {
             int min = kline1.getLow();
             int max = Math.max(kline2.getHigh(), kline4.getHigh());
-            for (int i = begin + 5; i < peaks.size(); i++) {
+            for (int i = begin.getPeakIndex() + 5; i < peaks.size(); i++) {
                 PeakKline currPeak = peaks.get(i);
                 Kline currKline = currPeak.getCombineKline().getKline();
                 if (currKline.getHigh() > max) {
-                    this.end = i;
+                    this.end = peaks.get(i);
                     this.low = min;
                     this.high = max;
                     return true;
@@ -102,11 +98,11 @@ public class MatrixLine {
         } else {
             int min = Math.min(kline2.getLow(), kline4.getLow());
             int max = kline1.getHigh();
-            for (int i = begin + 5; i < peaks.size(); i++) {
+            for (int i = begin.getPeakIndex() + 5; i < peaks.size(); i++) {
                 PeakKline currPeak = peaks.get(i);
                 Kline currKline = currPeak.getCombineKline().getKline();
                 if (currKline.getLow() < min) {
-                    this.end = i;
+                    this.end = peaks.get(i);
                     this.low = min;
                     this.high = max;
                     return true;

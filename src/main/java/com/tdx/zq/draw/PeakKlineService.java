@@ -18,7 +18,7 @@ public class PeakKlineService {
     public List<PeakKline> computerPeakKlines(List<CombineKline> combineKlineList, List<Kline> originalKLineList) {
 
         //1.获取所有的峰值点
-        List<PeakKline> allPeakKlineList = this.computerAllPeakKline(combineKlineList);
+        List<PeakKline> allPeakKlineList = PeakKline.computerAllPeakKline(combineKlineList);
         System.out.println("allPeakKlineList: " + JacksonUtils.toJson(allPeakKlineList));
 
         //2.过滤不符合条件的峰值点
@@ -63,12 +63,6 @@ public class PeakKlineService {
     }
 
     private PeakKline specialPeak(List<CombineKline> combineKlineList, List<PeakKline> peakKlineList) {
-        /*PeakKline lastPeakKline = peakKlineList.get(peakKlineList.size() - 1);
-        int specialIndex = combineKlineList.size() - 1;
-        CombineKline specialCombineKline = combineKlineList.get(specialIndex);
-        LineShapeEnum lineShapeEnum = lastPeakKline.getShapeType() == LineShapeEnum.FLOOR  ? LineShapeEnum.TOP : LineShapeEnum.FLOOR;
-        return new PeakKline(specialCombineKline, specialIndex, lineShapeEnum);*/
-
         PeakKline lastPeakKline = peakKlineList.get(peakKlineList.size() - 1);
         Kline lastKline = lastPeakKline.getCombineKline().getKline();
         CombineKline specialCombineKline = null;
@@ -104,7 +98,7 @@ public class PeakKlineService {
         return null;
     }
 
-    public List<PeakKline> computerAllPeakKline(List<CombineKline> combineKlineList) {
+    /*public List<PeakKline> computerAllPeakKline(List<CombineKline> combineKlineList) {
         List<PeakKline> allPeakKlineList = new ArrayList<>();
         for (int i = 1; i < combineKlineList.size() - 1; i++) {
             Kline left = combineKlineList.get(i - 1).getKline();
@@ -117,7 +111,7 @@ public class PeakKlineService {
             }
         }
         return allPeakKlineList;
-    }
+    }*/
 
     private List<PeakKline> filterTwoThreeBreak(
             List<CombineKline> combineKlineList,
@@ -250,17 +244,14 @@ public class PeakKlineService {
         noEnsureReservePeakKlineList = deleteEqualDirectPeak(noEnsureReservePeakKlineList);
 
         for (int i = 0; i < noEnsureReservePeakKlineList.size(); i++) {
-            if (noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.JUMP && noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.DROP) {
+            if (noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.JUMP
+                    && noEnsureReservePeakKlineList.get(i).getReserveType() != LineReserveTypeEnum.DROP) {
                 Integer index = noEnsureReservePeakKlineList.get(i).getCombineIndex();
                 Kline left = combineKlineList.get(index - 1).getKline();
                 Kline middle = combineKlineList.get(index).getKline();
                 Kline right = combineKlineList.get(index + 1).getKline();
                 Kline second = combineKlineList.get(index + 2).getKline();
                 Kline third = combineKlineList.get(index + 3).getKline();
-
-                if (middle.getDate() == 20190329) {
-                    System.out.println(20190329);
-                }
 
                 if (middle.getLow() < right.getLow()) {
                     int max = Arrays.stream(new int[]{left.getHigh(), middle.getHigh(), right.getHigh(), second.getHigh(), third.getHigh()}).max().getAsInt();

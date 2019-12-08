@@ -16,7 +16,7 @@ public class MatrixLineService {
     public List<Matrix> drawMatrix(List<PeakKline> peakKLines) {
 
         //1.获取前置MatirxLine
-        List<Matrix> baseMatixs = getBaseMatrixs(peakKLines);
+        List<Matrix> baseMatixs = getBaseMatrixs(peakKLines, new ArrayList<>(), 0);
         System.out.println("baseMatixs: " + JacksonUtils.toJson(baseMatixs));
 
         //2.获取后缀MatirxLine
@@ -31,16 +31,19 @@ public class MatrixLineService {
 
     }
 
-    private List<Matrix> getBaseMatrixs(List<PeakKline> peakKLines) {
-        List<Matrix> matrixs= new ArrayList<>();
-        for (int i = 0; i < peakKLines.size() - 4;) {
+    private List<Matrix> getBaseMatrixs(List<PeakKline> peakKLines, List<Matrix> matrixs, int index) {
+        for (int i = index; i < peakKLines.size() - 4;) {
             MatrixLine matrixLine = new MatrixLine(i, peakKLines);
             if (matrixLine.isValidMatrix()) {
-                matrixs.add(new Matrix(matrixLine));
-                i = matrixLine.getEnd();
-                /*if (i + 4 < matrixLine.getEnd()) {
-                    getBaseMatrixs(peakKLines.subList(i + 4, matrixLine.getEnd()));
-                }*/
+                Matrix matrix = new Matrix(matrixLine);
+                matrixs.add(matrix);
+                int begin = matrix.getMatrixEndPeakKline().getPeakIndex() + 5;
+                int end = matrix.getMatrixTendencyEndKline().getPeakIndex();
+                if (begin <= end) {
+                    i = matrix.getMatrixEndPeakKline().getPeakIndex();
+                } else {
+                    i = end;
+                }
             } else {
                 i++;
             }
