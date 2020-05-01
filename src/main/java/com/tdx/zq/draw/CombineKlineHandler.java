@@ -1,5 +1,6 @@
 package com.tdx.zq.draw;
 
+import com.tdx.zq.context.KlineApplicationContext;
 import com.tdx.zq.enums.LineDirectEnum;
 import com.tdx.zq.model.CombineKline;
 import com.tdx.zq.model.Kline;
@@ -9,11 +10,15 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-@Component
-public class CombineKLineService {
+public class CombineKlineHandler {
 
+    private List<Kline> klineList;
 
-    public List<CombineKline> computerCombineKlines(List<Kline> klineList) {
+    public CombineKlineHandler(KlineApplicationContext klineApplicationContext) {
+        this.klineList = klineApplicationContext.getKlineList();
+    }
+
+    public List<CombineKline> computerCombineKlines() {
 
         LineDirectEnum lineDirectEnum = LineDirectEnum.BALANCE;
 
@@ -25,10 +30,6 @@ public class CombineKLineService {
             Kline leftKline = combineKline.getKline();
             Kline rightKline = klineList.get(i);
             lineDirectEnum = computeDirect(leftKline, rightKline, lineDirectEnum);
-
-            if (leftKline.getDate() == 20190402) {
-                System.out.println(20190402);
-            }
 
             if (lineDirectEnum != LineDirectEnum.BALANCE) {
                 if (isContain(leftKline, rightKline, lineDirectEnum)) {

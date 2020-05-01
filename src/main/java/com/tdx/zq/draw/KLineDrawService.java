@@ -1,5 +1,6 @@
 package com.tdx.zq.draw;
 
+import com.tdx.zq.context.KlineApplicationContext;
 import com.tdx.zq.enums.LineShapeEnum;
 import com.tdx.zq.model.*;
 import com.tdx.zq.utils.JacksonUtils;
@@ -19,28 +20,25 @@ import java.util.stream.Collectors;
 @Service
 public class KLineDrawService implements InitializingBean {
 
-    private List<Kline> originalKLineList = new LinkedList<>();
-
-    private Map<Integer, Kline> originalKLineMap = new HashMap<>();
-
     @Autowired
     private PeakKlineService peakKlineService;
 
     @Autowired
     private MatrixLineService matrixLineService;
 
-    @Autowired
-    private CombineKLineService combineKLineService;
+    private KlineApplicationContext klineApplicationContext;
 
 
     public void compute() throws IOException {
 
         //1.合并所有的KLines
-        List<CombineKline> combineKLineList = combineKLineService.computerCombineKlines(originalKLineList);
+        CombineKlineHandler combineKlineHandler = new CombineKlineHandler(klineApplicationContext);
+        List<CombineKline> combineKLineList = combineKlineHandler.computerCombineKlines();
+
         System.out.println("combineKLineList: " + JacksonUtils.toJson(combineKLineList));
 
         //2.获取所有的高低点
-        List<PeakKline> peakLineList = peakKlineService.computerPeakKlines(combineKLineList, originalKLineList);
+        List<PeakKline> peakLineList = peakKlineService.computerPeakKlines(combineKLineList, klineApplicationContext);
         System.out.println("peakLineList: " + JacksonUtils.toJson(peakLineList));
 
         //3.获取矩形信息
@@ -103,42 +101,11 @@ public class KLineDrawService implements InitializingBean {
         return true;
     }
 
-
     @Override
     public void afterPropertiesSet() throws Exception {
-
         //SZ300181 佐力药业	STANDK(K线)	日线	线段	定位1:值:4.67/时:20190806;定位2:值:5.84/时:20190910;
-        //File file = new File(KLineDrawService.class.getResource("/SZ300181.txt").getFile());
-        //File file = new File(KLineDrawService.class.getResource("/SZ300136.txt").getFile());
-        //File file = new File(KLineDrawService.class.getResource("/SZ300202.txt").getFile());
-        File file = new File(KLineDrawService.class.getResource("/SZ300277.txt").getFile());
-        FileReader fileReader = new FileReader(file);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        List<String> klineStrList = bufferedReader.lines().collect(Collectors.toList());
-        klineStrList.remove(klineStrList.size() - 1);
-        klineStrList.remove(0);
-        klineStrList.remove(0);
-        List<Kline> klineList = klineStrList.stream().map(str -> new Kline(str)).collect(Collectors.toList());
-        for(Kline kline : klineList) {
-            originalKLineList.add(kline);
-            originalKLineMap.put(kline.getDate(), kline);
-        }
+        this.klineApplicationContext= new KlineApplicationContext("/SZ300277.txt");
         compute();
-
-        /*File file = new File(KLineDrawService.class.getResource("/sz300181_2.day").getFile());
-        //File file = new File(KLineDrawService.class.getResource("/sh600530.day").getFile());
-        //File file = new File(KLineDrawService.class.getResource("/RU1909.day").getFile());
-        InputStream inputStream = new FileInputStream(file);
-        byte[] bytes = new byte[32];
-        while(inputStream.read(bytes) != -1) {
-            Kline kLine = new Kline(bytes, 300181);
-            originalKLineList.add(kLine);
-            originalKLineMap.put(kLine.getDate(), kLine);
-        }
-        compute();*/
     }
-
-
-
 
 }

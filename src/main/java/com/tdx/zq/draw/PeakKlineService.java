@@ -1,5 +1,6 @@
 package com.tdx.zq.draw;
 
+import com.tdx.zq.context.KlineApplicationContext;
 import com.tdx.zq.enums.LineReserveTypeEnum;
 import com.tdx.zq.enums.LineShapeEnum;
 import com.tdx.zq.model.CombineKline;
@@ -15,7 +16,9 @@ import java.util.stream.Collectors;
 @Component
 public class PeakKlineService {
 
-    public List<PeakKline> computerPeakKlines(List<CombineKline> combineKlineList, List<Kline> originalKLineList) {
+    public List<PeakKline> computerPeakKlines(List<CombineKline> combineKlineList, KlineApplicationContext klineApplicationContext) {
+
+        List<Kline> originalKLineList = klineApplicationContext.getKlineList();
 
         //1.获取所有的峰值点
         List<PeakKline> allPeakKlineList = PeakKline.computerAllPeakKline(combineKlineList);
