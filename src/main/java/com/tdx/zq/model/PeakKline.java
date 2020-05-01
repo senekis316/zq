@@ -1,53 +1,78 @@
 package com.tdx.zq.model;
 
-import com.tdx.zq.enums.LineReserveTypeEnum;
-import com.tdx.zq.enums.LineShapeEnum;
-import lombok.Data;
+import com.tdx.zq.enums.PeakShapeEnum;
 
-import java.util.ArrayList;
-import java.util.List;
 
-@Data
-public class PeakKline{
+public class PeakKline {
 
-    private int peakIndex;
+    private boolean twoTreeBreakPeak;
 
-    private int combineIndex;
+    private MergeKline mergeKline;
 
-    private LineShapeEnum shapeType;
+    private PeakShapeEnum peakShape;
 
-    private CombineKline combineKline;
-
-    private List<CombineKline> combineKlines;
-
-    private LineReserveTypeEnum reserveType = LineReserveTypeEnum.NONE;
-
-    public PeakKline(CombineKline combineKline, int combineIndex, LineShapeEnum shapeType) {
-        this.combineKline = combineKline;
-        this.combineIndex = combineIndex;
-        this.shapeType = shapeType;
+    public PeakKline(MergeKline mergeKline) {
+        this.mergeKline = mergeKline;
+        this.peakShape = PeakShapeEnum.NONE;
     }
 
-    public PeakKline(List<CombineKline> combineKlines, CombineKline combineKline, int combineIndex, LineShapeEnum shapeType) {
-        this.shapeType = shapeType;
-        this.combineKline = combineKline;
-        this.combineIndex = combineIndex;
-        this.combineKlines = combineKlines;
+    public PeakKline(MergeKline prev, MergeKline curr, MergeKline next) {
+        this.mergeKline = curr;
+        setPeakShape(prev, curr, next);
     }
 
-    public static List<PeakKline> computerAllPeakKline(List<CombineKline> combineKlineList) {
-        List<PeakKline> allPeakKlineList = new ArrayList<>();
-        for (int i = 1; i < combineKlineList.size() - 1; i++) {
-            Kline left = combineKlineList.get(i - 1).getKline();
-            Kline middle = combineKlineList.get(i).getKline();
-            Kline right = combineKlineList.get(i + 1).getKline();
-            if (middle.getHigh() > left.getHigh() && middle.getHigh() > right.getHigh()) {
-                allPeakKlineList.add(new PeakKline(combineKlineList.get(i), i, LineShapeEnum.TOP));
-            } else if (middle.getLow() < left.getLow() && middle.getLow() < right.getLow()) {
-                allPeakKlineList.add(new PeakKline(combineKlineList.get(i), i, LineShapeEnum.FLOOR));
-            }
+    private void setPeakShape(MergeKline prev, MergeKline curr, MergeKline next) {
+        Kline left = prev.getMergeKline();
+        Kline middle = curr.getMergeKline();
+        Kline right = next.getMergeKline();
+        if (middle.getHigh() > left.getHigh() && middle.getHigh() > right.getHigh()) {
+            this.peakShape = PeakShapeEnum.TOP;
+        } else if (middle.getLow() < left.getLow() && middle.getLow() < right.getLow()) {
+            this.peakShape = PeakShapeEnum.FLOOR;
+        } else {
+            this.peakShape = PeakShapeEnum.NONE;
         }
-        return allPeakKlineList;
     }
+
+    public MergeKline getMergeKline() {
+        return mergeKline;
+    }
+
+    public PeakShapeEnum getPeakShape() {
+        return peakShape;
+    }
+
+    public void setTwoTreeBreakPeak(boolean twoTreeBreakPeak) {
+        this.twoTreeBreakPeak = twoTreeBreakPeak;
+    }
+
+    public boolean isTwoTreeBreakPeak() {
+        return twoTreeBreakPeak;
+    }
+
+    //    private int peakIndex;
+//
+//    private int combineIndex;
+//
+//
+//    private MergeKline combineKline;
+//
+//    private List<MergeKline> combineKlines;
+//
+//    private LineReserveTypeEnum reserveType = LineReserveTypeEnum.NONE;
+//
+//    public PeakKline(MergeKline combineKline, int combineIndex, LineShapeEnum shapeType) {
+//        this.combineKline = combineKline;
+//        this.combineIndex = combineIndex;
+//        this.shapeType = shapeType;
+//    }
+//
+//    public PeakKline(List<MergeKline> combineKlines, MergeKline combineKline, int combineIndex, LineShapeEnum shapeType) {
+//        this.shapeType = shapeType;
+//        this.combineKline = combineKline;
+//        this.combineIndex = combineIndex;
+//        this.combineKlines = combineKlines;
+//    }
+
 
 }

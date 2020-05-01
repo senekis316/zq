@@ -1,30 +1,30 @@
 package com.tdx.zq.draw;
 
 import com.tdx.zq.context.KlineApplicationContext;
-import com.tdx.zq.enums.LineShapeEnum;
-import com.tdx.zq.model.*;
+import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.utils.JacksonUtils;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.io.*;
-import java.nio.charset.Charset;
-import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Slf4j
 @Service
 public class KLineDrawService implements InitializingBean {
 
-    @Autowired
-    private PeakKlineService peakKlineService;
+//    @Autowired
+//    private PeakKlineService peakKlineService;
 
-    @Autowired
-    private MatrixLineService matrixLineService;
+//    @Autowired
+//    private MatrixLineService matrixLineService;
 
     private KlineApplicationContext klineApplicationContext;
 
@@ -32,25 +32,26 @@ public class KLineDrawService implements InitializingBean {
     public void compute() throws IOException {
 
         //1.合并所有的KLines
-        CombineKlineProcessor combineKlineHandler = new CombineKlineProcessor(klineApplicationContext);
-        List<CombineKline> combineKLineList = combineKlineHandler.computerCombineKlines();
+        //CombineKlineProcessor combineKlineHandler = new CombineKlineProcessor(klineApplicationContext);
+        //List<CombineKline> combineKLineList = combineKlineHandler.computerCombineKlines();
+        /*List<MergeKline> mergeKlineList = klineApplicationContext.getMergeKlineList();
+        System.out.println("mergeKLineList: " +
+            JacksonUtils.toJson(mergeKlineList.stream().map(MergeKline::getMergeKline).collect(Collectors.toList())));
 
-        System.out.println("combineKLineList: " + JacksonUtils.toJson(combineKLineList));
-
-        /*//2.获取所有的高低点
+        //2.获取所有的高低点
         List<PeakKline> peakLineList = peakKlineService.computerPeakKlines(combineKLineList, klineApplicationContext);
-        System.out.println("peakLineList: " + JacksonUtils.toJson(peakLineList));
+        //System.out.println("peakLineList: " + JacksonUtils.toJson(peakLineList));
 
         //3.获取矩形信息
-        List<Matrix> matrixLineList = matrixLineService.drawMatrix(peakLineList);
-        System.out.println("matrixLineList" + JacksonUtils.toJson(matrixLineList));
+        //List<Matrix> matrixLineList = matrixLineService.drawMatrix(peakLineList);
+        //System.out.println("matrixLineList" + JacksonUtils.toJson(matrixLineList));*/
 
         //4.保存画线信息
         //drawKline(peakLines);*/
 
     }
 
-    private boolean drawKline(List<PeakKline> peakKlines) throws IOException {
+    /*private boolean drawKline(List<PeakKline> peakKlines) throws IOException {
         return drawLineToFile("E:\\", "drawLines.txt", drawKlineToStr(peakKlines));
     }
 
@@ -74,7 +75,7 @@ public class KLineDrawService implements InitializingBean {
         }
 
         return lines;
-    }
+    }*/
 
     private boolean drawLineToFile(String filePath, String fileName, List<String> drawLines) throws IOException {
 
@@ -103,9 +104,13 @@ public class KLineDrawService implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws Exception {
+
         //SZ300181 佐力药业	STANDK(K线)	日线	线段	定位1:值:4.67/时:20190806;定位2:值:5.84/时:20190910;
-        this.klineApplicationContext= new KlineApplicationContext("/SZ300277.txt");
-        compute();
+        KlineApplicationContext klineApplicationContext = new KlineApplicationContext("/SZ300181.txt");
+        klineApplicationContext.printMergeKlineList();
+        klineApplicationContext.printPeakKlineList();
+        klineApplicationContext.printTwoThreeBreakPeakKlineList();
+
     }
 
 }
