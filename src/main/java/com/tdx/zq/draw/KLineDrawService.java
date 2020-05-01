@@ -32,12 +32,12 @@ public class KLineDrawService implements InitializingBean {
     public void compute() throws IOException {
 
         //1.合并所有的KLines
-        CombineKlineHandler combineKlineHandler = new CombineKlineHandler(klineApplicationContext);
+        CombineKlineProcessor combineKlineHandler = new CombineKlineProcessor(klineApplicationContext);
         List<CombineKline> combineKLineList = combineKlineHandler.computerCombineKlines();
 
         System.out.println("combineKLineList: " + JacksonUtils.toJson(combineKLineList));
 
-        //2.获取所有的高低点
+        /*//2.获取所有的高低点
         List<PeakKline> peakLineList = peakKlineService.computerPeakKlines(combineKLineList, klineApplicationContext);
         System.out.println("peakLineList: " + JacksonUtils.toJson(peakLineList));
 
@@ -46,7 +46,7 @@ public class KLineDrawService implements InitializingBean {
         System.out.println("matrixLineList" + JacksonUtils.toJson(matrixLineList));
 
         //4.保存画线信息
-        //drawKline(peakLines);
+        //drawKline(peakLines);*/
 
     }
 

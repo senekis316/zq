@@ -10,17 +10,17 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class CombineKlineHandler {
+public class CombineKlineProcessor {
 
     private List<Kline> klineList;
+    private LineDirectEnum lineDirectEnum;
 
-    public CombineKlineHandler(KlineApplicationContext klineApplicationContext) {
+    public CombineKlineProcessor(KlineApplicationContext klineApplicationContext) {
+        this.lineDirectEnum = LineDirectEnum.BALANCE;
         this.klineList = klineApplicationContext.getKlineList();
     }
 
     public List<CombineKline> computerCombineKlines() {
-
-        LineDirectEnum lineDirectEnum = LineDirectEnum.BALANCE;
 
         List<CombineKline> combineKlineList = new LinkedList();
         combineKlineList.add(new CombineKline(klineList.get(0), 0));
@@ -29,11 +29,11 @@ public class CombineKlineHandler {
             CombineKline combineKline = combineKlineList.get(combineKlineList.size() - 1);
             Kline leftKline = combineKline.getKline();
             Kline rightKline = klineList.get(i);
-            lineDirectEnum = computeDirect(leftKline, rightKline, lineDirectEnum);
+            computeDirect(leftKline, rightKline);
 
             if (lineDirectEnum != LineDirectEnum.BALANCE) {
-                if (isContain(leftKline, rightKline, lineDirectEnum)) {
-                    kLineCombine(leftKline, rightKline, lineDirectEnum);
+                if (isContain(leftKline, rightKline)) {
+                    kLineCombine(leftKline, rightKline);
                     combineKline.getContains().add(new Kline(rightKline));
                 } else {
                     combineKlineList.add(new CombineKline(rightKline, combineKlineList.size()));
@@ -81,22 +81,12 @@ public class CombineKlineHandler {
     //(2)如果右边的K线，High值比左边的High值低，Low值比左边的Low值低，则下降趋势。
     //(3)除以上两种情况，均无法确定趋势。
     //(4)当无法确定K线的涨跌趋势时，已最近的前一个K线趋势，作为当前K线的趋势。
-    public LineDirectEnum computeDirect(Kline leftKLine, Kline rightKLine, LineDirectEnum directEnum) {
-
-        if (directEnum == null) {
-            throw new IllegalArgumentException("LineDirectEnum不能为空!");
-        }
-
+    public void computeDirect(Kline leftKLine, Kline rightKLine) {
         if (rightKLine.getHigh() > leftKLine.getHigh() && rightKLine.getLow() > leftKLine.getLow()) {
-            return LineDirectEnum.UP;
+            this.lineDirectEnum = LineDirectEnum.UP;
+        } else if (rightKLine.getHigh() < leftKLine.getHigh() && rightKLine.getLow() < leftKLine.getLow()) {
+            this.lineDirectEnum = LineDirectEnum.DOWN;
         }
-
-        if (rightKLine.getHigh() < leftKLine.getHigh() && rightKLine.getLow() < leftKLine.getLow()) {
-            return LineDirectEnum.DOWN;
-        }
-
-        return directEnum;
-
     }
 
     //2.两条K线是否是包含关系:
@@ -104,9 +94,9 @@ public class CombineKlineHandler {
     //(2)如果右边的K线，High值大于等于左边的High值，Low值小于等于左边的Low值，则为包含关系。
     //(3)满足以上条件后，K线必须要能存在趋势，才能确定为包含关系。
     //(4)满足以上所有条件，左右K线为包含关系，其余情况均非包含关系。
-    public boolean isContain(Kline leftKLine, Kline rightKLine, LineDirectEnum directEnum) {
+    public boolean isContain(Kline leftKLine, Kline rightKLine) {
 
-        if (directEnum == LineDirectEnum.BALANCE) {
+        if (lineDirectEnum == LineDirectEnum.BALANCE) {
             return false;
         }
 
@@ -127,19 +117,15 @@ public class CombineKlineHandler {
     //(2)如果是增长趋势，合并后K线的High值取两条K线High值的最大值，合并后K线的Low值取两条K线Low值的最大值。
     //(3)如果是减少趋势，合并后K线的High值取两条K线High值的最小值，合并后K线的Low值取两条K线Low值的最小值。
     //(4)右边K线与左边K线只要满足包含关系，可以进行连续的包含合并。
-    public Kline kLineCombine(Kline leftKLine, Kline rightKLine, LineDirectEnum directEnum) {
+    public Kline kLineCombine(Kline leftKLine, Kline rightKLine) {
 
-        if (directEnum == null) {
-            throw new IllegalArgumentException("LineDirectEnum不能为空!");
-        }
-
-        if (directEnum == LineDirectEnum.BALANCE) {
+        if (lineDirectEnum == LineDirectEnum.BALANCE) {
             throw new IllegalArgumentException("KLineCombine方法不能处理LineDirectEnum.Balance的情况!");
         }
 
         leftKLine.setDate(rightKLine.getDate());
 
-        if (directEnum == LineDirectEnum.UP) {
+        if (lineDirectEnum == LineDirectEnum.UP) {
             leftKLine.setLow(Math.max(leftKLine.getLow(), rightKLine.getLow()));
             leftKLine.setHigh(Math.max(leftKLine.getHigh(), rightKLine.getHigh()));
         } else {
