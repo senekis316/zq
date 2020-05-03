@@ -32,12 +32,12 @@ public class MergeKlineProcessor {
                 klines.add(left);
                 left = mergeKline(left, right);
             } else {
-                mergeKlineList.add(new MergeKline(left, klines));
-                klines.clear();
+                mergeKlineList.add(new MergeKline(mergeKlineList.size(), left, klines));
+                klines = new ArrayList<>();
                 left = right;
             }
             if (i == klineList.size() - 1 && klineList.size() > 0) {
-                mergeKlineList.add(new MergeKline(left, klines));
+                mergeKlineList.add(new MergeKline(mergeKlineList.size(), left, klines));
             }
         }
         this.mergeKlineList = mergeKlineList;

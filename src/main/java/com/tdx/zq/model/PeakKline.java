@@ -5,7 +5,9 @@ import com.tdx.zq.enums.PeakShapeEnum;
 
 public class PeakKline {
 
-    private boolean twoTreeBreakPeak;
+    private boolean isJumpPeak;
+
+    private boolean isBreakPeak;
 
     private MergeKline mergeKline;
 
@@ -42,12 +44,20 @@ public class PeakKline {
         return peakShape;
     }
 
-    public void setTwoTreeBreakPeak(boolean twoTreeBreakPeak) {
-        this.twoTreeBreakPeak = twoTreeBreakPeak;
+    public void setIsBreakPeak(boolean isBreakPeak) {
+        this.isBreakPeak = isBreakPeak;
     }
 
-    public boolean isTwoTreeBreakPeak() {
-        return twoTreeBreakPeak;
+    public boolean isBreakPeak() {
+        return isBreakPeak;
+    }
+
+    public boolean isJumpPeak() {
+        return isJumpPeak;
+    }
+
+    public void setIsJumpPeak(boolean isJumpPeak) {
+        this.isJumpPeak = isJumpPeak;
     }
 
     //    private int peakIndex;

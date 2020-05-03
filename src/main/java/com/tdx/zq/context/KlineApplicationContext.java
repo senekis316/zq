@@ -6,7 +6,6 @@ import com.tdx.zq.draw.PeakKlineProcessor;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
-import com.tdx.zq.tuple.ThreeTuple;
 import com.tdx.zq.tuple.TwoTuple;
 import com.tdx.zq.utils.JacksonUtils;
 import java.io.BufferedReader;
@@ -94,11 +93,19 @@ public class KlineApplicationContext {
                 .collect(Collectors.toList())));
   }
 
-  public void printTwoThreeBreakPeakKlineList() {
-    System.out.println("twoThreeBeakPeakKlineList: " + JacksonUtils.toJson(
-        peakKlineList.stream().filter(peakKline -> peakKline.isTwoTreeBreakPeak())
+  public void printBreakPeakKlineList() {
+    System.out.println("beakPeakKlineList: " + JacksonUtils.toJson(
+        peakKlineList.stream().filter(peakKline -> peakKline.isBreakPeak())
           .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
           .collect(Collectors.toList())));
   }
+
+  public void printJumpPeakKlineList() {
+    System.out.println("jumpPeakKlineList: " + JacksonUtils.toJson(
+        peakKlineList.stream().filter(peakKline -> peakKline.isJumpPeak())
+            .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
+            .collect(Collectors.toList())));
+  }
+
 
 }

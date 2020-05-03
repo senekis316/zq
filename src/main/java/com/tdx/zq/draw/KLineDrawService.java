@@ -1,15 +1,12 @@
 package com.tdx.zq.draw;
 
 import com.tdx.zq.context.KlineApplicationContext;
-import com.tdx.zq.model.MergeKline;
-import com.tdx.zq.utils.JacksonUtils;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.InitializingBean;
@@ -109,7 +106,9 @@ public class KLineDrawService implements InitializingBean {
         KlineApplicationContext klineApplicationContext = new KlineApplicationContext("/SZ300181.txt");
         klineApplicationContext.printMergeKlineList();
         klineApplicationContext.printPeakKlineList();
-        klineApplicationContext.printTwoThreeBreakPeakKlineList();
+        klineApplicationContext.printBreakPeakKlineList();
+        klineApplicationContext.printJumpPeakKlineList();
+
 
     }
 

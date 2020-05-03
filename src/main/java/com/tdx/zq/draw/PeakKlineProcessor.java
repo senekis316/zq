@@ -1,6 +1,8 @@
 package com.tdx.zq.draw;
 
+import com.tdx.zq.enums.LineReserveTypeEnum;
 import com.tdx.zq.enums.PeakShapeEnum;
+import com.tdx.zq.utils.JacksonUtils;
 import java.util.Map;
 import java.util.List;
 import java.util.ArrayList;
@@ -9,6 +11,7 @@ import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.PeakKline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.context.KlineApplicationContext;
+import org.springframework.util.CollectionUtils;
 
 public class PeakKlineProcessor {
 
@@ -16,13 +19,16 @@ public class PeakKlineProcessor {
     private Map<Integer, Kline> klineMap;
     private List<MergeKline> mergeKlineList;
     private List<PeakKline> peakKlineList;
+    private List<PeakKline> breakPeakKlineList;
+    private List<PeakKline> jumpPeakKlineList;
 
     public PeakKlineProcessor(KlineApplicationContext klineApplicationContext) {
         this.klineMap = klineApplicationContext.getKlineMap();
         this.klineList = klineApplicationContext.getKlineList();
         this.mergeKlineList = klineApplicationContext.getMergeKlineList();
         setPeakKlineList(mergeKlineList);
-        setTwoTreeBreakPeak(mergeKlineList, peakKlineList);
+        setBreakPeakKlineList(peakKlineList);
+        setJumpPeakKlineList(mergeKlineList, breakPeakKlineList);
     }
 
     private void setPeakKlineList(List<MergeKline> mergeKlineList) {
@@ -36,9 +42,9 @@ public class PeakKlineProcessor {
         this.peakKlineList = peakKlineList;
     }
 
-    private void setTwoTreeBreakPeak(
-        List<MergeKline> mergeKlineList,
+    private void setBreakPeakKlineList(
         List<PeakKline> peakKlineList) {
+        List<PeakKline> breakPeakKlineList = new ArrayList<>();
         for (int i = 0; i < peakKlineList.size() - 3; i++) {
             if (peakKlineList.get(i).getPeakShape() != PeakShapeEnum.NONE) {
                 Kline middle = peakKlineList.get(i).getMergeKline().getMergeKline();
@@ -54,7 +60,8 @@ public class PeakKlineProcessor {
                     if (middle.getLow() > third.getLow()) {
                         continue;
                     }
-                    peakKlineList.get(i).setTwoTreeBreakPeak(true);
+                    peakKlineList.get(i).setIsBreakPeak(true);
+                    breakPeakKlineList.add(peakKlineList.get(i));
                 } else if (middle.getHigh() > right.getHigh()) {
                     if (middle.getHigh() < second.getHigh()) {
                         continue;
@@ -62,10 +69,12 @@ public class PeakKlineProcessor {
                     if (middle.getHigh() < third.getHigh()) {
                         continue;
                     }
-                    peakKlineList.get(i).setTwoTreeBreakPeak(true);
+                    peakKlineList.get(i).setIsBreakPeak(true);
+                    breakPeakKlineList.add(peakKlineList.get(i));
                 }
             }
         }
+        this.breakPeakKlineList = breakPeakKlineList;
     }
 
     public List<PeakKline> getPeakKlineList() {
@@ -196,62 +205,66 @@ public class PeakKlineProcessor {
 
 //
 //
-//    private void jumpReservePeak(
-//        List<MergeKline> combineKlineList,
-//        List<PeakKline> noEnsureReservePeakKlineList) {
-//
-//        for (int i = 0; i < noEnsureReservePeakKlineList.size(); i++) {
-//            Integer index = noEnsureReservePeakKlineList.get(i).getCombineIndex();
-//            Kline left = combineKlineList.get(index - 1).getMergeKline();
-//            Kline middle = combineKlineList.get(index).getMergeKline();
-//            Kline right = combineKlineList.get(index + 1).getMergeKline();
-//            Kline second = combineKlineList.get(index + 2).getMergeKline();
-//            Kline third = combineKlineList.get(index + 3).getMergeKline();
-//
-//            Kline origin2 = combineKlineList.get(index + 2).getContainKlines().get(0);
-//            Kline origin3 = combineKlineList.get(index + 3).getContainKlines().get(0);
-//
-//            if (middle.getDate() == 20190329) {
-//                System.out.println(20190329);
-//            }
-//
-//            if (middle.getLow() < right.getLow()) {
-//                if (right.getHigh() < second.getLow()
-//                        && second.getLow() > left.getHigh()
-//                            && origin2.getLow() > right.getHigh()
-//                                && origin2.getLow() > left.getHigh()) {
-//                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
-//                    continue;
-//                }
-//                if (left.getHigh() < third.getLow()
-//                        && right.getHigh() < third.getLow()
-//                            && second.getHigh() < third.getLow()
-//                                && origin3.getLow() > left.getHigh()
-//                                    && origin3.getLow() > right.getHigh()
-//                                        && origin3.getLow() > second.getHigh()) {
-//                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
-//                    continue;
-//                }
-//            } else if (middle.getHigh() > right.getHigh()) {
-//                if (left.getLow() > second.getHigh()
-//                        && right.getLow() > second.getHigh()
-//                            && right.getLow() > origin2.getHigh()
-//                                && left.getLow() > origin2.getHigh()) {
-//                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
-//                    continue;
-//                }
-//                if (left.getLow() > third.getHigh()
-//                        && right.getLow() > third.getHigh()
-//                            && second.getLow() > third.getHigh()
-//                                && left.getLow() > origin3.getHigh()
-//                                    && right.getLow() > origin3.getHigh()
-//                                        && second.getLow() > origin3.getHigh()) {
-//                    noEnsureReservePeakKlineList.get(i).setReserveType(LineReserveTypeEnum.JUMP);
-//                    continue;
-//                }
-//            }
-//        }
-//    }
+    private void setJumpPeakKlineList(
+        List<MergeKline> mergeKlineList,
+        List<PeakKline> breakPeakKlineList) {
+        List<PeakKline> jumpPeakKlineList = new ArrayList<>();
+        for (int i = 0; i < breakPeakKlineList.size(); i++) {
+
+            PeakKline breakPeakKline = breakPeakKlineList.get(i);
+            Integer index = breakPeakKline.getMergeKline().getIndex();
+
+            Kline left = mergeKlineList.get(index - 1).getMergeKline();
+            Kline middle = mergeKlineList.get(index).getMergeKline();
+            Kline right = mergeKlineList.get(index + 1).getMergeKline();
+            Kline second = mergeKlineList.get(index + 2).getMergeKline();
+            Kline third = mergeKlineList.get(index + 3).getMergeKline();
+
+            Kline origin2 = mergeKlineList.get(index + 2).getFirstOriginKline();
+            Kline origin3 = mergeKlineList.get(index + 3).getFirstOriginKline();
+
+            if (middle.getLow() < right.getLow()) {
+                if (right.getHigh() < second.getLow()
+                        && second.getLow() > left.getHigh()
+                            && origin2.getLow() > right.getHigh()
+                                && origin2.getLow() > left.getHigh()) {
+                    breakPeakKline.setIsJumpPeak(true);
+                    jumpPeakKlineList.add(breakPeakKline);
+                    continue;
+                }
+                if (left.getHigh() < third.getLow()
+                        && right.getHigh() < third.getLow()
+                            && second.getHigh() < third.getLow()
+                                && origin3.getLow() > left.getHigh()
+                                    && origin3.getLow() > right.getHigh()
+                                        && origin3.getLow() > second.getHigh()) {
+                    breakPeakKline.setIsJumpPeak(true);
+                    jumpPeakKlineList.add(breakPeakKline);
+                    continue;
+                }
+            } else if (middle.getHigh() > right.getHigh()) {
+                if (left.getLow() > second.getHigh()
+                        && right.getLow() > second.getHigh()
+                            && right.getLow() > origin2.getHigh()
+                                && left.getLow() > origin2.getHigh()) {
+                    breakPeakKline.setIsJumpPeak(true);
+                    jumpPeakKlineList.add(breakPeakKline);
+                    continue;
+                }
+                if (left.getLow() > third.getHigh()
+                        && right.getLow() > third.getHigh()
+                            && second.getLow() > third.getHigh()
+                                && left.getLow() > origin3.getHigh()
+                                    && right.getLow() > origin3.getHigh()
+                                        && second.getLow() > origin3.getHigh()) {
+                    breakPeakKline.setIsJumpPeak(true);
+                    jumpPeakKlineList.add(breakPeakKline);
+                    continue;
+                }
+            }
+        }
+        this.jumpPeakKlineList = jumpPeakKlineList;
+    }
 //
 //    private List<PeakKline> deleteEqualDirectPeak(List<PeakKline> peakKlineList) {
 //
