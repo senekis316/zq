@@ -108,8 +108,10 @@ public class KLineDrawService implements InitializingBean {
         klineApplicationContext.printPeakKlineList();
         klineApplicationContext.printBreakPeakKlineList();
         klineApplicationContext.printJumpPeakKlineList();
-
-
+        klineApplicationContext.printTendencyPeakKlineList();
+        klineApplicationContext.printOppositeTendencyPeakKlineList();
+        klineApplicationContext.printInDependentTendencyPeakKlineList();
+        //klineApplicationContext.printInDependentTendencyPeakKlineList();
     }
 
 }

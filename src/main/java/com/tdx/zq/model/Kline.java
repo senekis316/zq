@@ -17,20 +17,20 @@ import java.util.Objects;
 @Slf4j
 public class Kline {
 
-    protected int code;
+    private int code;
 
-    protected int date;
+    private int date;
 
-    protected int open;
+    private int open;
 
-    protected int high;
+    private int high;
 
-    protected int low;
+    private int low;
 
-    protected int close;
+    private int close;
 
     //成交额
-    protected float amount;
+    private float amount;
 
     //成交量
     private int volume;
@@ -64,10 +64,10 @@ public class Kline {
     public Kline(String klineStr) {
         String[] strs = klineStr.split("\t");
         this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
-        this.open = (int)(Float.valueOf(strs[1].trim()) * 100);
-        this.high = (int)(Float.valueOf(strs[2].trim()) * 100);
-        this.low = (int)(Float.valueOf(strs[3].trim()) * 100);
-        this.close = (int)(Float.valueOf(strs[4].trim()) * 100);
+        this.open = Integer.valueOf(strs[1].trim().replace(".", ""));
+        this.high = Integer.valueOf(strs[2].trim().replace(".", ""));
+        this.low = Integer.valueOf(strs[3].trim().replace(".", ""));
+        this.close = Integer.valueOf(strs[4].trim().replace(".", ""));
         this.volume = Integer.valueOf(strs[5].trim());
         this.amount = Float.valueOf(strs[6].trim());
     }

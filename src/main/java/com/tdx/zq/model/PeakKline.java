@@ -2,24 +2,35 @@ package com.tdx.zq.model;
 
 import com.tdx.zq.enums.PeakShapeEnum;
 
-
 public class PeakKline {
+
+    private boolean isDependent;
 
     private boolean isJumpPeak;
 
     private boolean isBreakPeak;
 
+    private boolean isTendencyPeak;
+
+    private boolean isEqualDirectPeak;
+
+    private boolean isDependentTendencyPeak;
+
     private MergeKline mergeKline;
 
     private PeakShapeEnum peakShape;
 
-    public PeakKline(MergeKline mergeKline) {
-        this.mergeKline = mergeKline;
-        this.peakShape = PeakShapeEnum.NONE;
-    }
+    private int index;
 
-    public PeakKline(MergeKline prev, MergeKline curr, MergeKline next) {
+    private int highest;
+
+    private int lowest;
+
+    public PeakKline(int index, MergeKline prev, MergeKline curr, MergeKline next) {
+        this.index = index;
         this.mergeKline = curr;
+        this.lowest = Math.min(Math.min(prev.getMergeKline().getLow(), curr.getMergeKline().getLow()), next.getMergeKline().getLow());
+        this.highest = Math.max(Math.max(prev.getMergeKline().getHigh(), curr.getMergeKline().getHigh()), next.getMergeKline().getHigh());
         setPeakShape(prev, curr, next);
     }
 
@@ -34,6 +45,10 @@ public class PeakKline {
         } else {
             this.peakShape = PeakShapeEnum.NONE;
         }
+    }
+
+    public int getMergeKlineIndex() {
+        return mergeKline.getIndex();
     }
 
     public MergeKline getMergeKline() {
@@ -60,29 +75,47 @@ public class PeakKline {
         this.isJumpPeak = isJumpPeak;
     }
 
-    //    private int peakIndex;
-//
-//    private int combineIndex;
-//
-//
-//    private MergeKline combineKline;
-//
-//    private List<MergeKline> combineKlines;
-//
-//    private LineReserveTypeEnum reserveType = LineReserveTypeEnum.NONE;
-//
-//    public PeakKline(MergeKline combineKline, int combineIndex, LineShapeEnum shapeType) {
-//        this.combineKline = combineKline;
-//        this.combineIndex = combineIndex;
-//        this.shapeType = shapeType;
-//    }
-//
-//    public PeakKline(List<MergeKline> combineKlines, MergeKline combineKline, int combineIndex, LineShapeEnum shapeType) {
-//        this.shapeType = shapeType;
-//        this.combineKline = combineKline;
-//        this.combineIndex = combineIndex;
-//        this.combineKlines = combineKlines;
-//    }
+    public boolean isEqualDirectPeak() {
+        return isEqualDirectPeak;
+    }
 
+    public void setIsEqualDirectPeak(boolean isEqualDirectPeak) {
+        this.isEqualDirectPeak = isEqualDirectPeak;
+    }
 
+    public boolean isTendencyPeak() {
+        return isTendencyPeak;
+    }
+
+    public void setIsTendencyPeak(boolean tendencyPeak) {
+        isTendencyPeak = tendencyPeak;
+    }
+
+    public boolean isDependentTendencyPeak() {
+        return isDependentTendencyPeak;
+    }
+
+    public void setDependentTendencyPeak(boolean dependentTendencyPeak) {
+        isDependentTendencyPeak = dependentTendencyPeak;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public int getHighest() {
+        return highest;
+    }
+
+    public int getLowest() {
+        return lowest;
+    }
+
+    public boolean isDependent() {
+        return isDependent;
+    }
+
+    public void setDependent(boolean dependent) {
+        isDependent = dependent;
+    }
 }

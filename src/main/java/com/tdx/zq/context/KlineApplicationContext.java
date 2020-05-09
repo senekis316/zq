@@ -26,6 +26,8 @@ public class KlineApplicationContext {
   private Map<Integer, Kline> klineMap;
   private List<MergeKline> mergeKlineList;
   private List<PeakKline> peakKlineList;
+  private List<PeakKline> oppositeTendencyPeakKlineList;
+  private List<PeakKline> independentTendencyPeakKlineList;
 
   public KlineApplicationContext(String path) throws FileNotFoundException {
     setKlineList(path);
@@ -65,7 +67,10 @@ public class KlineApplicationContext {
   }
 
   private void setPeakKlineList() {
-    this.peakKlineList = new PeakKlineProcessor(this).getPeakKlineList();
+    PeakKlineProcessor peakKlineProcessor = new PeakKlineProcessor(this);
+    this.peakKlineList = peakKlineProcessor.getPeakKlineList();
+    this.oppositeTendencyPeakKlineList = peakKlineProcessor.getOppositeTendencyPeakKlineList();
+    this.independentTendencyPeakKlineList = peakKlineProcessor.getIndependentTendencyPeakKlineList();
   }
 
   public List<Kline> getKlineList() {
@@ -90,14 +95,14 @@ public class KlineApplicationContext {
     System.out.println("peakKlineList: " + JacksonUtils.toJson(
         peakKlineList.stream().map(peakKline ->
             new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
-                .collect(Collectors.toList())));
+            .collect(Collectors.toList())));
   }
 
   public void printBreakPeakKlineList() {
     System.out.println("beakPeakKlineList: " + JacksonUtils.toJson(
         peakKlineList.stream().filter(peakKline -> peakKline.isBreakPeak())
-          .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
-          .collect(Collectors.toList())));
+            .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
+            .collect(Collectors.toList())));
   }
 
   public void printJumpPeakKlineList() {
@@ -105,6 +110,25 @@ public class KlineApplicationContext {
         peakKlineList.stream().filter(peakKline -> peakKline.isJumpPeak())
             .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
             .collect(Collectors.toList())));
+  }
+
+  public void printTendencyPeakKlineList() {
+    System.out.println("tendencyPeakKlineList: " + JacksonUtils.toJson(
+        peakKlineList.stream().filter(peakKline -> peakKline.isTendencyPeak())
+            .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
+            .collect(Collectors.toList())));
+  }
+
+  public void printOppositeTendencyPeakKlineList() {
+    System.out.println("OppositePeakKlineList: " + JacksonUtils.toJson(
+        oppositeTendencyPeakKlineList.stream().map(peakKline ->
+            new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline())).collect(Collectors.toList())));
+  }
+
+  public void printInDependentTendencyPeakKlineList() {
+    System.out.println("IndependentDependencyPeakKlineList: " + JacksonUtils.toJson(
+        independentTendencyPeakKlineList.stream().map(peakKline ->
+            new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline())).collect(Collectors.toList())));
   }
 
 
