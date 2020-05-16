@@ -4,6 +4,8 @@ import com.tdx.zq.enums.PeakShapeEnum;
 
 public class PeakKline {
 
+    private int angle;
+
     private boolean isDependent;
 
     private boolean isJumpPeak;
