@@ -1,5 +1,6 @@
 package com.tdx.zq.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import org.springframework.util.CollectionUtils;
 
@@ -9,14 +10,25 @@ public class MergeKline {
     private Kline mergeKline;
     private List<Kline> containKlineList;
 
-    public MergeKline(int index, Kline mergeKline, List<Kline> containKlineList) {
+    public MergeKline(int index, Kline mergeKline) {
         this.index = index;
         this.mergeKline = mergeKline;
-        this.containKlineList = containKlineList;
+        this.containKlineList = new ArrayList<>();
+        containKlineList.add(mergeKline);
     }
+
+//    public MergeKline(int index, Kline mergeKline, List<Kline> containKlineList) {
+//        this.index = index;
+//        this.mergeKline = mergeKline;
+//        this.containKlineList = containKlineList;
+//    }
 
     public int getIndex() {
         return index;
+    }
+
+    public void setMergeKline(Kline mergeKline) {
+        this.mergeKline = mergeKline;
     }
 
     public Kline getMergeKline() {

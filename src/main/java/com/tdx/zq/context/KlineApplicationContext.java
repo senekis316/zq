@@ -12,6 +12,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,8 +29,9 @@ public class KlineApplicationContext {
   private List<PeakKline> peakKlineList;
   private List<PeakKline> oppositeTendencyPeakKlineList;
   private List<PeakKline> independentTendencyPeakKlineList;
+  private List<PeakKline> anglePeakKlineList;
 
-  public KlineApplicationContext(String path) throws FileNotFoundException {
+  public KlineApplicationContext(String path) throws FileNotFoundException, ParseException {
     setKlineList(path);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
@@ -49,7 +51,7 @@ public class KlineApplicationContext {
 
     LinkedList<Kline> klineList = new LinkedList();
     for (String klineStr : klineStrList) {
-      klineList.add(new Kline(klineStr));
+      klineList.add(new Kline(klineStr, klineList.size()));
     }
     this.klineList = klineList;
   }
@@ -66,11 +68,12 @@ public class KlineApplicationContext {
     this.mergeKlineList = new MergeKlineProcessor(klineList).getMergeKlineList();
   }
 
-  private void setPeakKlineList() {
+  private void setPeakKlineList() throws ParseException {
     PeakKlineProcessor peakKlineProcessor = new PeakKlineProcessor(this);
     this.peakKlineList = peakKlineProcessor.getPeakKlineList();
     this.oppositeTendencyPeakKlineList = peakKlineProcessor.getOppositeTendencyPeakKlineList();
     this.independentTendencyPeakKlineList = peakKlineProcessor.getIndependentTendencyPeakKlineList();
+    this.anglePeakKlineList = peakKlineProcessor.getAnglePeakKlineList();
   }
 
   public List<Kline> getKlineList() {
@@ -130,6 +133,14 @@ public class KlineApplicationContext {
         independentTendencyPeakKlineList.stream().map(peakKline ->
             new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline())).collect(Collectors.toList())));
   }
+
+  public void printAnglePeakKlineList() {
+    System.out.println("PeakKlineAngleList: " + JacksonUtils.toJson(
+        anglePeakKlineList.stream().map(peakKline ->
+            new TwoTuple(peakKline.getMergeKline().getMergeKline().getDate(), peakKline.getAngle())).collect(Collectors.toList())));
+
+  }
+
 
 
 }

@@ -4,7 +4,7 @@ import com.tdx.zq.enums.PeakShapeEnum;
 
 public class PeakKline {
 
-    private int angle;
+    private double angle;
 
     private boolean isDependent;
 
@@ -120,4 +120,13 @@ public class PeakKline {
     public void setDependent(boolean dependent) {
         isDependent = dependent;
     }
+
+    public double getAngle() {
+        return angle;
+    }
+
+    public void setAngle(double angle) {
+        this.angle = angle;
+    }
+
 }

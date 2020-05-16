@@ -35,6 +35,8 @@ public class Kline {
     //成交量
     private int volume;
 
+    private int index;
+
     public Kline(byte[] bytes, int code) {
 
         ByteBuffer bb = ByteBuffer.wrap(bytes);
@@ -61,7 +63,7 @@ public class Kline {
         this.code = kline.getCode();
     }
 
-    public Kline(String klineStr) {
+    public Kline(String klineStr, int index) {
         String[] strs = klineStr.split("\t");
         this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
         this.open = Integer.valueOf(strs[1].trim().replace(".", ""));
@@ -70,6 +72,7 @@ public class Kline {
         this.close = Integer.valueOf(strs[4].trim().replace(".", ""));
         this.volume = Integer.valueOf(strs[5].trim());
         this.amount = Float.valueOf(strs[6].trim());
+        this.index = index;
     }
 
     @Override

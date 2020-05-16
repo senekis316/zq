@@ -5,9 +5,12 @@ import com.tdx.zq.enums.PeakShapeEnum;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,8 +26,10 @@ public class PeakKlineProcessor {
     private List<PeakKline> tendencyPeakKlineList;
     private List<PeakKline> oppositeTendencyPeakKlineList;
     private List<PeakKline> independentTendencyPeakKlineList;
+    private List<PeakKline> anglePeakKlineList;
 
-    public PeakKlineProcessor(KlineApplicationContext klineApplicationContext) {
+    public PeakKlineProcessor(KlineApplicationContext klineApplicationContext)
+        throws ParseException {
         this.klineMap = klineApplicationContext.getKlineMap();
         this.klineList = klineApplicationContext.getKlineList();
         this.mergeKlineList = klineApplicationContext.getMergeKlineList();
@@ -34,6 +39,7 @@ public class PeakKlineProcessor {
         setTendencyPeakKlineList(mergeKlineList, breakPeakKlineList);
         setOppositeTendencyPeakKline(tendencyPeakKlineList);
         setInDependentTendencyPeakKlineList();
+        setTendencyAngle();
     }
 
     private void setPeakKlineList(List<MergeKline> mergeKlineList) {
@@ -373,4 +379,68 @@ public class PeakKlineProcessor {
         return independentTendencyPeakKlineList;
     }
 
+    public void setTendencyAngle() {
+
+        List<PeakKline> anglePeakKlineList = new ArrayList<>();
+
+        for (int i = 1; i < independentTendencyPeakKlineList.size(); i++) {
+
+            PeakKline prev = independentTendencyPeakKlineList.get(i - 1);
+            PeakKline curr = independentTendencyPeakKlineList.get(i);
+
+            long high;
+            int start;
+            int end;
+
+            if (prev.getPeakShape() == curr.getPeakShape()) {
+                continue;
+            }
+
+            if (prev.getPeakShape() == PeakShapeEnum.FLOOR) {
+                high = curr.getHighest() - prev.getLowest();
+                start = getLowestIndex(prev.getLowest(), prev);
+                end = getHighestIndex(curr.getHighest(), curr);
+            } else {
+                high = prev.getHighest() - curr.getLowest();
+                start = getHighestIndex(prev.getHighest(), prev);
+                end = getLowestIndex(curr.getLowest(), curr);
+            }
+
+            double width = (end - start + 1) * 6.5;
+
+            double angle = Math.toDegrees(Math.atan((double)high / width));
+
+            prev.setAngle(angle);
+
+            anglePeakKlineList.add(prev);
+
+        }
+
+        this.anglePeakKlineList = anglePeakKlineList;
+
+    }
+
+    public int getHighestIndex(int highest, PeakKline peakKline) {
+        List<Kline> klineList = peakKline.getMergeKline().getContainKlineList();
+        for (Kline kline : klineList) {
+            if (kline.getHigh() == highest) {
+                return kline.getIndex();
+            }
+        }
+        return -1;
+    }
+
+    public int getLowestIndex(int lowest, PeakKline peakKline) {
+        List<Kline> klineList = peakKline.getMergeKline().getContainKlineList();
+        for (Kline kline : klineList) {
+            if (kline.getLow() == lowest) {
+                return kline.getIndex();
+            }
+        }
+        return -1;
+    }
+
+    public List<PeakKline> getAnglePeakKlineList() {
+        return anglePeakKlineList;
+    }
 }

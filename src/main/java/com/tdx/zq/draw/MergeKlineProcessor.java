@@ -23,21 +23,23 @@ public class MergeKlineProcessor {
     }
 
     public void setMergeKlineList(List<Kline> klineList) {
-        List<Kline> klines = new ArrayList<>();
-        Kline left = new Kline(klineList.get(0));
         List<MergeKline> mergeKlineList = new ArrayList<>();
-        for (int i = 1; i < klineList.size(); i++) {
-            Kline right = new Kline(klineList.get(i));
-            if (computeDirect(left, right) != LineDirectEnum.BALANCE && shouldMerge(left, right)) {
-                klines.add(left);
-                left = mergeKline(left, right);
+        MergeKline mergeKline = null;
+
+        for (int i = 0; i < klineList.size(); i++) {
+            Kline curr = klineList.get(i);
+            if (mergeKline == null) {
+                mergeKline = new MergeKline(mergeKlineList.size(), curr);
             } else {
-                mergeKlineList.add(new MergeKline(mergeKlineList.size(), left, klines));
-                klines = new ArrayList<>();
-                left = right;
-            }
-            if (i == klineList.size() - 1 && klineList.size() > 0) {
-                mergeKlineList.add(new MergeKline(mergeKlineList.size(), left, klines));
+                Kline prev = mergeKline.getMergeKline();
+                List<Kline> containKlineList = mergeKline.getContainKlineList();
+                if (computeDirect(prev, curr) != LineDirectEnum.BALANCE && shouldMerge(prev, curr)) {
+                    mergeKline.setMergeKline(mergeKline(prev, curr));
+                    containKlineList.add(curr);
+                } else {
+                    mergeKlineList.add(mergeKline);
+                    mergeKline = new MergeKline(mergeKlineList.size(), curr);
+                }
             }
         }
         this.mergeKlineList = mergeKlineList;
