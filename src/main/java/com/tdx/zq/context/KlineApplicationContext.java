@@ -3,6 +3,7 @@ package com.tdx.zq.context;
 import com.tdx.zq.draw.KLineDrawService;
 import com.tdx.zq.draw.MergeKlineProcessor;
 import com.tdx.zq.draw.PeakKlineProcessor;
+import com.tdx.zq.enums.KlineType;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
@@ -13,6 +14,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class KlineApplicationContext {
 
+  private KlineType klineType;
   private List<Kline> klineList;
   private Map<Long, Kline> klineMap;
   private List<MergeKline> mergeKlineList;
@@ -34,14 +37,21 @@ public class KlineApplicationContext {
   private List<PeakKline> independentTendencyPeakKlineList;
   private List<PeakKline> anglePeakKlineList;
 
-  public KlineApplicationContext(String path) throws FileNotFoundException, ParseException {
+  /*public KlineApplicationContext(String path) throws FileNotFoundException, ParseException {
     setKlineList(path);
+    setKlineMap(klineList);
+    setMergeKlineList(klineList);
+    setPeakKlineList();
+  }*/
+
+  public KlineApplicationContext(String path, KlineType klineType) throws FileNotFoundException, ParseException {
+    setKlineList(path, klineType);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
     setPeakKlineList();
   }
 
-  private void setKlineList(String path) throws FileNotFoundException {
+  private void setKlineList(String path, KlineType klineType) throws FileNotFoundException {
 
     File file = new File(KLineDrawService.class.getResource(path).getFile());
     FileReader fileReader = new FileReader(file);
@@ -52,8 +62,24 @@ public class KlineApplicationContext {
     klineStrList.remove(0);
     klineStrList.remove(0);
 
-    LinkedList<Kline> klineList = new LinkedList();
+    if (klineType != KlineType.HOUR_LINE) {
+      setKlineList(klineStrList);
+    } else {
+      LinkedList<Kline> klineList = new LinkedList();
+      List<String> hourKlineList = new ArrayList<>();
+      for (int i = 0; i < klineStrList.size(); i++) {
+        hourKlineList.add(klineStrList.get(i));
+        if (hourKlineList.size() == 12) {
+          klineList.add(new Kline(hourKlineList, klineList.size()));
+          hourKlineList.clear();
+        }
+      }
+      this.klineList = klineList;
+    }
+  }
 
+  private void setKlineList(List<String> klineStrList) throws FileNotFoundException {
+    LinkedList<Kline> klineList = new LinkedList();
     if (klineStrList.get(0).split("\t").length == 7) {
       for (String klineStr : klineStrList) {
         klineList.add(new Kline(klineStr, klineList.size()));
