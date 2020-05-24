@@ -13,6 +13,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,14 +38,7 @@ public class KlineApplicationContext {
   private List<PeakKline> independentTendencyPeakKlineList;
   private List<PeakKline> anglePeakKlineList;
 
-  /*public KlineApplicationContext(String path) throws FileNotFoundException, ParseException {
-    setKlineList(path);
-    setKlineMap(klineList);
-    setMergeKlineList(klineList);
-    setPeakKlineList();
-  }*/
-
-  public KlineApplicationContext(String path, KlineType klineType) throws FileNotFoundException, ParseException {
+  public KlineApplicationContext(String path, KlineType klineType) throws IOException {
     setKlineList(path, klineType);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
@@ -62,10 +56,9 @@ public class KlineApplicationContext {
     klineStrList.remove(0);
     klineStrList.remove(0);
 
-    if (klineType != KlineType.HOUR_LINE) {
-      setKlineList(klineStrList);
-    } else {
-      LinkedList<Kline> klineList = new LinkedList();
+    LinkedList<Kline> klineList = new LinkedList();
+
+    if (klineType == KlineType.HOUR_LINE) {
       List<String> hourKlineList = new ArrayList<>();
       for (int i = 0; i < klineStrList.size(); i++) {
         hourKlineList.add(klineStrList.get(i));
@@ -74,21 +67,15 @@ public class KlineApplicationContext {
           hourKlineList.clear();
         }
       }
-      this.klineList = klineList;
-    }
-  }
-
-  private void setKlineList(List<String> klineStrList) throws FileNotFoundException {
-    LinkedList<Kline> klineList = new LinkedList();
-    if (klineStrList.get(0).split("\t").length == 7) {
-      for (String klineStr : klineStrList) {
-        klineList.add(new Kline(klineStr, klineList.size()));
-      }
-    } else if (klineStrList.get(0).split("\t").length == 8){
+    } else if (klineType == KlineType.TEN_MINUTES_LINE) {
       for (int i = 1; i < klineStrList.size(); i += 2) {
         String prev = klineStrList.get(i - 1);
         String curr = klineStrList.get(i);
         klineList.add(new Kline(prev, curr, klineList.size()));
+      }
+    } else if (klineType == KlineType.DAY_LINE) {
+      for (String klineStr : klineStrList) {
+        klineList.add(new Kline(klineStr, klineList.size()));
       }
     }
     this.klineList = klineList;
@@ -106,7 +93,7 @@ public class KlineApplicationContext {
     this.mergeKlineList = new MergeKlineProcessor(klineList).getMergeKlineList();
   }
 
-  private void setPeakKlineList() throws ParseException {
+  private void setPeakKlineList() throws IOException {
     PeakKlineProcessor peakKlineProcessor = new PeakKlineProcessor(this);
     this.peakKlineList = peakKlineProcessor.getPeakKlineList();
     this.breakPeakKlineList = peakKlineProcessor.getBreakPeakKlineList();

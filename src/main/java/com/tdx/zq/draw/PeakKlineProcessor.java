@@ -5,12 +5,20 @@ import com.tdx.zq.enums.PeakShapeEnum;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 public class PeakKlineProcessor {
 
@@ -25,7 +33,7 @@ public class PeakKlineProcessor {
     private List<PeakKline> independentTendencyPeakKlineList;
     private List<PeakKline> anglePeakKlineList;
 
-    public PeakKlineProcessor(KlineApplicationContext klineApplicationContext) {
+    public PeakKlineProcessor(KlineApplicationContext klineApplicationContext) throws IOException {
         this.klineMap = klineApplicationContext.getKlineMap();
         this.klineList = klineApplicationContext.getKlineList();
         this.mergeKlineList = klineApplicationContext.getMergeKlineList();
@@ -37,6 +45,7 @@ public class PeakKlineProcessor {
         setOppositeTendencyPeakKline(oppositeTendencyPeakKlineList);
         setInDependentTendencyPeakKlineList();
         setTendencyAngle();
+        exportExcel();
     }
 
     private void setPeakKlineList(List<MergeKline> mergeKlineList) {
@@ -466,4 +475,23 @@ public class PeakKlineProcessor {
     public List<PeakKline> getTendencyPeakKlineList() {
         return tendencyPeakKlineList;
     }
+
+    public void exportExcel() throws IOException {
+        try (OutputStream output = new FileOutputStream("src/main/resources/SZ300181.xlsx");
+             SXSSFWorkbook workBook = new SXSSFWorkbook(independentTendencyPeakKlineList.size())) {
+            Sheet sheet = workBook.createSheet();
+            for (int i = 0; i < independentTendencyPeakKlineList.size(); i++) {
+                PeakKline peakKline = independentTendencyPeakKlineList.get(i);
+                Kline kline = peakKline.getMergeKline().getMergeKline();
+                int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? kline.getHigh()
+                    : kline.getLow();
+                Row row = sheet.createRow(i);
+                row.createCell(0, CellType.NUMERIC).setCellValue(kline.getDate());
+                row.createCell(1, CellType.NUMERIC).setCellValue(value);
+            }
+            workBook.write(output);
+            workBook.dispose();
+        }
+    }
+
 }
