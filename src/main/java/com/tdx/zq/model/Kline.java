@@ -17,9 +17,11 @@ import java.util.Objects;
 @Slf4j
 public class Kline {
 
+    private int time;
+
     private int code;
 
-    private int date;
+    private long date;
 
     private int open;
 
@@ -75,18 +77,44 @@ public class Kline {
         this.index = index;
     }
 
+    public Kline(String prev, String curr, int index) {
+        String[] values1 = prev.split("\t");
+        String[] values2 = curr.split("\t");
+        this.date = Long.valueOf(values2[0].trim().replace("/", "") + values2[1].trim());
+        this.time = Integer.valueOf(values2[1].trim());
+        this.open = Integer.valueOf(values2[2].trim().replace(".", ""));
+        this.high = Math.max(Integer.valueOf(values1[3].trim().replace(".", "")), Integer.valueOf(values2[3].trim().replace(".", "")));
+        this.low = Math.min(Integer.valueOf(values1[4].trim().replace(".", "")), Integer.valueOf(values2[4].trim().replace(".", "")));
+        this.close = Integer.valueOf(values2[5].trim().replace(".", ""));
+        this.volume = Integer.valueOf(values1[6].trim());
+        this.amount = Float.valueOf(values1[7].trim());
+        this.index = index;
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Kline kLine = (Kline) o;
-        return date == kLine.date &&
-                high == kLine.high &&
-                low == kLine.low;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        Kline kline = (Kline) o;
+        return time == kline.time &&
+            code == kline.code &&
+            date == kline.date &&
+            open == kline.open &&
+            high == kline.high &&
+            low == kline.low &&
+            close == kline.close &&
+            Float.compare(kline.amount, amount) == 0 &&
+            volume == kline.volume &&
+            index == kline.index;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(date, high, low);
+        return Objects.hash(time, code, date, open, high, low, close, amount, volume, index);
     }
+
 }

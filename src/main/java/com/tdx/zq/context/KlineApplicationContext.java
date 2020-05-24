@@ -24,9 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 public class KlineApplicationContext {
 
   private List<Kline> klineList;
-  private Map<Integer, Kline> klineMap;
+  private Map<Long, Kline> klineMap;
   private List<MergeKline> mergeKlineList;
   private List<PeakKline> peakKlineList;
+  private List<PeakKline> breakPeakKlineList;
+  private List<PeakKline> jumpPeakKlineList;
+  private List<PeakKline> tendencyPeakKlineList;
   private List<PeakKline> oppositeTendencyPeakKlineList;
   private List<PeakKline> independentTendencyPeakKlineList;
   private List<PeakKline> anglePeakKlineList;
@@ -50,14 +53,23 @@ public class KlineApplicationContext {
     klineStrList.remove(0);
 
     LinkedList<Kline> klineList = new LinkedList();
-    for (String klineStr : klineStrList) {
-      klineList.add(new Kline(klineStr, klineList.size()));
+
+    if (klineStrList.get(0).split("\t").length == 7) {
+      for (String klineStr : klineStrList) {
+        klineList.add(new Kline(klineStr, klineList.size()));
+      }
+    } else if (klineStrList.get(0).split("\t").length == 8){
+      for (int i = 1; i < klineStrList.size(); i += 2) {
+        String prev = klineStrList.get(i - 1);
+        String curr = klineStrList.get(i);
+        klineList.add(new Kline(prev, curr, klineList.size()));
+      }
     }
     this.klineList = klineList;
   }
 
   private void setKlineMap(List<Kline> klineList) {
-    Map<Integer, Kline> klineMap = new HashMap<>();
+    Map<Long, Kline> klineMap = new HashMap<>();
     for(Kline kline : klineList) {
       klineMap.put(kline.getDate(), kline);
     }
@@ -71,6 +83,9 @@ public class KlineApplicationContext {
   private void setPeakKlineList() throws ParseException {
     PeakKlineProcessor peakKlineProcessor = new PeakKlineProcessor(this);
     this.peakKlineList = peakKlineProcessor.getPeakKlineList();
+    this.breakPeakKlineList = peakKlineProcessor.getBreakPeakKlineList();
+    this.jumpPeakKlineList = peakKlineProcessor.getJumpPeakKlineList();
+    this.tendencyPeakKlineList = peakKlineProcessor.getTendencyPeakKlineList();
     this.oppositeTendencyPeakKlineList = peakKlineProcessor.getOppositeTendencyPeakKlineList();
     this.independentTendencyPeakKlineList = peakKlineProcessor.getIndependentTendencyPeakKlineList();
     this.anglePeakKlineList = peakKlineProcessor.getAnglePeakKlineList();
@@ -80,7 +95,7 @@ public class KlineApplicationContext {
     return klineList;
   }
 
-  public Map<Integer, Kline> getKlineMap() {
+  public Map<Long, Kline> getKlineMap() {
     return klineMap;
   }
 
@@ -103,21 +118,21 @@ public class KlineApplicationContext {
 
   public void printBreakPeakKlineList() {
     System.out.println("beakPeakKlineList: " + JacksonUtils.toJson(
-        peakKlineList.stream().filter(peakKline -> peakKline.isBreakPeak())
+        breakPeakKlineList.stream().filter(peakKline -> peakKline.isBreakPeak())
             .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
             .collect(Collectors.toList())));
   }
 
   public void printJumpPeakKlineList() {
     System.out.println("jumpPeakKlineList: " + JacksonUtils.toJson(
-        peakKlineList.stream().filter(peakKline -> peakKline.isJumpPeak())
+        jumpPeakKlineList.stream().filter(peakKline -> peakKline.isJumpPeak())
             .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
             .collect(Collectors.toList())));
   }
 
   public void printTendencyPeakKlineList() {
     System.out.println("tendencyPeakKlineList: " + JacksonUtils.toJson(
-        peakKlineList.stream().filter(peakKline -> peakKline.isTendencyPeak())
+        tendencyPeakKlineList.stream().filter(peakKline -> peakKline.isTendencyPeak())
             .map(peakKline -> new TwoTuple(peakKline.getPeakShape(), peakKline.getMergeKline().getMergeKline()))
             .collect(Collectors.toList())));
   }

@@ -5,12 +5,9 @@ import com.tdx.zq.enums.PeakShapeEnum;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -18,7 +15,7 @@ import java.util.stream.Collectors;
 public class PeakKlineProcessor {
 
     private List<Kline> klineList;
-    private Map<Integer, Kline> klineMap;
+    private Map<Long, Kline> klineMap;
     private List<MergeKline> mergeKlineList;
     private List<PeakKline> peakKlineList;
     private List<PeakKline> breakPeakKlineList;
@@ -28,8 +25,7 @@ public class PeakKlineProcessor {
     private List<PeakKline> independentTendencyPeakKlineList;
     private List<PeakKline> anglePeakKlineList;
 
-    public PeakKlineProcessor(KlineApplicationContext klineApplicationContext)
-        throws ParseException {
+    public PeakKlineProcessor(KlineApplicationContext klineApplicationContext) {
         this.klineMap = klineApplicationContext.getKlineMap();
         this.klineList = klineApplicationContext.getKlineList();
         this.mergeKlineList = klineApplicationContext.getMergeKlineList();
@@ -38,6 +34,7 @@ public class PeakKlineProcessor {
         setJumpPeakKlineList(mergeKlineList, breakPeakKlineList);
         setTendencyPeakKlineList(mergeKlineList, breakPeakKlineList);
         setOppositeTendencyPeakKline(tendencyPeakKlineList);
+        setOppositeTendencyPeakKline(oppositeTendencyPeakKlineList);
         setInDependentTendencyPeakKlineList();
         setTendencyAngle();
     }
@@ -440,7 +437,19 @@ public class PeakKlineProcessor {
         return -1;
     }
 
+    public List<PeakKline> getBreakPeakKlineList() {
+        return breakPeakKlineList;
+    }
+
     public List<PeakKline> getAnglePeakKlineList() {
         return anglePeakKlineList;
+    }
+
+    public List<PeakKline> getJumpPeakKlineList() {
+        return jumpPeakKlineList;
+    }
+
+    public List<PeakKline> getTendencyPeakKlineList() {
+        return tendencyPeakKlineList;
     }
 }

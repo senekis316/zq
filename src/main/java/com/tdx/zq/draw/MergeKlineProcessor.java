@@ -42,6 +42,7 @@ public class MergeKlineProcessor {
                 }
             }
         }
+        mergeKlineList.add(mergeKlineList.size(), mergeKline);
         this.mergeKlineList = mergeKlineList;
     }
 
@@ -96,6 +97,7 @@ public class MergeKlineProcessor {
         }
 
         combineKline.setDate(rightKLine.getDate());
+        combineKline.setTime(rightKLine.getTime());
 
         if (lineDirectEnum == LineDirectEnum.UP) {
             combineKline.setLow(Math.max(leftKLine.getLow(), rightKLine.getLow()));
