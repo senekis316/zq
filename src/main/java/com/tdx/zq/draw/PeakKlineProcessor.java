@@ -180,6 +180,13 @@ public class PeakKlineProcessor {
                         Kline curr = mergeKlineList.get(j).getMergeKline();
                         if (max <= curr.getHigh()) {
                             peakKline.setIsTendencyPeak(true);
+                            while (i < breakPeakKlineList.size() - 1) {
+                                if (breakPeakKlineList.get(i + 1).getMergeKline().getMergeKline().getDate() < curr.getDate()) {
+                                    i++;
+                                } else {
+                                    break;
+                                }
+                            }
                             break;
                         } else if (middle.getLow() > curr.getLow()) {
                             break;
@@ -193,6 +200,13 @@ public class PeakKlineProcessor {
                         Kline curr = mergeKlineList.get(j).getMergeKline();
                         if (min >= curr.getLow()) {
                             peakKline.setIsTendencyPeak(true);
+                            while (i < breakPeakKlineList.size() - 1) {
+                                if (breakPeakKlineList.get(i + 1).getMergeKline().getMergeKline().getDate() < curr.getDate()) {
+                                    i++;
+                                } else {
+                                    break;
+                                }
+                            }
                             break;
                         } else if (middle.getHigh() < curr.getHigh()) {
                             break;
