@@ -14,11 +14,11 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.CellType;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
+
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.springframework.util.CollectionUtils;
 
 public class PeakKlineProcessor {
 
@@ -32,8 +32,10 @@ public class PeakKlineProcessor {
     private List<PeakKline> oppositeTendencyPeakKlineList;
     private List<PeakKline> independentTendencyPeakKlineList;
     private List<PeakKline> anglePeakKlineList;
+    private KlineApplicationContext klineApplicationContext;
 
     public PeakKlineProcessor(KlineApplicationContext klineApplicationContext) throws IOException {
+        this.klineApplicationContext = klineApplicationContext;
         this.klineMap = klineApplicationContext.getKlineMap();
         this.klineList = klineApplicationContext.getKlineList();
         this.mergeKlineList = klineApplicationContext.getMergeKlineList();
@@ -375,7 +377,7 @@ public class PeakKlineProcessor {
     }
 
     private void deleteContainTenencyPeak() {
-
+        if (independentTendencyPeakKlineList.size() < 2) return;
         PeakKline prev = independentTendencyPeakKlineList.get(0);
         for (int i = 1; i < independentTendencyPeakKlineList.size(); i++) {
             PeakKline curr = independentTendencyPeakKlineList.get(i);
@@ -385,10 +387,8 @@ public class PeakKlineProcessor {
                 prev = curr;
             }
         }
-
         this.independentTendencyPeakKlineList = independentTendencyPeakKlineList.stream()
-            .filter(peakKline -> !peakKline.isDependent()).collect(Collectors.toList());
-
+                .filter(peakKline -> !peakKline.isDependent()).collect(Collectors.toList());
     }
 
     public List<PeakKline> getOppositeTendencyPeakKlineList() {
@@ -477,7 +477,8 @@ public class PeakKlineProcessor {
     }
 
     public void exportExcel() throws IOException {
-        try (OutputStream output = new FileOutputStream("src/main/resources/SZ300181.xlsx");
+        if (CollectionUtils.isEmpty(independentTendencyPeakKlineList)) return;
+        try (OutputStream output = new FileOutputStream(klineApplicationContext.getOutputPath());
              SXSSFWorkbook workBook = new SXSSFWorkbook(independentTendencyPeakKlineList.size())) {
             Sheet sheet = workBook.createSheet();
             for (int i = 0; i < independentTendencyPeakKlineList.size(); i++) {
@@ -486,7 +487,7 @@ public class PeakKlineProcessor {
                 int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? kline.getHigh()
                     : kline.getLow();
                 Row row = sheet.createRow(i);
-                row.createCell(0, CellType.NUMERIC).setCellValue(kline.getDate());
+                row.createCell(0, CellType.STRING).setCellValue(String.valueOf(kline.getDate()));
                 row.createCell(1, CellType.NUMERIC).setCellValue(value);
             }
             workBook.write(output);

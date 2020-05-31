@@ -66,44 +66,65 @@ public class Kline {
         this.code = kline.getCode();
     }
 
-    public Kline(String klineStr, int index) {
-        String[] strs = klineStr.split("\t");
-        this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
-        this.open = Integer.valueOf(strs[1].trim().replace(".", ""));
-        this.high = Integer.valueOf(strs[2].trim().replace(".", ""));
-        this.low = Integer.valueOf(strs[3].trim().replace(".", ""));
-        this.close = Integer.valueOf(strs[4].trim().replace(".", ""));
-        this.volume = Integer.valueOf(strs[5].trim());
-        this.amount = Float.valueOf(strs[6].trim());
-        this.index = index;
-    }
+//    public Kline(String klineStr, int index) {
+//        String[] strs = klineStr.split("\t");
+//        if (strs.length == 7) {
+//            this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
+//            this.open = Integer.valueOf(strs[1].trim().replace(".", ""));
+//            this.high = Integer.valueOf(strs[2].trim().replace(".", ""));
+//            this.low = Integer.valueOf(strs[3].trim().replace(".", ""));
+//            this.close = Integer.valueOf(strs[4].trim().replace(".", ""));
+//            this.volume = Integer.valueOf(strs[5].trim());
+//            this.amount = Float.valueOf(strs[6].trim());
+//        } else if (strs.length >= 8 ) {
+//            this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
+//            this.time = Integer.valueOf(strs[1].trim());
+//            this.open = Integer.valueOf(strs[2].trim().replace(".", ""));
+//            this.high = Integer.valueOf(strs[3].trim().replace(".", ""));
+//            this.low = Integer.valueOf(strs[4].trim().replace(".", ""));
+//            this.close = Integer.valueOf(strs[5].trim().replace(".", ""));
+//            this.volume = Integer.valueOf(strs[6].trim());
+//            this.amount = Float.valueOf(strs[7].trim());
+//        }
+//        this.index = index;
+//    }
+//
+//    public Kline(String prev, String curr, int index) {
+//        String[] values1 = prev.split("\t");
+//        String[] values2 = curr.split("\t");
+//        this.date = Long.valueOf(values2[0].trim().replace("/", "") + values2[1].trim());
+//        this.time = Integer.valueOf(values2[1].trim());
+//        this.open = Integer.valueOf(values2[2].trim().replace(".", ""));
+//        this.high = Math.max(Integer.valueOf(values1[3].trim().replace(".", "")), Integer.valueOf(values2[3].trim().replace(".", "")));
+//        this.low = Math.min(Integer.valueOf(values1[4].trim().replace(".", "")), Integer.valueOf(values2[4].trim().replace(".", "")));
+//        this.close = Integer.valueOf(values2[5].trim().replace(".", ""));
+//        this.volume = Integer.valueOf(values1[6].trim());
+//        this.amount = Float.valueOf(values1[7].trim());
+//        this.index = index;
+//    }
 
-    public Kline(String prev, String curr, int index) {
-        String[] values1 = prev.split("\t");
-        String[] values2 = curr.split("\t");
-        this.date = Long.valueOf(values2[0].trim().replace("/", "") + values2[1].trim());
-        this.time = Integer.valueOf(values2[1].trim());
-        this.open = Integer.valueOf(values2[2].trim().replace(".", ""));
-        this.high = Math.max(Integer.valueOf(values1[3].trim().replace(".", "")), Integer.valueOf(values2[3].trim().replace(".", "")));
-        this.low = Math.min(Integer.valueOf(values1[4].trim().replace(".", "")), Integer.valueOf(values2[4].trim().replace(".", "")));
-        this.close = Integer.valueOf(values2[5].trim().replace(".", ""));
-        this.volume = Integer.valueOf(values1[6].trim());
-        this.amount = Float.valueOf(values1[7].trim());
-        this.index = index;
-    }
-
-    public Kline(List<String> lines, int index) {
+    public Kline(List<String> lines, boolean hasTime, int index) {
         this.low = Integer.MAX_VALUE;
         for (int i = 0; i < lines.size(); i++) {
             String[] values = lines.get(i).split("\t");
-            this.date = Long.valueOf(values[0].trim().replace("/", "") + values[1].trim());
-            this.time = Integer.valueOf(values[1].trim());
-            this.open = Integer.valueOf(values[2].trim().replace(".", ""));
-            this.high = Math.max(high, Integer.valueOf(values[3].trim().replace(".", "")));
-            this.low = Math.min(low, Integer.valueOf(values[4].trim().replace(".", "")));
-            this.close = Integer.valueOf(values[5].trim().replace(".", ""));
-            this.volume = Integer.valueOf(values[6].trim());
-            this.amount = Float.valueOf(values[7].trim());
+            if (hasTime) {
+                this.date = Long.valueOf(values[0].trim().replace("/", "") + values[1].trim());
+                this.time = Integer.valueOf(values[1].trim());
+                this.open = Integer.valueOf(values[2].trim().replace(".", ""));
+                this.high = Math.max(high, Integer.valueOf(values[3].trim().replace(".", "")));
+                this.low = Math.min(low, Integer.valueOf(values[4].trim().replace(".", "")));
+                this.close = Integer.valueOf(values[5].trim().replace(".", ""));
+                this.volume = Integer.valueOf(values[6].trim());
+                this.amount = Float.valueOf(values[7].trim());
+            } else {
+                this.date = Integer.valueOf(values[0].trim().replace("/", ""));
+                this.open = Integer.valueOf(values[1].trim().replace(".", ""));
+                this.high = Integer.valueOf(values[2].trim().replace(".", ""));
+                this.low = Integer.valueOf(values[3].trim().replace(".", ""));
+                this.close = Integer.valueOf(values[4].trim().replace(".", ""));
+                this.volume = Integer.valueOf(values[5].trim());
+                this.amount = Float.valueOf(values[6].trim());
+            }
         }
         this.index = index;
     }

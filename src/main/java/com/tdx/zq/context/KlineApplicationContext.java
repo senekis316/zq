@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,11 +22,16 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
 
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.util.CollectionUtils;
+
+@Getter
 @Slf4j
 public class KlineApplicationContext {
 
+  private String outputPath;
   private KlineType klineType;
   private List<Kline> klineList;
   private Map<Long, Kline> klineMap;
@@ -45,16 +51,29 @@ public class KlineApplicationContext {
     setPeakKlineList();
   }
 
-  private void setKlineList(String path, KlineType klineType) throws FileNotFoundException {
+  public KlineApplicationContext(File file, KlineType klineType, String outputPath) throws IOException {
+    this.outputPath = outputPath;
+    setKlineList(file, klineType);
+    setKlineMap(klineList);
+    setMergeKlineList(klineList);
+    setPeakKlineList();
+  }
 
-    File file = new File(KLineDrawService.class.getResource(path).getFile());
-    FileReader fileReader = new FileReader(file);
+  private void setKlineList(File file, KlineType klineType) throws IOException {
+
+    FileReader fileReader = new FileReader(file, Charset.forName("GBK"));
     BufferedReader bufferedReader = new BufferedReader(fileReader);
 
     List<String> klineStrList = bufferedReader.lines().collect(Collectors.toList());
+    if (klineStrList.size() == 3) return;
+    if (klineType == KlineType.HOUR_LINE && klineStrList.size() < 15);
+    if (klineType == KlineType.TEN_MINUTES_LINE && klineStrList.size() < 5);
     klineStrList.remove(klineStrList.size() - 1);
     klineStrList.remove(0);
+    boolean hasTime = klineStrList.get(0).split("\t")[1].trim().equals("时间");
     klineStrList.remove(0);
+
+
 
     LinkedList<Kline> klineList = new LinkedList();
 
@@ -63,37 +82,52 @@ public class KlineApplicationContext {
       for (int i = 0; i < klineStrList.size(); i++) {
         hourKlineList.add(klineStrList.get(i));
         if (hourKlineList.size() == 12) {
-          klineList.add(new Kline(hourKlineList, klineList.size()));
-          hourKlineList.clear();
+          try {
+            klineList.add(new Kline(hourKlineList, hasTime, klineList.size()));
+            hourKlineList.clear();
+          } catch (Exception e) {
+            throw e;
+          }
         }
       }
     } else if (klineType == KlineType.TEN_MINUTES_LINE) {
       for (int i = 1; i < klineStrList.size(); i += 2) {
-        String prev = klineStrList.get(i - 1);
-        String curr = klineStrList.get(i);
-        klineList.add(new Kline(prev, curr, klineList.size()));
+        List<String> tenMinuteKlineList = new ArrayList<>();
+        tenMinuteKlineList.add(klineStrList.get(i - 1));
+        tenMinuteKlineList.add(klineStrList.get(i));
+        klineList.add(new Kline(tenMinuteKlineList, hasTime, klineList.size()));
       }
-    } else if (klineType == KlineType.DAY_LINE) {
+    } else if (klineType == KlineType.DAY_LINE || klineType == KlineType.ONE_MINUTES_LINE) {
       for (String klineStr : klineStrList) {
-        klineList.add(new Kline(klineStr, klineList.size()));
+        List<String> dayKlineList = new ArrayList<>();
+        dayKlineList.add(klineStr);
+        klineList.add(new Kline(dayKlineList, hasTime, klineList.size()));
       }
     }
     this.klineList = klineList;
   }
 
+  private void setKlineList(String path, KlineType klineType) throws IOException {
+    File file = new File(KLineDrawService.class.getResource(path).getFile());
+    setKlineList(file, klineType);
+  }
+
   private void setKlineMap(List<Kline> klineList) {
+    if (CollectionUtils.isEmpty(klineList)) return;
     Map<Long, Kline> klineMap = new HashMap<>();
-    for(Kline kline : klineList) {
+    for (Kline kline : klineList) {
       klineMap.put(kline.getDate(), kline);
     }
     this.klineMap = klineMap;
   }
 
   public void setMergeKlineList(List<Kline> klineList) {
+    if (CollectionUtils.isEmpty(klineList)) return;
     this.mergeKlineList = new MergeKlineProcessor(klineList).getMergeKlineList();
   }
 
   private void setPeakKlineList() throws IOException {
+    if (CollectionUtils.isEmpty(klineList)) return;
     PeakKlineProcessor peakKlineProcessor = new PeakKlineProcessor(this);
     this.peakKlineList = peakKlineProcessor.getPeakKlineList();
     this.breakPeakKlineList = peakKlineProcessor.getBreakPeakKlineList();
