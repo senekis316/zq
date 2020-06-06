@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.apache.poi.hssf.usermodel.HSSFCellStyle;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.springframework.util.CollectionUtils;
@@ -484,9 +483,33 @@ public class PeakKlineProcessor {
             for (int i = 0; i < independentTendencyPeakKlineList.size(); i++) {
                 PeakKline peakKline = independentTendencyPeakKlineList.get(i);
                 int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? peakKline.getHighest() : peakKline.getLowest();
+                long date = peakKline.getPeakDate();
                 Row row = sheet.createRow(i);
-                row.createCell(0, CellType.STRING).setCellValue(String.valueOf(peakKline.getPeakDate()));
+                row.createCell(0, CellType.STRING).setCellValue(String.valueOf(date));
                 row.createCell(1, CellType.NUMERIC).setCellValue(value);
+                if (i == independentTendencyPeakKlineList.size() - 1) {
+                    int lowest = Integer.MAX_VALUE;
+                    int highest = Integer.MIN_VALUE;
+                    List<Kline> klines = peakKlineList.get(peakKline.getIndex() + 1).getMergeKline().getContainKlineList();
+                    int index = klines.get(klines.size() - 1).getIndex();
+                    for (int j = index + 1; j < klineList.size(); j++) {
+                        if (peakKline.getPeakShape() == PeakShapeEnum.TOP) {
+                            if (lowest > klineList.get(j).getLow()) {
+                                lowest = klineList.get(j).getLow();
+                                date = klineList.get(j).getDate();
+                            }
+                        } else {
+                            if (highest < klineList.get(j).getHigh()) {
+                                highest = klineList.get(j).getHigh();
+                                date = klineList.get(j).getDate();
+                            }
+                        }
+                    }
+                    value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? lowest : highest;
+                    row = sheet.createRow(i + 1);
+                    row.createCell(0, CellType.STRING).setCellValue(String.valueOf(date));
+                    row.createCell(1, CellType.NUMERIC).setCellValue(value);
+                }
             }
             workBook.write(output);
             workBook.dispose();

@@ -17,12 +17,6 @@ public class MergeKline {
         containKlineList.add(mergeKline);
     }
 
-//    public MergeKline(int index, Kline mergeKline, List<Kline> containKlineList) {
-//        this.index = index;
-//        this.mergeKline = mergeKline;
-//        this.containKlineList = containKlineList;
-//    }
-
     public int getIndex() {
         return index;
     }
