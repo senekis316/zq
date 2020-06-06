@@ -290,7 +290,7 @@ public class PeakKlineProcessor {
         this.independentTendencyPeakKlineList = oppositeTendencyPeakKlineList.stream()
             .filter(peakKline -> !peakKline.isDependentTendencyPeak()).collect(Collectors.toList());
 
-        deleteContainTenencyPeak();
+        deleteContainTendencyPeak();
 
     }
 
@@ -376,7 +376,7 @@ public class PeakKlineProcessor {
 
     }
 
-    private void deleteContainTenencyPeak() {
+    private void deleteContainTendencyPeak() {
         if (independentTendencyPeakKlineList.size() < 2) return;
         PeakKline prev = independentTendencyPeakKlineList.get(0);
         for (int i = 1; i < independentTendencyPeakKlineList.size(); i++) {
@@ -479,15 +479,13 @@ public class PeakKlineProcessor {
     public void exportExcel() throws IOException {
         if (CollectionUtils.isEmpty(independentTendencyPeakKlineList)) return;
         try (OutputStream output = new FileOutputStream(klineApplicationContext.getOutputPath());
-             SXSSFWorkbook workBook = new SXSSFWorkbook(independentTendencyPeakKlineList.size())) {
+            SXSSFWorkbook workBook = new SXSSFWorkbook(independentTendencyPeakKlineList.size())) {
             Sheet sheet = workBook.createSheet();
             for (int i = 0; i < independentTendencyPeakKlineList.size(); i++) {
                 PeakKline peakKline = independentTendencyPeakKlineList.get(i);
-                Kline kline = peakKline.getMergeKline().getMergeKline();
-                int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? kline.getHigh()
-                    : kline.getLow();
+                int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? peakKline.getHighest() : peakKline.getLowest();
                 Row row = sheet.createRow(i);
-                row.createCell(0, CellType.STRING).setCellValue(String.valueOf(kline.getDate()));
+                row.createCell(0, CellType.STRING).setCellValue(String.valueOf(peakKline.getPeakDate()));
                 row.createCell(1, CellType.NUMERIC).setCellValue(value);
             }
             workBook.write(output);

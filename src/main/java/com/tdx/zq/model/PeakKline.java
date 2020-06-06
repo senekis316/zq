@@ -1,6 +1,7 @@
 package com.tdx.zq.model;
 
 import com.tdx.zq.enums.PeakShapeEnum;
+import java.util.List;
 
 public class PeakKline {
 
@@ -28,12 +29,15 @@ public class PeakKline {
 
     private int lowest;
 
+    private long peakDate;
+
     public PeakKline(int index, MergeKline prev, MergeKline curr, MergeKline next) {
         this.index = index;
         this.mergeKline = curr;
         this.lowest = Math.min(Math.min(prev.getMergeKline().getLow(), curr.getMergeKline().getLow()), next.getMergeKline().getLow());
         this.highest = Math.max(Math.max(prev.getMergeKline().getHigh(), curr.getMergeKline().getHigh()), next.getMergeKline().getHigh());
         setPeakShape(prev, curr, next);
+        setPeakDate();
     }
 
     private void setPeakShape(MergeKline prev, MergeKline curr, MergeKline next) {
@@ -127,6 +131,26 @@ public class PeakKline {
 
     public void setAngle(double angle) {
         this.angle = angle;
+    }
+
+    public void setPeakDate() {
+        List<Kline> klineList = this.getMergeKline().getContainKlineList();
+        for (Kline kline : klineList) {
+            if (peakShape == PeakShapeEnum.TOP) {
+                if (kline.getHigh() == highest) {
+                    this.peakDate = kline.getDate();
+                }
+            } else if (peakShape == PeakShapeEnum.FLOOR) {
+                if (kline.getLow() == lowest) {
+                    this.peakDate = kline.getDate();
+                }
+            }
+        }
+
+    }
+
+    public long getPeakDate() {
+        return peakDate;
     }
 
 }

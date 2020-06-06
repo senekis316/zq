@@ -44,12 +44,19 @@ public class KlineApplicationContext {
   private List<PeakKline> independentTendencyPeakKlineList;
   private List<PeakKline> anglePeakKlineList;
 
-  public KlineApplicationContext(String path, KlineType klineType) throws IOException {
-    setKlineList(path, klineType);
+  public KlineApplicationContext(String path, KlineType klineType, String outputPath) throws IOException {
+    this.outputPath = outputPath;
+    File file = new File(KLineDrawService.class.getResource(path).getFile());
+    setKlineList(file, klineType);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
     setPeakKlineList();
   }
+
+//  private void setKlineList(String path, KlineType klineType) throws IOException {
+//
+//    setKlineList(file, klineType);
+//  }
 
   public KlineApplicationContext(File file, KlineType klineType, String outputPath) throws IOException {
     this.outputPath = outputPath;
