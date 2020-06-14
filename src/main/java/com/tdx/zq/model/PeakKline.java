@@ -3,11 +3,14 @@ package com.tdx.zq.model;
 import com.tdx.zq.enums.PeakShapeEnum;
 import java.util.List;
 
+
 public class PeakKline {
 
     private double angle;
 
     private boolean isDependent;
+
+    private boolean isTurnPeak;
 
     private boolean isJumpPeak;
 
@@ -18,6 +21,8 @@ public class PeakKline {
     private boolean isEqualDirectPeak;
 
     private boolean isDependentTendencyPeak;
+
+    private boolean isRangePeak;
 
     private MergeKline mergeKline;
 
@@ -153,4 +158,19 @@ public class PeakKline {
         return peakDate;
     }
 
+    public boolean isTurnPeak() {
+        return isTurnPeak;
+    }
+
+    public void setTurnPeak(boolean turnPeak) {
+        isTurnPeak = turnPeak;
+    }
+
+    public boolean isRangePeak() {
+        return isRangePeak;
+    }
+
+    public void setRangePeak(boolean rangePeak) {
+        isRangePeak = rangePeak;
+    }
 }
