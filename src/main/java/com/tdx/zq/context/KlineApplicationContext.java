@@ -46,7 +46,7 @@ public class KlineApplicationContext {
 
   public KlineApplicationContext(String path, KlineType klineType, String outputPath) throws IOException {
     this.outputPath = outputPath;
-    File file = new File(KLineDrawService.class.getResource(path).getFile());
+    File file = new File(path);
     setKlineList(file, klineType);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
