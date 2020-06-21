@@ -239,9 +239,10 @@ public class PeakKlineProcessor {
     public void setTendencyPeakKlineList() {
         tendencyPeakKlineList = new ArrayList<>();
         for (int i = 0; i < breakPeakKlineList.size() - 1; i++) {
-            PeakKline peakKline = peakKlineList.get(i);
+            PeakKline peakKline = breakPeakKlineList.get(i);
             if (peakKline.isJumpPeak() || peakKline.isTurnPeak()) {
                 if (!peakKline.isRangePeak()) {
+                    peakKline.setIsTendencyPeak(true);
                     tendencyPeakKlineList.add(peakKline);
                 }
             }

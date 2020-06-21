@@ -160,7 +160,7 @@ public class KlineApplicationContext {
 
   public void printPeakKlineList() {
       System.out.println("peakKlineList: " + JacksonUtils.toJson(
-      breakPeakKlineList.stream().map(PeakKlinePrint::new).filter(PeakKlinePrint::isRangePeak).collect(Collectors.toList())));
+      breakPeakKlineList.stream().map(PeakKlinePrint::new).filter(PeakKlinePrint::isTendencyPeak).collect(Collectors.toList())));
 //    System.out.println("peakKlineList: " + JacksonUtils.toJson(
 //        breakPeakKlineList.stream().map(PeakKlinePrint::new).collect(Collectors.toList())));
   }

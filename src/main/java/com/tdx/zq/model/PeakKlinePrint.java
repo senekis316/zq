@@ -16,6 +16,8 @@ public class PeakKlinePrint {
 
   private boolean isRangePeak;
 
+  private boolean isTendencyPeak;
+
   private PeakShapeEnum peakShape;
 
   public PeakKlinePrint(PeakKline peakKline) {
@@ -23,6 +25,7 @@ public class PeakKlinePrint {
     this.isJumpPeak = peakKline.isJumpPeak();
     this.isBreakPeak = peakKline.isBreakPeak();
     this.isRangePeak = peakKline.isRangePeak();
+    this.isTendencyPeak = peakKline.isTendencyPeak();
     this.peakShape = peakKline.getPeakShape();
     this.mergeKline = peakKline.getMergeKline().getMergeKline();
   }
