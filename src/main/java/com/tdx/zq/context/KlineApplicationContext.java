@@ -8,7 +8,6 @@ import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
 import com.tdx.zq.model.PeakKlinePrint;
-import com.tdx.zq.tuple.TwoTuple;
 import com.tdx.zq.utils.JacksonUtils;
 import java.io.BufferedReader;
 import java.io.File;
@@ -51,11 +50,6 @@ public class KlineApplicationContext {
     setMergeKlineList(klineList);
     setPeakKlineList();
   }
-
-//  private void setKlineList(String path, KlineType klineType) throws IOException {
-//
-//    setKlineList(file, klineType);
-//  }
 
   public KlineApplicationContext(File file, KlineType klineType, String outputPath) throws IOException {
     this.outputPath = outputPath;
