@@ -281,6 +281,51 @@ public class PeakKlineProcessor {
         deleteEqualDirectionPeak(equalDirectionPeaks);
         this.tendencyPeakKlineList = tendencyPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
 
+        // 处理反向删除逻辑
+        for (int i = tendencyPeakKlineList.size() - 1; i > 0; i--) {
+            List<PeakKline> peaks = new ArrayList<>();
+            PeakKline curr = tendencyPeakKlineList.get(i);
+            for (int j = curr.getIndex() - 3; j >= 0 && j < curr.getIndex(); j++) {
+                PeakKline prev = peakKlineList.get(j);
+                if (curr.getMergeKline().getIndex() - prev.getMergeKline().getIndex() <= 3
+                    && !prev.isJumpPeak()
+                    && prev.getPeakShape() != PeakShapeEnum.NONE
+                    && prev.getPeakShape() != curr.getPeakShape()) {
+                    peaks.add(prev);
+                }
+            }
+            if (peaks.size() > 0) {
+                PeakKline peak = peaks.get(0);
+                if (peaks.size() == 2) {
+                    if (curr.getPeakShape() == PeakShapeEnum.TOP) {
+                        peak = peak.getLowest() < peaks.get(1).getLowest() ? peak: peaks.get(1);
+                    } else {
+                        peak = peak.getHighest() > peaks.get(1).getHighest() ? peak: peaks.get(1);
+                    }
+                }
+                int lowest;
+                int highest;
+                if (curr.getPeakShape() == PeakShapeEnum.TOP) {
+                    lowest = peak.getLowest();
+                    highest = curr.getHighest();
+                } else {
+                    lowest = curr.getLowest();
+                    highest = peak.getHighest();
+                }
+                for (int j = i - 1; j >= 0 ; j--) {
+                    PeakKline range = tendencyPeakKlineList.get(j);
+                    if (range.getHighest() < highest
+                        && range.getLowest() > lowest) {
+                        range.setRangePeak(true);
+                        range.setIsTendencyPeak(false);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        this.tendencyPeakKlineList = tendencyPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
+
     }
 
     public void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
