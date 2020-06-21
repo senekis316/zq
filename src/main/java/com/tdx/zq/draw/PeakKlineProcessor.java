@@ -234,6 +234,21 @@ public class PeakKlineProcessor {
                 }
             }
         }
+
+        for (int i = 0; i < breakPeakKlineList.size(); i++) {
+            PeakKline curr = breakPeakKlineList.get(i);
+            for (int j = i + 1; j < breakPeakKlineList.size(); j++) {
+                PeakKline last = breakPeakKlineList.get(j);
+                if (!last.isRangePeak() && (last.isTurnPeak() || last.isJumpPeak())) {
+                    if (last.getMergeKline().getMergeKline().getHigh() < curr.getHighest()
+                        && last.getMergeKline().getMergeKline().getLow() > curr.getLowest()) {
+                        last.setRangePeak(true);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     public void setTendencyPeakKlineList() {
@@ -247,7 +262,54 @@ public class PeakKlineProcessor {
                 }
             }
         }
+
+        //处理通向点
+        List<PeakKline> equalDirectionPeaks = new ArrayList<>();
+        equalDirectionPeaks.add(tendencyPeakKlineList.get(0));
+
+        for (int i = 1; i < tendencyPeakKlineList.size(); i++) {
+            PeakKline prev = equalDirectionPeaks.get(equalDirectionPeaks.size() - 1);
+            PeakKline curr = tendencyPeakKlineList.get(i);
+            if (prev.getPeakShape() == curr.getPeakShape()) {
+                equalDirectionPeaks.add(curr);
+            } else {
+                deleteEqualDirectionPeak(equalDirectionPeaks);
+                equalDirectionPeaks.clear();
+                equalDirectionPeaks.add(curr);
+            }
+        }
+        deleteEqualDirectionPeak(equalDirectionPeaks);
+        this.tendencyPeakKlineList = tendencyPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
+
     }
+
+    public void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
+        if (equalDirectionPeaks.size() > 1) {
+            PeakKline max = equalDirectionPeaks.get(0);
+            PeakKline min = equalDirectionPeaks.get(0);
+            for (int j = 1; j < equalDirectionPeaks.size(); j++) {
+                PeakKline peak = equalDirectionPeaks.get(j);
+                if (peak.getPeakShape() == PeakShapeEnum.TOP) {
+                    if (max.getMergeKline().getMergeKline().getHigh() >=
+                        peak.getMergeKline().getMergeKline().getHigh()) {
+                        peak.setIsTendencyPeak(false);
+                    } else {
+                        max.setIsTendencyPeak(false);
+                        max = peak;
+                    }
+                } else {
+                    if (min.getMergeKline().getMergeKline().getLow() <=
+                        peak.getMergeKline().getMergeKline().getLow()) {
+                        peak.setIsTendencyPeak(false);
+                    } else {
+                        min.setIsTendencyPeak(false);
+                        min = peak;
+                    }
+                }
+            }
+        }
+    }
+
 
     public void exportExcel() throws IOException {
         if (CollectionUtils.isEmpty(tendencyPeakKlineList)) return;
