@@ -272,7 +272,7 @@ public class PeakKlineProcessor {
             }
         }
 
-        //处理通向点
+        //处理同向点
         List<PeakKline> equalDirectionPeaks = new ArrayList<>();
         equalDirectionPeaks.add(tendencyPeakKlineList.get(0));
 
@@ -328,6 +328,21 @@ public class PeakKlineProcessor {
                         range.setRangePeak(true);
                         range.setIsTendencyPeak(false);
                     } else {
+                        if (range.getPeakShape() == curr.getPeakShape()) {
+                            if (range.getPeakShape() == PeakShapeEnum.TOP) {
+                                if (range.getHighest() >= curr.getHighest()) {
+                                    curr.setIsTendencyPeak(false);
+                                } else {
+                                    range.setIsTendencyPeak(false);
+                                }
+                            } else {
+                                if (range.getLowest() <= curr.getLowest()) {
+                                    curr.setIsTendencyPeak(false);
+                                } else {
+                                    range.setIsTendencyPeak(false);
+                                }
+                            }
+                        }
                         break;
                     }
                 }
@@ -337,7 +352,7 @@ public class PeakKlineProcessor {
 
     }
 
-    public void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
+    private void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
         if (equalDirectionPeaks.size() > 1) {
             PeakKline max = equalDirectionPeaks.get(0);
             PeakKline min = equalDirectionPeaks.get(0);

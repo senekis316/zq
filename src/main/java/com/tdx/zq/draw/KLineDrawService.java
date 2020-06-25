@@ -48,8 +48,8 @@ public class KLineDrawService implements InitializingBean {
 //        KlineApplicationContext klineApplicationContext =
 //            new KlineApplicationContext("/SZ300181.txt", KlineType.DAY_LINE);
         KlineApplicationContext klineApplicationContext =
-            new KlineApplicationContext("src/main/resources/SZ300181.txt", KlineType.DAY_LINE, "src/main/resources/SZ300181.xlsx");
-       // klineApplicationContext.printMergeKlineList();
+            new KlineApplicationContext("src/main/resources/SH603976.txt", KlineType.DAY_LINE, "src/main/resources/SH603976.xlsx");
+        // klineApplicationContext.printMergeKlineList();
         klineApplicationContext.printPeakKlineList();
 //        klineApplicationContext.printBreakPeakKlineList();
 //        klineApplicationContext.printJumpPeakKlineList();
@@ -57,6 +57,7 @@ public class KLineDrawService implements InitializingBean {
 //        klineApplicationContext.printOppositeTendencyPeakKlineList();
 //        klineApplicationContext.printInDependentTendencyPeakKlineList();
 //        klineApplicationContext.printAnglePeakKlineList();
+        System.exit(0);
     }
 
 }
