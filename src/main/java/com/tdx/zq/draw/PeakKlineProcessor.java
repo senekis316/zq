@@ -125,30 +125,39 @@ public class PeakKlineProcessor {
             Kline second = mergeKlineList.get(index + 2).getMergeKline();
             Kline third = mergeKlineList.get(index + 3).getMergeKline();
 
+            Kline orig1 = mergeKlineList.get(index + 2).getFirstOriginKline();
+            Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
+
             if (middle.getLow() < right.getLow()) {
                 if (right.getHigh() < second.getLow()
-                    && second.getLow() > left.getHigh()) {
+                    && second.getLow() > left.getHigh()
+                    && breakPeakKline.getHighest() < orig1.getLow()) {
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
                 if (left.getHigh() < third.getLow()
                     && right.getHigh() < third.getLow()
-                    && second.getHigh() < third.getLow()) {
+                    && second.getHigh() < third.getLow()
+                    && second.getHigh() < orig2.getLow()
+                    && breakPeakKline.getHighest() < orig2.getLow()) {
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
             } else if (middle.getHigh() > right.getHigh()) {
                 if (left.getLow() > second.getHigh()
-                    && right.getLow() > second.getHigh()) {
+                    && right.getLow() > second.getHigh()
+                    && breakPeakKline.getLowest() > orig1.getHigh()) {
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
                 if (left.getLow() > third.getHigh()
                     && right.getLow() > third.getHigh()
-                    && second.getLow() > third.getHigh()) {
+                    && second.getLow() > third.getHigh()
+                    && second.getLow() > orig2.getHigh()
+                    && breakPeakKline.getLowest() > orig2.getHigh()) {
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
