@@ -123,24 +123,26 @@ public class PeakKlineProcessor {
             Kline middle = mergeKlineList.get(index).getMergeKline();
             Kline right = mergeKlineList.get(index + 1).getMergeKline();
             Kline second = mergeKlineList.get(index + 2).getMergeKline();
-            Kline third = mergeKlineList.get(index + 3).getMergeKline();
 
             Kline orig1 = mergeKlineList.get(index + 2).getFirstOriginKline();
-            Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
 
             if (middle.getLow() < right.getLow()) {
                 if (right.getHigh() < second.getLow()
                     && second.getLow() > left.getHigh()
                     && breakPeakKline.getHighest() < orig1.getLow()) {
+                    breakPeakKline.setTurnKline(orig1);
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
+                Kline third = mergeKlineList.get(index + 3).getMergeKline();
+                Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
                 if (left.getHigh() < third.getLow()
                     && right.getHigh() < third.getLow()
                     && second.getHigh() < third.getLow()
                     && second.getHigh() < orig2.getLow()
                     && breakPeakKline.getHighest() < orig2.getLow()) {
+                    breakPeakKline.setTurnKline(orig2);
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
@@ -149,15 +151,19 @@ public class PeakKlineProcessor {
                 if (left.getLow() > second.getHigh()
                     && right.getLow() > second.getHigh()
                     && breakPeakKline.getLowest() > orig1.getHigh()) {
+                    breakPeakKline.setTurnKline(orig1);
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
+                Kline third = mergeKlineList.get(index + 3).getMergeKline();
+                Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
                 if (left.getLow() > third.getHigh()
                     && right.getLow() > third.getHigh()
                     && second.getLow() > third.getHigh()
                     && second.getLow() > orig2.getHigh()
                     && breakPeakKline.getLowest() > orig2.getHigh()) {
+                    breakPeakKline.setTurnKline(orig2);
                     breakPeakKline.setIsJumpPeak(true);
                     jumpPeakKlineList.add(breakPeakKline);
                     continue;
@@ -176,9 +182,6 @@ public class PeakKlineProcessor {
             PeakKline peakKline = breakPeakKlineList.get(i);
 
             if (peakKline.getPeakShape() != PeakShapeEnum.NONE) {
-
-                System.out.println(peakKline.getMergeKline().getMergeKline().getDate());
-
                 Integer index = peakKline.getMergeKline().getIndex();
                 Kline left = mergeKlineList.get(index - 1).getMergeKline();
                 Kline middle = mergeKlineList.get(index).getMergeKline();
@@ -194,6 +197,7 @@ public class PeakKlineProcessor {
                         Kline curr = mergeKlineList.get(j).getMergeKline();
                         if (max <= curr.getHigh()) {
                             peakKline.setTurnPeak(true);
+                            peakKline.setTurnKline(curr);
                             break;
                         } else if (middle.getLow() > curr.getLow()) {
                             break;
@@ -207,6 +211,7 @@ public class PeakKlineProcessor {
                         Kline curr = mergeKlineList.get(j).getMergeKline();
                         if (min >= curr.getLow()) {
                             peakKline.setTurnPeak(true);
+                            peakKline.setTurnKline(curr);
                             break;
                         } else if (middle.getHigh() < curr.getHigh()) {
                             break;
@@ -261,8 +266,9 @@ public class PeakKlineProcessor {
     }
 
     public void setTendencyPeakKlineList() {
+
         tendencyPeakKlineList = new ArrayList<>();
-        for (int i = 0; i < breakPeakKlineList.size() - 1; i++) {
+        for (int i = 0; i < breakPeakKlineList.size(); i++) {
             PeakKline peakKline = breakPeakKlineList.get(i);
             if (peakKline.isJumpPeak() || peakKline.isTurnPeak()) {
                 if (!peakKline.isRangePeak()) {
@@ -350,6 +356,19 @@ public class PeakKlineProcessor {
         }
         this.tendencyPeakKlineList = tendencyPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
 
+        for (int i = 0; i < tendencyPeakKlineList.size(); i++) {
+            PeakKline prev = tendencyPeakKlineList.get(i);
+            if (prev.isTendencyPeak()) {
+                for (int j = i + 1; j < tendencyPeakKlineList.size(); j++) {
+                    PeakKline curr = tendencyPeakKlineList.get(j);
+                    if (prev.getTurnKline().getDate() > curr.getPeakDate()) {
+                        curr.setIsTendencyPeak(false);
+                    }
+                }
+            }
+        }
+        this.tendencyPeakKlineList = tendencyPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
+
     }
 
     private void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
@@ -409,6 +428,73 @@ public class PeakKlineProcessor {
                                 date = klineList.get(j).getDate();
                             }
                         }
+                    }
+
+                    PeakShapeEnum shape = peakKline.getPeakShape() == PeakShapeEnum.TOP ? PeakShapeEnum.FLOOR : PeakShapeEnum.TOP;
+                    for (int j = peakKlineList.size() - 1; j >= 0; j--) {
+                        if (peakKlineList.get(j).getPeakShape() == shape) {
+                            if (peakKlineList.get(j).getPeakDate() == date) {
+
+                                Integer pos = peakKlineList.get(j).getMergeKline().getIndex();
+
+                                if (pos + 2 < mergeKlineList.size()) {
+
+                                    Kline left = mergeKlineList.get(pos - 1).getMergeKline();
+                                    Kline middle = mergeKlineList.get(pos).getMergeKline();
+                                    Kline right = mergeKlineList.get(pos + 1).getMergeKline();
+                                    Kline second = mergeKlineList.get(pos + 2).getMergeKline();
+
+                                    Kline orig1 = mergeKlineList.get(pos + 2).getFirstOriginKline();
+
+                                    if (middle.getLow() < right.getLow()) {
+                                        if (right.getHigh() < second.getLow()
+                                            && second.getLow() > left.getHigh()
+                                            && peakKlineList.get(j).getHighest() < orig1.getLow()) {
+                                            tendencyPeakKlineList.add(peakKlineList.get(j));
+                                            break;
+                                        }
+                                        if (pos + 3 < mergeKlineList.size()) {
+                                            Kline third = mergeKlineList.get(pos + 3).getMergeKline();
+                                            Kline orig2 = mergeKlineList.get(pos + 3)
+                                                .getFirstOriginKline();
+                                            if (left.getHigh() < third.getLow()
+                                                && right.getHigh() < third.getLow()
+                                                && second.getHigh() < third.getLow()
+                                                && second.getHigh() < orig2.getLow()
+                                                && peakKlineList.get(j).getHighest() < orig2.getLow()) {
+                                                tendencyPeakKlineList.add(peakKlineList.get(j));
+                                                break;
+                                            }
+                                        }
+                                    } else if (middle.getHigh() > right.getHigh()) {
+                                        if (left.getLow() > second.getHigh()
+                                            && right.getLow() > second.getHigh()
+                                            && peakKlineList.get(j).getLowest() > orig1.getHigh()) {
+                                            tendencyPeakKlineList.add(peakKlineList.get(j));
+                                            break;
+                                        }
+                                        if (pos + 3 < mergeKlineList.size()) {
+                                            Kline third = mergeKlineList.get(pos + 3)
+                                                .getMergeKline();
+                                            Kline orig2 = mergeKlineList.get(pos + 3)
+                                                .getFirstOriginKline();
+                                            if (left.getLow() > third.getHigh()
+                                                && right.getLow() > third.getHigh()
+                                                && second.getLow() > third.getHigh()
+                                                && second.getLow() > orig2.getHigh()
+                                                && peakKlineList.get(j).getLowest() > orig2
+                                                .getHigh()) {
+                                                tendencyPeakKlineList.add(peakKlineList.get(j));
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (i != tendencyPeakKlineList.size() - 1) {
+                        continue;
                     }
                     value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? lowest : highest;
                     row = sheet.createRow(i + 1);

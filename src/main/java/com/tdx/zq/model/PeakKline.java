@@ -26,6 +26,8 @@ public class PeakKline {
 
     private MergeKline mergeKline;
 
+    private Kline turnKline;
+
     private PeakShapeEnum peakShape;
 
     private int index;
@@ -172,5 +174,13 @@ public class PeakKline {
 
     public void setRangePeak(boolean rangePeak) {
         isRangePeak = rangePeak;
+    }
+
+    public void setTurnKline(Kline turnKline) {
+        this.turnKline = turnKline;
+    }
+
+    public Kline getTurnKline() {
+        return turnKline;
     }
 }
