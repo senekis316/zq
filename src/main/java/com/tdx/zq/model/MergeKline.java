@@ -37,4 +37,16 @@ public class MergeKline {
         return CollectionUtils.isEmpty(containKlineList) ? mergeKline : containKlineList.get(0);
     }
 
+    public Kline getLastOriginKline() {
+        return CollectionUtils.isEmpty(containKlineList) ? mergeKline : containKlineList.get(containKlineList.size() - 1);
+    }
+
+    public int getLow() {
+        return this.mergeKline.getLow();
+    }
+
+    public int getHigh() {
+        return this.mergeKline.getHigh();
+    }
+
 }
