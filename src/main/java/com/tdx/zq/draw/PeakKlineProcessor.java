@@ -431,7 +431,7 @@ public class PeakKlineProcessor {
                             if (prev.getPeakShape() == PeakShapeEnum.TOP) {
                                 if (prev.getHighest() > curr.getHighest()) {
                                     curr.setRangePeak(true);
-                                    i--;
+                                    j--;
                                 } else {
                                     prev.setRangePeak(true);
                                     i = 0;
@@ -440,7 +440,7 @@ public class PeakKlineProcessor {
                             } else {
                                 if (prev.getLowest() < curr.getLowest()) {
                                     curr.setRangePeak(true);
-                                    i--;
+                                    j--;
                                 } else {
                                     prev.setRangePeak(true);
                                     i = 0;
