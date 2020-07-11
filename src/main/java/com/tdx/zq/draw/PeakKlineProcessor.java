@@ -268,6 +268,9 @@ public class PeakKlineProcessor {
 //    }
 
     public void setBreakRangePeak() {
+
+        deleteEqualDirectionPeak(breakPeakKlineList.stream().filter(peak -> peak.isJumpPeak() || peak.isTurnPeak()).collect(Collectors.toList()));
+
         for (int i = 1; i < breakPeakKlineList.size(); i++) {
             PeakKline prev = breakPeakKlineList.get(i - 1);
             if (!prev.isRangePeak()) {
@@ -418,31 +421,92 @@ public class PeakKlineProcessor {
     }
 
     private void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
-        if (equalDirectionPeaks.size() > 1) {
+        for (int i = 1; i < equalDirectionPeaks.size(); i++) {
+            PeakKline prev = equalDirectionPeaks.get(i - 1);
+            if (!prev.isRangePeak()) {
+                for (int j = i; j < equalDirectionPeaks.size(); j++) {
+                    PeakKline curr = equalDirectionPeaks.get(j);
+                    if (!curr.isRangePeak()) {
+                        if (prev.getPeakShape() == curr.getPeakShape()) {
+                            if (prev.getPeakShape() == PeakShapeEnum.TOP) {
+                                if (prev.getHighest() > curr.getHighest()) {
+                                    curr.setRangePeak(true);
+                                    i--;
+                                } else {
+                                    prev.setRangePeak(true);
+                                    i = 0;
+                                    break;
+                                }
+                            } else {
+                                if (prev.getLowest() < curr.getLowest()) {
+                                    curr.setRangePeak(true);
+                                    i--;
+                                } else {
+                                    prev.setRangePeak(true);
+                                    i = 0;
+                                    break;
+                                }
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        /*if (equalDirectionPeaks.size() > 1) {
             PeakKline max = equalDirectionPeaks.get(0);
             PeakKline min = equalDirectionPeaks.get(0);
             for (int j = 1; j < equalDirectionPeaks.size(); j++) {
                 PeakKline peak = equalDirectionPeaks.get(j);
                 if (peak.getPeakShape() == PeakShapeEnum.TOP) {
                     if (max.getMergeKline().getMergeKline().getHigh() >=
-                        peak.getMergeKline().getMergeKline().getHigh()) {
-                        peak.setIsTendencyPeak(false);
+                            peak.getMergeKline().getMergeKline().getHigh()) {
+                        peak.setRangePeak(false);
                     } else {
-                        max.setIsTendencyPeak(false);
+                        max.setRangePeak(false);
                         max = peak;
                     }
                 } else {
                     if (min.getMergeKline().getMergeKline().getLow() <=
-                        peak.getMergeKline().getMergeKline().getLow()) {
-                        peak.setIsTendencyPeak(false);
+                            peak.getMergeKline().getMergeKline().getLow()) {
+                        peak.setRangePeak(false);
                     } else {
-                        min.setIsTendencyPeak(false);
+                        min.setRangePeak(false);
                         min = peak;
                     }
                 }
             }
-        }
+        }*/
     }
+
+//    private void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
+//        if (equalDirectionPeaks.size() > 1) {
+//            PeakKline max = equalDirectionPeaks.get(0);
+//            PeakKline min = equalDirectionPeaks.get(0);
+//            for (int j = 1; j < equalDirectionPeaks.size(); j++) {
+//                PeakKline peak = equalDirectionPeaks.get(j);
+//                if (peak.getPeakShape() == PeakShapeEnum.TOP) {
+//                    if (max.getMergeKline().getMergeKline().getHigh() >=
+//                        peak.getMergeKline().getMergeKline().getHigh()) {
+//                        peak.setIsTendencyPeak(false);
+//                    } else {
+//                        max.setIsTendencyPeak(false);
+//                        max = peak;
+//                    }
+//                } else {
+//                    if (min.getMergeKline().getMergeKline().getLow() <=
+//                        peak.getMergeKline().getMergeKline().getLow()) {
+//                        peak.setIsTendencyPeak(false);
+//                    } else {
+//                        min.setIsTendencyPeak(false);
+//                        min = peak;
+//                    }
+//                }
+//            }
+//        }
+//    }
 
 
     public void exportExcel() throws IOException {
