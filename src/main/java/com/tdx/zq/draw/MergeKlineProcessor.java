@@ -25,7 +25,7 @@ public class MergeKlineProcessor {
     public void setMergeKlineList(List<Kline> klineList) {
         List<MergeKline> mergeKlineList = new ArrayList<>();
         MergeKline mergeKline = null;
-
+        
         for (int i = 0; i < klineList.size(); i++) {
             Kline curr = klineList.get(i);
             if (mergeKline == null) {
@@ -112,6 +112,7 @@ public class MergeKlineProcessor {
         combineKline.setVolume(leftKLine.getVolume() + rightKLine.getVolume());
         combineKline.setOpen(Math.max(leftKLine.getOpen(), rightKLine.getOpen()));
         combineKline.setClose(Math.max(leftKLine.getClose(), rightKLine.getClose()));
+        combineKline.setIndex(rightKLine.getIndex());
 
         return combineKline;
 

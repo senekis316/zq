@@ -198,7 +198,13 @@ public class PeakKlineProcessor {
                         Kline curr = mergeKlineList.get(j).getMergeKline();
                         if (max <= curr.getHigh()) {
                             peakKline.setTurnPeak(true);
-                            peakKline.setTurnKline(curr);
+                            if (peakKline.isJumpPeak()) {
+                                if (peakKline.getTurnKline().getDate() >= curr.getDate()) {
+                                    peakKline.setTurnKline(curr);
+                                }
+                            } else {
+                                peakKline.setTurnKline(curr);
+                            }
                             break;
                         } else if (middle.getLow() > curr.getLow()) {
                             break;
@@ -212,7 +218,13 @@ public class PeakKlineProcessor {
                         Kline curr = mergeKlineList.get(j).getMergeKline();
                         if (min >= curr.getLow()) {
                             peakKline.setTurnPeak(true);
-                            peakKline.setTurnKline(curr);
+                            if (peakKline.isJumpPeak()) {
+                                if (peakKline.getTurnKline().getDate() >= curr.getDate()) {
+                                    peakKline.setTurnKline(curr);
+                                }
+                            } else {
+                                peakKline.setTurnKline(curr);
+                            }
                             break;
                         } else if (middle.getHigh() < curr.getHigh()) {
                             break;
@@ -269,7 +281,7 @@ public class PeakKlineProcessor {
 
     public void setBreakRangePeak() {
 
-        deleteEqualDirectionPeak(breakPeakKlineList.stream().filter(peak -> peak.isJumpPeak() || peak.isTurnPeak()).collect(Collectors.toList()));
+        //deleteEqualDirectionPeak(breakPeakKlineList.stream().filter(peak -> peak.isJumpPeak() || peak.isTurnPeak()).collect(Collectors.toList()));
 
         for (int i = 1; i < breakPeakKlineList.size(); i++) {
             PeakKline prev = breakPeakKlineList.get(i - 1);
@@ -420,7 +432,7 @@ public class PeakKlineProcessor {
 
     }
 
-    private void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
+    /*private void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
         for (int i = 1; i < equalDirectionPeaks.size(); i++) {
             PeakKline prev = equalDirectionPeaks.get(i - 1);
             if (!prev.isRangePeak()) {
@@ -453,7 +465,7 @@ public class PeakKlineProcessor {
                     }
                 }
             }
-        }
+        }*/
 
         /*if (equalDirectionPeaks.size() > 1) {
             PeakKline max = equalDirectionPeaks.get(0);
@@ -478,8 +490,8 @@ public class PeakKlineProcessor {
                     }
                 }
             }
-        }*/
-    }
+        }
+    }*/
 
 //    private void deleteEqualDirectionPeak(List<PeakKline> equalDirectionPeaks) {
 //        if (equalDirectionPeaks.size() > 1) {
@@ -514,11 +526,27 @@ public class PeakKlineProcessor {
         try (OutputStream output = new FileOutputStream(klineApplicationContext.getOutputPath());
             SXSSFWorkbook workBook = new SXSSFWorkbook(tendencyPeakKlineList.size())) {
             Sheet sheet = workBook.createSheet();
+            
+            MergeKline prev = mergeKlineList.get(0);
+            for (int i = 1; i < tendencyPeakKlineList.get(0).getMergeKlineIndex(); i++) {
+                MergeKline curr = mergeKlineList.get(i);
+                if (tendencyPeakKlineList.get(0).getPeakShape() == PeakShapeEnum.TOP) {
+                    prev = prev.getLow() <= curr.getLow() ? prev : curr;
+                } else {
+                    prev = prev.getHigh() >= curr.getHigh() ? prev : curr;
+                }
+            }
+            if (prev != null && prev.getIndex() < tendencyPeakKlineList.get(0).getMergeKlineIndex()) {
+                Row firstRow = sheet.createRow(0);
+                firstRow.createCell(0, CellType.STRING).setCellValue(String.valueOf(klineList.get(0).getDate()));
+                firstRow.createCell(1, CellType.NUMERIC).setCellValue(klineList.get(0).getLow());
+            }
+    
             for (int i = 0; i < tendencyPeakKlineList.size(); i++) {
                 PeakKline peakKline = tendencyPeakKlineList.get(i);
                 int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? peakKline.getHighest() : peakKline.getLowest();
                 long date = peakKline.getPeakDate();
-                Row row = sheet.createRow(i);
+                Row row = sheet.createRow(i + 1);
                 row.createCell(0, CellType.STRING).setCellValue(String.valueOf(date));
                 row.createCell(1, CellType.NUMERIC).setCellValue(value);
                 if (i == tendencyPeakKlineList.size() - 1) {
@@ -607,11 +635,12 @@ public class PeakKlineProcessor {
                         continue;
                     }
                     value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? lowest : highest;
-                    row = sheet.createRow(i + 1);
+                    row = sheet.createRow(i + 2);
                     row.createCell(0, CellType.STRING).setCellValue(String.valueOf(date));
                     row.createCell(1, CellType.NUMERIC).setCellValue(value);
                 }
             }
+    
             workBook.write(output);
             workBook.dispose();
         } finally {
