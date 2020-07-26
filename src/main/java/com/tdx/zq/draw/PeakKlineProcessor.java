@@ -315,10 +315,26 @@ public class PeakKlineProcessor {
             for (int i = 0; i < tendencyPeakKlineList.size(); i++) {
                 PeakKline peakKline = tendencyPeakKlineList.get(i);
                 int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? peakKline.getHighest() : peakKline.getLowest();
-                long date = peakKline.getPeakDate();
+                Long date = null;
+                if (peakKline.getPeakShape() == PeakShapeEnum.TOP) {
+                    for (Kline kline : peakKline.getMergeKline().getContainKlineList()) {
+                        if (kline.getHigh() == value) {
+                            date = kline.getDate();
+                            break;
+                        }
+                    }
+                } else {
+                    for (Kline kline : peakKline.getMergeKline().getContainKlineList()) {
+                        if (kline.getLow() == value) {
+                            date = kline.getDate();
+                            break;
+                        }
+                    }
+                }
                 Row row = sheet.createRow(i + 1);
                 row.createCell(0, CellType.STRING).setCellValue(String.valueOf(date));
                 row.createCell(1, CellType.NUMERIC).setCellValue(value);
+                
                 if (i == tendencyPeakKlineList.size() - 1) {
                     int lowest = Integer.MAX_VALUE;
                     int highest = Integer.MIN_VALUE;
