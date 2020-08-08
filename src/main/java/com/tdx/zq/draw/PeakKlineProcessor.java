@@ -111,59 +111,6 @@ public class PeakKlineProcessor {
         this.breakPeakKlineList = breakPeakKlineList;
     }
 
-    /*private boolean setJumpPeakKline(PeakKline peakKline,  List<MergeKline> mergeKlineList) {
-
-        Integer index = peakKline.getMergeKline().getIndex();
-
-        Kline left = mergeKlineList.get(index - 1).getMergeKline();
-        Kline middle = mergeKlineList.get(index).getMergeKline();
-        Kline right = mergeKlineList.get(index + 1).getMergeKline();
-        Kline second = mergeKlineList.get(index + 2).getMergeKline();
-
-        Kline orig1 = mergeKlineList.get(index + 2).getFirstOriginKline();
-
-        if (middle.getLow() < right.getLow()) {
-            if (right.getHigh() < second.getLow()
-                && second.getLow() > left.getHigh()
-                && peakKline.getHighest() < orig1.getLow()) {
-                peakKline.setTurnKline(orig1);
-                peakKline.setIsJumpPeak(true);
-                return true;
-            }
-            Kline third = mergeKlineList.get(index + 3).getMergeKline();
-            Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
-            if (left.getHigh() < third.getLow()
-                && right.getHigh() < third.getLow()
-                && second.getHigh() < third.getLow()
-                && second.getHigh() < orig2.getLow()
-                && peakKline.getHighest() < orig2.getLow()) {
-                peakKline.setTurnKline(orig2);
-                peakKline.setIsJumpPeak(true);
-                return true;
-            }
-        } else if (middle.getHigh() > right.getHigh()) {
-            if (left.getLow() > second.getHigh()
-                && right.getLow() > second.getHigh()
-                && peakKline.getLowest() > orig1.getHigh()) {
-                peakKline.setTurnKline(orig1);
-                peakKline.setIsJumpPeak(true);
-                return true;
-            }
-            Kline third = mergeKlineList.get(index + 3).getMergeKline();
-            Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
-            if (left.getLow() > third.getHigh()
-                && right.getLow() > third.getHigh()
-                && second.getLow() > third.getHigh()
-                && second.getLow() > orig2.getHigh()
-                && peakKline.getLowest() > orig2.getHigh()) {
-                peakKline.setTurnKline(orig2);
-                peakKline.setIsJumpPeak(true);
-                return true;
-            }
-        }
-        return false;
-    }*/
-
     private void setJumpPeakKlineList(
         List<MergeKline> mergeKlineList,
         List<PeakKline> peakKlineList) {
