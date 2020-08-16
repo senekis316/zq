@@ -73,13 +73,11 @@ public class PeakKlineProcessor {
 
     private void setBreakPeakKlineList(
         List<PeakKline> peakKlineList) {
-        //List<PeakKline> breakPeakKlineList = new ArrayList<>();
         for (int i = 0; i < peakKlineList.size() - 3; i++) {
             if (!peakKlineList.get(i).isBreakPeak()) {
                 if (peakKlineList.get(i).getPeakShape() != PeakShapeEnum.NONE) {
                     if (peakKlineList.get(i).isJumpPeak()) {
                         peakKlineList.get(i).setIsBreakPeak(true);
-                        //breakPeakKlineList.add(peakKlineList.get(i));
                     } else {
                         Kline middle = peakKlineList.get(i).getMergeKline().getMergeKline();
                         Kline right = peakKlineList.get(i + 1).getMergeKline().getMergeKline();
@@ -95,7 +93,6 @@ public class PeakKlineProcessor {
                                 continue;
                             }
                             peakKlineList.get(i).setIsBreakPeak(true);
-                            //breakPeakKlineList.add(peakKlineList.get(i));
                         } else if (middle.getHigh() > right.getHigh()) {
                             if (middle.getHigh() < second.getHigh()) {
                                 continue;
@@ -104,7 +101,6 @@ public class PeakKlineProcessor {
                                 continue;
                             }
                             peakKlineList.get(i).setIsBreakPeak(true);
-                            //breakPeakKlineList.add(peakKlineList.get(i));
                         }
                     }
                 }
@@ -117,7 +113,6 @@ public class PeakKlineProcessor {
     private void setBreakJumpPeakKlineList(
         List<MergeKline> mergeKlineList,
         List<PeakKline> peakKlineList) {
-        List<PeakKline> jumpPeakKlineList = new ArrayList<>();
         for (int i = 0; i < peakKlineList.size() - 3; i++) {
 
             PeakKline peakKline = peakKlineList.get(i);
@@ -157,7 +152,6 @@ public class PeakKlineProcessor {
     private void setJumpPeakKlineList(
         List<MergeKline> mergeKlineList,
         List<PeakKline> breakPeakKlineList) {
-        //List<PeakKline> jumpPeakKlineList = new ArrayList<>();
         for (int i = 0; i < breakPeakKlineList.size() - 3; i++) {
 
             PeakKline breakPeakKline = breakPeakKlineList.get(i);
@@ -176,7 +170,6 @@ public class PeakKlineProcessor {
                     && breakPeakKline.getHighest() < orig1.getLow()) {
                     breakPeakKline.setTurnKline(orig1);
                     breakPeakKline.setIsJumpPeak(true);
-                    //jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
                 Kline third = mergeKlineList.get(index + 3).getMergeKline();
@@ -188,7 +181,6 @@ public class PeakKlineProcessor {
                     && breakPeakKline.getHighest() < orig2.getLow()) {
                     breakPeakKline.setTurnKline(orig2);
                     breakPeakKline.setIsJumpPeak(true);
-                    //jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
             } else if (middle.getHigh() > right.getHigh()) {
@@ -197,7 +189,6 @@ public class PeakKlineProcessor {
                     && breakPeakKline.getLowest() > orig1.getHigh()) {
                     breakPeakKline.setTurnKline(orig1);
                     breakPeakKline.setIsJumpPeak(true);
-                    //jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
                 Kline third = mergeKlineList.get(index + 3).getMergeKline();
@@ -209,7 +200,6 @@ public class PeakKlineProcessor {
                     && breakPeakKline.getLowest() > orig2.getHigh()) {
                     breakPeakKline.setTurnKline(orig2);
                     breakPeakKline.setIsJumpPeak(true);
-                    //jumpPeakKlineList.add(breakPeakKline);
                     continue;
                 }
             }
