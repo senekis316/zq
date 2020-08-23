@@ -5,6 +5,7 @@ import com.tdx.zq.enums.PeakShapeEnum;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
+import com.tdx.zq.tuple.TwoTuple;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.Data;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -416,28 +418,46 @@ public class PeakKlineProcessor {
 
     }
 
+    @Data
+    public static class KlineRow {
+        private long date;
+        private long value;
+        public KlineRow(long date, long value) {
+            this.date = date;
+            this.value = value;
+        }
+    }
+
     public void exportExcel() throws IOException {
         if (CollectionUtils.isEmpty(tendencyPeakKlineList)) return;
         try (OutputStream output = new FileOutputStream(klineApplicationContext.getOutputPath());
             SXSSFWorkbook workBook = new SXSSFWorkbook(tendencyPeakKlineList.size())) {
             Sheet sheet = workBook.createSheet();
-            
-            MergeKline prev = mergeKlineList.get(0);
-            for (int i = 1; i < tendencyPeakKlineList.get(0).getMergeKlineIndex(); i++) {
-                MergeKline curr = mergeKlineList.get(i);
-                if (tendencyPeakKlineList.get(0).getPeakShape() == PeakShapeEnum.TOP) {
-                    prev = prev.getLow() <= curr.getLow() ? prev : curr;
+
+            List<KlineRow> klineRows = new ArrayList<>();
+
+            int skip = 0;
+            MergeKline one = mergeKlineList.get(0);
+            MergeKline two = tendencyPeakKlineList.get(0).getMergeKline();
+            if (one.getIndex() != two.getIndex()) {
+                if (tendencyPeakKlineList.get(0).getPeakShape() == PeakShapeEnum.FLOOR) {
+                    if (one.getLow() <= two.getLow()) {
+                        klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getLow()));
+                        skip++;
+                    } else {
+                        klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
+                    }
                 } else {
-                    prev = prev.getHigh() >= curr.getHigh() ? prev : curr;
+                    if (one.getHigh() >= two.getHigh()) {
+                        klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
+                        skip++;
+                    } else {
+                        klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
+                    }
                 }
             }
-            if (prev != null && prev.getIndex() < tendencyPeakKlineList.get(0).getMergeKlineIndex()) {
-                Row firstRow = sheet.createRow(0);
-                firstRow.createCell(0, CellType.STRING).setCellValue(String.valueOf(klineList.get(0).getDate()));
-                firstRow.createCell(1, CellType.NUMERIC).setCellValue(klineList.get(0).getLow());
-            }
-    
-            for (int i = 0; i < tendencyPeakKlineList.size(); i++) {
+
+            for (int i = skip; i < tendencyPeakKlineList.size(); i++) {
                 PeakKline peakKline = tendencyPeakKlineList.get(i);
                 int value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? peakKline.getHighest() : peakKline.getLowest();
                 Long date = null;
@@ -456,10 +476,8 @@ public class PeakKlineProcessor {
                         }
                     }
                 }
-                Row row = sheet.createRow(i + 1);
-                row.createCell(0, CellType.STRING).setCellValue(String.valueOf(date));
-                row.createCell(1, CellType.NUMERIC).setCellValue(value);
-                
+                klineRows.add(new KlineRow(date, value));
+
                 if (i == tendencyPeakKlineList.size() - 1) {
                     int lowest = Integer.MAX_VALUE;
                     int highest = Integer.MIN_VALUE;
@@ -546,12 +564,17 @@ public class PeakKlineProcessor {
                         continue;
                     }
                     value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? lowest : highest;
-                    row = sheet.createRow(i + 2);
-                    row.createCell(0, CellType.STRING).setCellValue(String.valueOf(date));
-                    row.createCell(1, CellType.NUMERIC).setCellValue(value);
+                    klineRows.add(new KlineRow(date, value));
                 }
             }
-    
+
+            for (int i = 0; i < klineRows.size(); i++) {
+                KlineRow klineRow = klineRows.get(i);
+                Row row = sheet.createRow(i);
+                row.createCell(0, CellType.STRING).setCellValue(String.valueOf(klineRow.getDate()));
+                row.createCell(1, CellType.NUMERIC).setCellValue(klineRow.getValue());
+            }
+
             workBook.write(output);
             workBook.dispose();
         } finally {
