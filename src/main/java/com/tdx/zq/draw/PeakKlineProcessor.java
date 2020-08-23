@@ -73,7 +73,7 @@ public class PeakKlineProcessor {
 
     private void setBreakPeakKlineList(
         List<PeakKline> peakKlineList) {
-        for (int i = 0; i < peakKlineList.size() - 3; i++) {
+        for (int i = 0; i < peakKlineList.size() - 4; i++) {
             if (!peakKlineList.get(i).isBreakPeak()) {
                 if (peakKlineList.get(i).getPeakShape() != PeakShapeEnum.NONE) {
                     if (peakKlineList.get(i).isJumpPeak()) {
@@ -83,6 +83,7 @@ public class PeakKlineProcessor {
                         Kline right = peakKlineList.get(i + 1).getMergeKline().getMergeKline();
                         Kline second = peakKlineList.get(i + 2).getMergeKline().getMergeKline();
                         Kline third = peakKlineList.get(i + 3).getMergeKline().getMergeKline();
+                        Kline fourth = peakKlineList.get(i + 4).getMergeKline().getMergeKline();
 
                         //波谷
                         if (middle.getLow() < right.getLow()) {
@@ -92,12 +93,18 @@ public class PeakKlineProcessor {
                             if (middle.getLow() > third.getLow()) {
                                 continue;
                             }
+                            if (middle.getLow() > fourth.getLow()) {
+                                continue;
+                            }
                             peakKlineList.get(i).setIsBreakPeak(true);
                         } else if (middle.getHigh() > right.getHigh()) {
                             if (middle.getHigh() < second.getHigh()) {
                                 continue;
                             }
                             if (middle.getHigh() < third.getHigh()) {
+                                continue;
+                            }
+                            if (middle.getHigh() < fourth.getHigh()) {
                                 continue;
                             }
                             peakKlineList.get(i).setIsBreakPeak(true);
@@ -283,9 +290,14 @@ public class PeakKlineProcessor {
                             if ((curr.isJumpPeak() || curr.isTurnPeak())
                                 && prev.getPeakShape() != curr.getPeakShape()
                                 && curr.getMergeKline().getLastOriginKline().getIndex() >= prev.getTurnKline().getIndex()) {
-                                int max = prev.getPeakShape() == PeakShapeEnum.TOP ? prev.getHighest() : curr.getHighest();
-                                int min = prev.getPeakShape() == PeakShapeEnum.FLOOR ? prev.getLowest() : curr.getLowest();
-                                for (int z = prev.getMergeKlineIndex() + 1; z < curr.getMergeKlineIndex(); z++) {
+                                int max =
+                                    prev.getPeakShape() == PeakShapeEnum.TOP ? prev.getHighest()
+                                        : curr.getHighest();
+                                int min =
+                                    prev.getPeakShape() == PeakShapeEnum.FLOOR ? prev.getLowest()
+                                        : curr.getLowest();
+                                for (int z = prev.getMergeKlineIndex() + 1;
+                                    z < curr.getMergeKlineIndex(); z++) {
                                     MergeKline merge = mergeKlineList.get(z);
                                     if (curr.getPeakShape() == PeakShapeEnum.FLOOR) {
                                         if (merge.getLow() < min) {
