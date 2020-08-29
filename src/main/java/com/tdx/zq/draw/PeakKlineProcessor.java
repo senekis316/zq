@@ -5,7 +5,6 @@ import com.tdx.zq.enums.PeakShapeEnum;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
-import com.tdx.zq.tuple.TwoTuple;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -124,35 +123,38 @@ public class PeakKlineProcessor {
         List<PeakKline> peakKlineList) {
         for (int i = 0; i < peakKlineList.size() - 3; i++) {
 
-            PeakKline peakKline = peakKlineList.get(i);
-            Integer index = peakKline.getMergeKline().getIndex();
+            if (peakKlineList.get(i).getPeakShape() != PeakShapeEnum.NONE) {
 
-            Kline left = mergeKlineList.get(index - 1).getMergeKline();
-            Kline middle = mergeKlineList.get(index).getMergeKline();
-            Kline right = mergeKlineList.get(index + 1).getMergeKline();
-            Kline second = mergeKlineList.get(index + 2).getMergeKline();
-            Kline third = mergeKlineList.get(index + 3).getMergeKline();
+                PeakKline peakKline = peakKlineList.get(i);
+                Integer index = peakKline.getMergeKline().getIndex();
 
-            Kline orig1 = mergeKlineList.get(index + 2).getFirstOriginKline();
-            //Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
+                Kline left = mergeKlineList.get(index - 1).getMergeKline();
+                Kline middle = mergeKlineList.get(index).getMergeKline();
+                Kline right = mergeKlineList.get(index + 1).getMergeKline();
+                Kline second = mergeKlineList.get(index + 2).getMergeKline();
+                Kline third = mergeKlineList.get(index + 3).getMergeKline();
 
-            if (middle.getLow() < right.getLow()) {
-                if (right.getHigh() < second.getLow()
-                    && second.getLow() > left.getHigh()
-                    && peakKline.getHighest() < orig1.getLow()
-                    && peakKline.getLowest() >= third.getLow()) {
-                    peakKline.setTurnKline(orig1);
-                    peakKline.setIsJumpPeak(true);
-                    peakKline.setIsBreakPeak(true);
-                }
-            } else if (middle.getHigh() > right.getHigh()) {
-                if (left.getLow() > second.getHigh()
-                    && right.getLow() > second.getHigh()
-                    && peakKline.getLowest() > orig1.getHigh()
-                    && peakKline.getHighest() <= third.getHigh()) {
-                    peakKline.setTurnKline(orig1);
-                    peakKline.setIsJumpPeak(true);
-                    peakKline.setIsBreakPeak(true);
+                Kline orig1 = mergeKlineList.get(index + 2).getFirstOriginKline();
+                //Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
+
+                if (middle.getLow() < right.getLow()) {
+                    if (right.getHigh() < second.getLow()
+                        && second.getLow() > left.getHigh()
+                        && peakKline.getHighest() < orig1.getLow()
+                        && peakKline.getLowest() >= third.getLow()) {
+                        peakKline.setTurnKline(orig1);
+                        peakKline.setIsJumpPeak(true);
+                        peakKline.setIsBreakPeak(true);
+                    }
+                } else if (middle.getHigh() > right.getHigh()) {
+                    if (left.getLow() > second.getHigh()
+                        && right.getLow() > second.getHigh()
+                        && peakKline.getLowest() > orig1.getHigh()
+                        && peakKline.getHighest() <= third.getHigh()) {
+                        peakKline.setTurnKline(orig1);
+                        peakKline.setIsJumpPeak(true);
+                        peakKline.setIsBreakPeak(true);
+                    }
                 }
             }
         }
@@ -476,6 +478,7 @@ public class PeakKlineProcessor {
                         }
                     }
                 }
+
                 klineRows.add(new KlineRow(date, value));
 
                 if (i == tendencyPeakKlineList.size() - 1) {
