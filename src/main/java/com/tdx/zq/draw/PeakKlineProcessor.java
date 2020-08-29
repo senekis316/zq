@@ -135,7 +135,6 @@ public class PeakKlineProcessor {
                 Kline third = mergeKlineList.get(index + 3).getMergeKline();
 
                 Kline orig1 = mergeKlineList.get(index + 2).getFirstOriginKline();
-                //Kline orig2 = mergeKlineList.get(index + 3).getFirstOriginKline();
 
                 if (middle.getLow() < right.getLow()) {
                     if (right.getHigh() < second.getLow()
@@ -316,7 +315,23 @@ public class PeakKlineProcessor {
                                     }
                                 }
                             } else {
-                                curr.setRangePeak(true);
+                                if (curr.getPeakShape() == prev.getPeakShape()) {
+                                    if (curr.getPeakShape() == PeakShapeEnum.FLOOR) {
+                                        if (prev.getLowest() <= curr.getLowest()) {
+                                            curr.setRangePeak(true);
+                                        } else {
+                                            prev.setRangePeak(true);
+                                        }
+                                    } else {
+                                        if (prev.getHighest() >= curr.getHighest()) {
+                                            curr.setRangePeak(true);
+                                        } else {
+                                            prev.setRangePeak(true);
+                                        }
+                                    }
+                                } else {
+                                    curr.setRangePeak(true);
+                                }
                             }
                         }
                         if (!curr.isRangePeak()) {
