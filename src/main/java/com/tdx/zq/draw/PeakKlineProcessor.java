@@ -369,7 +369,9 @@ public class PeakKlineProcessor {
                         for (int x = begin; x >= 0; x--) {
                             PeakKline curr = breakPeakKlineList.get(x);
                             if (curr.isTendencyPeak()) {
-                                if (curr.getHighest() < highest && curr.getLowest() > lowest) {
+                                if (curr.getPeakShape() == PeakShapeEnum.TOP && curr.getHighest() < highest) {
+                                    curr.setIsTendencyPeak(false);
+                                } else if (curr.getPeakShape() == PeakShapeEnum.FLOOR && curr.getLowest() > lowest) {
                                     curr.setIsTendencyPeak(false);
                                 } else {
                                     if (curr.getPeakShape() == middle.getPeakShape()) {
