@@ -48,9 +48,9 @@ public class KLineDrawService implements InitializingBean {
 //        KlineApplicationContext klineApplicationContext =
 //            new KlineApplicationContext("/SZ300181.txt", KlineType.DAY_LINE);
 //        KlineApplicationContext klineApplicationContext =
-//            new KlineApplicationContext("src/main/resources/SZ300378.txt",
-//                KlineType.DAY_LINE, "src/main/resources/SZ300378.xlsx");
-//        // klineApplicationContext.printMergeKlineList();
+//            new KlineApplicationContext("src/main/resources/SH603976.txt",
+//                KlineType.DAY_LINE, "src/main/resources/SH603976.xlsx");
+//        klineApplicationContext.printMergeKlineList();
 //        klineApplicationContext.printPeakKlineList();
 //        klineApplicationContext.printBreakPeakKlineList();
 //        klineApplicationContext.printJumpPeakKlineList();

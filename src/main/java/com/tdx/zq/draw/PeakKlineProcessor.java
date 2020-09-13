@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.tdx.zq.tuple.TwoTuple;
+import com.tdx.zq.utils.JacksonUtils;
 import lombok.Data;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
@@ -359,71 +362,56 @@ public class PeakKlineProcessor {
 
         this.tendencyPeakKlineList = tendencyPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
 
-        for (int i = 0; i < breakPeakKlineList.size() - 1;) {
-            PeakKline left = breakPeakKlineList.get(i);
-            while(!left.isTendencyPeak() && i < breakPeakKlineList.size() - 1) {
-                left = breakPeakKlineList.get(++i);
+        // 处理反向删除逻辑
+        for (int i = tendencyPeakKlineList.size() - 1; i > 0; i--) {
+            List<PeakKline> peaks = new ArrayList<>();
+            PeakKline curr = tendencyPeakKlineList.get(i);
+            for (int j = curr.getIndex() - 3; j >= 0 && j < curr.getIndex(); j++) {
+                PeakKline prev = peakKlineList.get(j);
+                if (curr.getMergeKline().getIndex() - prev.getMergeKline().getIndex() <= 3
+                    && !prev.isJumpPeak()
+                    && prev.getPeakShape() != PeakShapeEnum.NONE
+                    && prev.getPeakShape() != curr.getPeakShape()) {
+                    peaks.add(prev);
+                }
             }
-            int begin = i;
-            PeakKline right = breakPeakKlineList.get(++i);
-            while(!right.isTendencyPeak() && i < breakPeakKlineList.size() - 1) {
-                right = breakPeakKlineList.get(++i);
-            }
-            int end = i;
-            if (end - begin > 1) {
-                for (int j = begin; j < end; j++) {
-                    PeakKline middle = breakPeakKlineList.get(j);
-                    if (left.getPeakShape() == PeakShapeEnum.FLOOR
-                        && middle.getPeakShape() == left.getPeakShape()
-                        && middle.getLowest() < left.getLowest()) {
-                        int lowest = middle.getLowest();
-                        int highest = Integer.MIN_VALUE;
-                        for (int z = middle.getMergeKlineIndex() -3; z >= 0 && z < middle.getMergeKlineIndex(); z++) {
-                            highest = Math.max(highest, mergeKlineList.get(z).getHigh());
-                        }
-                        for (int x = begin; x >= 0; x--) {
-                            PeakKline curr = breakPeakKlineList.get(x);
-                            if (curr.isTendencyPeak()) {
-                                if (curr.getPeakShape() == PeakShapeEnum.TOP && curr.getHighest() < highest) {
-                                    curr.setIsTendencyPeak(false);
-                                } else if (curr.getPeakShape() == PeakShapeEnum.FLOOR && curr.getLowest() > lowest) {
-                                    curr.setIsTendencyPeak(false);
-                                } else {
-                                    if (curr.getPeakShape() == middle.getPeakShape()) {
-                                        if (curr.getLowest() > lowest) {
-                                            middle.setIsTendencyPeak(true);
-                                        }
-                                    } else {
-                                        middle.setIsTendencyPeak(true);
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-                        break;
+            if (peaks.size() > 0) {
+                PeakKline peak = peaks.get(0);
+                if (peaks.size() == 2) {
+                    if (curr.getPeakShape() == PeakShapeEnum.TOP) {
+                        peak = peak.getLowest() < peaks.get(1).getLowest() ? peak: peaks.get(1);
+                    } else {
+                        peak = peak.getHighest() > peaks.get(1).getHighest() ? peak: peaks.get(1);
                     }
-                    if (left.getPeakShape() == PeakShapeEnum.TOP
-                        && middle.getPeakShape() == left.getPeakShape()
-                        && middle.getHighest() > left.getHighest()) {
-                        int lowest = Integer.MAX_VALUE;
-                        int highest = middle.getHighest();
-                        for (int z = middle.getMergeKlineIndex() - 3; z >= 0 && z < middle.getMergeKlineIndex(); z++) {
-                            lowest = Math.min(lowest, mergeKlineList.get(z).getLow());
-                        }
-                        for (int x = begin; x >= 0; x--) {
-                            PeakKline curr = breakPeakKlineList.get(x);
-                            if (curr.isTendencyPeak()) {
-                                if (curr.getHighest() < highest && curr.getLowest() > lowest) {
+                }
+                int lowest;
+                int highest;
+                if (curr.getPeakShape() == PeakShapeEnum.TOP) {
+                    lowest = peak.getLowest();
+                    highest = curr.getHighest();
+                } else {
+                    lowest = curr.getLowest();
+                    highest = peak.getHighest();
+                }
+                for (int j = i - 1; j >= 0 ; j--) {
+                    PeakKline range = tendencyPeakKlineList.get(j);
+                    if (range.getHighest() < highest
+                        && range.getLowest() > lowest) {
+                        range.setRangePeak(true);
+                        range.setIsTendencyPeak(false);
+                    } else {
+                        if (range.getPeakShape() == curr.getPeakShape()) {
+                            if (range.getPeakShape() == PeakShapeEnum.TOP) {
+                                if (range.getHighest() >= curr.getHighest()) {
                                     curr.setIsTendencyPeak(false);
                                 } else {
-                                    if (curr.getPeakShape() == middle.getPeakShape()) {
-                                        if (curr.getHighest() < highest) {
-                                            middle.setIsTendencyPeak(true);
-                                        }
-                                    } else {
-                                        middle.setIsTendencyPeak(true);
-                                    }
-                                    break;
+                                    range.setIsTendencyPeak(false);
+                                }
+                            } else {
+                                if (range.getLowest() <= curr.getLowest()) {
+                                    curr.setIsTendencyPeak(false);
+                                } else {
+                                    range.setIsTendencyPeak(false);
                                 }
                             }
                         }
@@ -432,9 +420,7 @@ public class PeakKlineProcessor {
                 }
             }
         }
-
         this.tendencyPeakKlineList = breakPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
-
     }
 
     @Data
