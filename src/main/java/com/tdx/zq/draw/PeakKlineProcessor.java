@@ -97,7 +97,7 @@ public class PeakKlineProcessor {
                     if (right.getHigh() < second.getLow()
                         && second.getLow() > left.getHigh()
                         && peakKline.getHighest() < orig1.getLow()
-                        && peakKline.getLowest() >= third.getLow()) {
+                        && peakKline.getLowest() <= third.getLow()) {
                         peakKline.setTurnKline(orig1);
                         peakKline.setIsJumpPeak(true);
                         peakKline.setIsBreakPeak(true);
@@ -238,6 +238,9 @@ public class PeakKlineProcessor {
                 Kline third = mergeKlineList.get(index + 3).getMergeKline();
 
                 if (middle.getLow() < right.getLow()) {
+                    if (peakKline.isJumpPeak()) {
+                        peakKline.setTurnPeak(true);
+                    }
                     int max = Arrays.stream(
                         new int[]{left.getHigh(), middle.getHigh(), right.getHigh(), second.getHigh(),
                             third.getHigh()}).max().getAsInt();
@@ -258,6 +261,9 @@ public class PeakKlineProcessor {
                         }
                     }
                 } else if (middle.getHigh() > right.getHigh()) {
+                    if (peakKline.isJumpPeak()) {
+                        peakKline.setTurnPeak(true);
+                    }
                     int min = Arrays.stream(
                         new int[]{left.getLow(), middle.getLow(), right.getLow(), second.getLow(),
                             third.getLow()}).min().getAsInt();
