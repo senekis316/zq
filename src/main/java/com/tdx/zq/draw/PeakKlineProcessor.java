@@ -2,6 +2,7 @@ package com.tdx.zq.draw;
 
 import com.tdx.zq.context.KlineApplicationContext;
 import com.tdx.zq.enums.PeakShapeEnum;
+import com.tdx.zq.enums.TendencyTypeEnum;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
@@ -31,6 +32,7 @@ public class PeakKlineProcessor {
     private List<PeakKline> jumpPeakKlineList;
     private List<PeakKline> turnPeakKlineList;
     private List<PeakKline> tendencyPeakKlineList;
+    private List<MatrixKlineRow> matrixKlineRowList;
     private KlineApplicationContext klineApplicationContext;
 
     public PeakKlineProcessor(KlineApplicationContext klineApplicationContext) throws IOException {
@@ -439,6 +441,21 @@ public class PeakKlineProcessor {
         }
     }
 
+    @Data
+    public static class MatrixKlineRow {
+        private long low;
+        private long high;
+        private long date;
+        private PeakShapeEnum shape;
+        private TendencyTypeEnum tendency;
+        public MatrixKlineRow(long low, long high, long date, PeakShapeEnum shape) {
+            this.low = low;
+            this.high = high;
+            this.date = date;
+            this.shape = shape;
+        }
+    }
+
     public void exportExcel() throws IOException {
         if (CollectionUtils.isEmpty(tendencyPeakKlineList)) return;
         try (OutputStream output = new FileOutputStream(klineApplicationContext.getOutputPath());
@@ -446,6 +463,7 @@ public class PeakKlineProcessor {
             Sheet sheet = workBook.createSheet();
 
             List<KlineRow> klineRows = new ArrayList<>();
+            List<MatrixKlineRow> matrixKlineRows = new ArrayList<>();
 
             int skip = 0;
             MergeKline one = mergeKlineList.get(0);
@@ -454,16 +472,20 @@ public class PeakKlineProcessor {
                 if (tendencyPeakKlineList.get(0).getPeakShape() == PeakShapeEnum.FLOOR) {
                     if (one.getLow() <= two.getLow()) {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getLow()));
+                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.TOP));
                         skip++;
                     } else {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
+                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.TOP));
                     }
                 } else {
                     if (one.getHigh() >= two.getHigh()) {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
+                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.FLOOR));
                         skip++;
                     } else {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
+                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.FLOOR));
                     }
                 }
             }
@@ -489,6 +511,7 @@ public class PeakKlineProcessor {
                 }
 
                 klineRows.add(new KlineRow(date, value));
+                matrixKlineRows.add(new MatrixKlineRow(peakKline.getLowest(), peakKline.getHighest(), date, peakKline.getPeakShape()));
 
                 if (i == tendencyPeakKlineList.size() - 1) {
                     int lowest = Integer.MAX_VALUE;
@@ -577,8 +600,15 @@ public class PeakKlineProcessor {
                     }
                     value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? lowest : highest;
                     klineRows.add(new KlineRow(date, value));
+                    if (peakKline.getPeakShape() == PeakShapeEnum.TOP) {
+                        matrixKlineRows.add(new MatrixKlineRow(lowest, peakKline.getHighest(), date, PeakShapeEnum.FLOOR));
+                    } else {
+                        matrixKlineRows.add(new MatrixKlineRow(peakKline.getLowest(), highest, date, PeakShapeEnum.TOP));
+                    }
                 }
             }
+
+            this.matrixKlineRowList = matrixKlineRows;
 
             for (int i = 0; i < klineRows.size(); i++) {
                 KlineRow klineRow = klineRows.get(i);
@@ -593,6 +623,10 @@ public class PeakKlineProcessor {
             System.out.println("输出文件: " + klineApplicationContext.getOutputPath());
         }
 
+    }
+
+    public List<MatrixKlineRow> getMatrixKlineRowList() {
+        return matrixKlineRowList;
     }
 
 }

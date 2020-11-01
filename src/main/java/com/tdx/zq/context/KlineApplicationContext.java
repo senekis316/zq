@@ -1,8 +1,10 @@
 package com.tdx.zq.context;
 
 import com.tdx.zq.draw.KLineDrawService;
+import com.tdx.zq.draw.MatrixKlineProcessor;
 import com.tdx.zq.draw.MergeKlineProcessor;
 import com.tdx.zq.draw.PeakKlineProcessor;
+import com.tdx.zq.draw.PeakKlineProcessor.*;
 import com.tdx.zq.enums.KlineType;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
@@ -37,10 +39,7 @@ public class KlineApplicationContext {
   private List<PeakKline> breakPeakKlineList;
   private List<PeakKline> jumpPeakKlineList;
   private List<PeakKline> turnPeakKlineList;
-  private List<PeakKline> tendencyPeakKlineList;
-  private List<PeakKline> oppositeTendencyPeakKlineList;
-  private List<PeakKline> independentTendencyPeakKlineList;
-  private List<PeakKline> anglePeakKlineList;
+  private List<MatrixKlineRow> matrixKlineRowList;
 
   public KlineApplicationContext(String path, KlineType klineType, String outputPath) throws IOException {
     this.outputPath = outputPath;
@@ -49,6 +48,7 @@ public class KlineApplicationContext {
     setKlineMap(klineList);
     setMergeKlineList(klineList);
     setPeakKlineList();
+    setMatrixKlineList();
   }
 
   public KlineApplicationContext(File file, KlineType klineType, String outputPath) throws IOException {
@@ -72,8 +72,6 @@ public class KlineApplicationContext {
     klineStrList.remove(0);
     boolean hasTime = klineStrList.get(0).split("\t")[1].trim().equals("时间");
     klineStrList.remove(0);
-
-
 
     LinkedList<Kline> klineList = new LinkedList();
 
@@ -133,11 +131,12 @@ public class KlineApplicationContext {
     this.breakPeakKlineList = peakKlineProcessor.getBreakPeakKlineList();
     this.jumpPeakKlineList = peakKlineProcessor.getJumpPeakKlineList();
     this.turnPeakKlineList = peakKlineProcessor.getTurnPeakKlineList();
+    this.matrixKlineRowList = peakKlineProcessor.getMatrixKlineRowList();
+  }
 
-//    this.tendencyPeakKlineList = peakKlineProcessor.getTendencyPeakKlineList();
-//    this.oppositeTendencyPeakKlineList = peakKlineProcessor.getOppositeTendencyPeakKlineList();
-//    this.independentTendencyPeakKlineList = peakKlineProcessor.getIndependentTendencyPeakKlineList();
-//    this.anglePeakKlineList = peakKlineProcessor.getAnglePeakKlineList();
+  private void setMatrixKlineList() {
+    MatrixKlineProcessor matrixKlineProcessor = new MatrixKlineProcessor(matrixKlineRowList);
+
   }
 
   public List<Kline> getKlineList() {
@@ -155,8 +154,6 @@ public class KlineApplicationContext {
   public void printPeakKlineList() {
       System.out.println("peakKlineList: " + JacksonUtils.toJson(
       breakPeakKlineList.stream().map(PeakKlinePrint::new).filter(PeakKlinePrint::isTendencyPeak).collect(Collectors.toList())));
-//    System.out.println("peakKlineList: " + JacksonUtils.toJson(
-//        breakPeakKlineList.stream().map(PeakKlinePrint::new).collect(Collectors.toList())));
   }
 
 //  public void printMergeKlineList() {
