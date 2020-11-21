@@ -57,6 +57,7 @@ public class KlineApplicationContext {
     setKlineMap(klineList);
     setMergeKlineList(klineList);
     setPeakKlineList();
+    setMatrixKlineList();
   }
 
   private void setKlineList(File file, KlineType klineType) throws IOException {
