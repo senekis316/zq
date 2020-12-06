@@ -431,7 +431,6 @@ public class PeakKlineProcessor {
         this.tendencyPeakKlineList = breakPeakKlineList.stream().filter(PeakKline::isTendencyPeak).collect(Collectors.toList());
     }
 
-    @Data
     public static class KlineRow {
         private long date;
         private long value;
@@ -439,9 +438,16 @@ public class PeakKlineProcessor {
             this.date = date;
             this.value = value;
         }
+
+        public long getDate() {
+            return date;
+        }
+
+        public long getValue() {
+            return value;
+        }
     }
 
-    @Data
     public static class MatrixKlineRow {
         private long low;
         private long high;
@@ -453,6 +459,26 @@ public class PeakKlineProcessor {
             this.high = high;
             this.date = date;
             this.shape = shape;
+        }
+
+        public long getLow() {
+            return low;
+        }
+
+        public long getHigh() {
+            return high;
+        }
+
+        public long getDate() {
+            return date;
+        }
+
+        public PeakShapeEnum getShape() {
+            return shape;
+        }
+
+        public TendencyTypeEnum getTendency() {
+            return tendency;
         }
     }
 

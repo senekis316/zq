@@ -22,12 +22,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
 
-@Getter
-@Slf4j
+
 public class KlineApplicationContext {
 
   private String outputPath;
@@ -216,6 +213,31 @@ public class KlineApplicationContext {
 //
 //  }
 
+  public String getOutputPath() {
+    return outputPath;
+  }
 
+  public KlineType getKlineType() {
+    return klineType;
+  }
 
+  public List<PeakKline> getPeakKlineList() {
+    return peakKlineList;
+  }
+
+  public List<PeakKline> getBreakPeakKlineList() {
+    return breakPeakKlineList;
+  }
+
+  public List<PeakKline> getJumpPeakKlineList() {
+    return jumpPeakKlineList;
+  }
+
+  public List<PeakKline> getTurnPeakKlineList() {
+    return turnPeakKlineList;
+  }
+
+  public List<MatrixKlineRow> getMatrixKlineRowList() {
+    return matrixKlineRowList;
+  }
 }

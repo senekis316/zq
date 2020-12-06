@@ -6,7 +6,6 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-@Getter
 public enum KlineType {
 
   DAY_LINE("day", "day"),
@@ -35,4 +34,11 @@ public enum KlineType {
     return klineTypes;
   }
 
+  public String getInputDirectory() {
+    return inputDirectory;
+  }
+
+  public String getOutputDirectory() {
+    return outputDirectory;
+  }
 }

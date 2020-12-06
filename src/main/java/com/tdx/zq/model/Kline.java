@@ -11,11 +11,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Objects;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@ToString
-@Slf4j
 public class Kline {
 
     private int time;
@@ -39,6 +34,86 @@ public class Kline {
     private int volume;
 
     private int index;
+
+    public int getTime() {
+        return time;
+    }
+
+    public void setTime(int time) {
+        this.time = time;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public long getDate() {
+        return date;
+    }
+
+    public void setDate(long date) {
+        this.date = date;
+    }
+
+    public int getOpen() {
+        return open;
+    }
+
+    public void setOpen(int open) {
+        this.open = open;
+    }
+
+    public int getHigh() {
+        return high;
+    }
+
+    public void setHigh(int high) {
+        this.high = high;
+    }
+
+    public int getLow() {
+        return low;
+    }
+
+    public void setLow(int low) {
+        this.low = low;
+    }
+
+    public int getClose() {
+        return close;
+    }
+
+    public void setClose(int close) {
+        this.close = close;
+    }
+
+    public float getAmount() {
+        return amount;
+    }
+
+    public void setAmount(float amount) {
+        this.amount = amount;
+    }
+
+    public int getVolume() {
+        return volume;
+    }
+
+    public void setVolume(int volume) {
+        this.volume = volume;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
 
     public Kline(byte[] bytes, int code) {
 
@@ -65,43 +140,6 @@ public class Kline {
         this.volume = kline.getVolume();
         this.code = kline.getCode();
     }
-
-//    public Kline(String klineStr, int index) {
-//        String[] strs = klineStr.split("\t");
-//        if (strs.length == 7) {
-//            this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
-//            this.open = Integer.valueOf(strs[1].trim().replace(".", ""));
-//            this.high = Integer.valueOf(strs[2].trim().replace(".", ""));
-//            this.low = Integer.valueOf(strs[3].trim().replace(".", ""));
-//            this.close = Integer.valueOf(strs[4].trim().replace(".", ""));
-//            this.volume = Integer.valueOf(strs[5].trim());
-//            this.amount = Float.valueOf(strs[6].trim());
-//        } else if (strs.length >= 8 ) {
-//            this.date = Integer.valueOf(strs[0].trim().replace("/", ""));
-//            this.time = Integer.valueOf(strs[1].trim());
-//            this.open = Integer.valueOf(strs[2].trim().replace(".", ""));
-//            this.high = Integer.valueOf(strs[3].trim().replace(".", ""));
-//            this.low = Integer.valueOf(strs[4].trim().replace(".", ""));
-//            this.close = Integer.valueOf(strs[5].trim().replace(".", ""));
-//            this.volume = Integer.valueOf(strs[6].trim());
-//            this.amount = Float.valueOf(strs[7].trim());
-//        }
-//        this.index = index;
-//    }
-//
-//    public Kline(String prev, String curr, int index) {
-//        String[] values1 = prev.split("\t");
-//        String[] values2 = curr.split("\t");
-//        this.date = Long.valueOf(values2[0].trim().replace("/", "") + values2[1].trim());
-//        this.time = Integer.valueOf(values2[1].trim());
-//        this.open = Integer.valueOf(values2[2].trim().replace(".", ""));
-//        this.high = Math.max(Integer.valueOf(values1[3].trim().replace(".", "")), Integer.valueOf(values2[3].trim().replace(".", "")));
-//        this.low = Math.min(Integer.valueOf(values1[4].trim().replace(".", "")), Integer.valueOf(values2[4].trim().replace(".", "")));
-//        this.close = Integer.valueOf(values2[5].trim().replace(".", ""));
-//        this.volume = Integer.valueOf(values1[6].trim());
-//        this.amount = Float.valueOf(values1[7].trim());
-//        this.index = index;
-//    }
 
     public Kline(List<String> lines, boolean hasTime, int index) {
         this.low = Integer.MAX_VALUE;
