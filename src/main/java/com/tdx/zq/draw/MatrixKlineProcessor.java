@@ -5,8 +5,6 @@ import java.util.List;
 
 import com.tdx.zq.draw.PeakKlineProcessor.MatrixKlineRow;
 import com.tdx.zq.enums.PeakShapeEnum;
-import org.apache.commons.collections4.CollectionUtils;
-
 
 public class MatrixKlineProcessor {
 
@@ -96,76 +94,76 @@ public class MatrixKlineProcessor {
                     }
                 }
             }
-//            else {
-//            if (matrixKlineRowList.get(i).getShape() == PeakShapeEnum.TOP) {
-//                if (downMatrixList.size() == 0) {
-//                    if (r1.getHigh() >= r3.getHigh()) {
-//                        matrixKlineRows.add(r1);
-//                        matrixKlineRows.add(r2);
-//                        matrixKlineRows.add(r3);
-//                        matrixKlineRows.add(r4);
-//                        downMatrixList.add(matrixKlineRows);
-//                    }
-//                } else {
-//                    List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-//                    if (lastDownMatrixList.get(lastDownMatrixList.size() - 1) == r2) {
-//                        int min = - 1;
-//                        boolean down = false;
-//                        for (int j = lastDownMatrixList.size() - 1; j > 1; j -= 2) {
-//                            if (!down && lastDownMatrixList.get(j).getLow() <= lastDownMatrixList.get(1).getLow()) {
-//                                down = true;
-//                            }
-//                            if (min == -1) {
-//                                min = j;
-//                            } else {
-//                                min = lastDownMatrixList.get(min).getLow() < lastDownMatrixList.get(j).getLow() ? min : j;
-//                            }
-//                        }
-//                        if (down) {
-//                            if (min == lastDownMatrixList.size() - 1) {
-//                                if (r5.getHigh() > r3.getHigh() && r6.getLow() >= r2.getLow()) {
-//                                    for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
-//                                        lastDownMatrixList.remove(z);
-//                                    }
-//                                } else {
-//                                    lastDownMatrixList.add(r3);
-//                                    lastDownMatrixList.add(r4);
-//                                }
-//                            } else {
-//                                if (r5.getHigh() > lastDownMatrixList.get(min + 1).getHigh()) {
-//                                    for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
-//                                        lastDownMatrixList.remove(z);
-//                                    }
-//                                } else {
-//                                    lastDownMatrixList.add(r3);
-//                                    lastDownMatrixList.add(r4);
-//                                }
-//                            }
-//                        } else {
-//                            if (r3.getHigh() <= lastDownMatrixList.get(0).getHigh()) {
-//                                lastDownMatrixList.add(r3);
-//                                lastDownMatrixList.add(r4);
-//                            } else {
-//                                downMatrixList.remove(downMatrixList.size() - 1);
-//                            }
-//                        }
-//                    } else {
-//                        if (r1.getHigh() >= r3.getHigh()) {
-//                            matrixKlineRows.add(r1);
-//                            matrixKlineRows.add(r2);
-//                            matrixKlineRows.add(r3);
-//                            matrixKlineRows.add(r4);
-//                            downMatrixList.add(matrixKlineRows);
-//                        }
-//                    }
-//                }
-//            }
+            else {
+                if (downMatrixList.size() == 0) {
+                    if (r1.getHigh() >= r3.getHigh()) {
+                        matrixKlineRows.add(r1);
+                        matrixKlineRows.add(r2);
+                        matrixKlineRows.add(r3);
+                        matrixKlineRows.add(r4);
+                        downMatrixList.add(matrixKlineRows);
+                    }
+                } else {
+                    List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
+                    if (lastDownMatrixList.get(lastDownMatrixList.size() - 1) == r2) {
+                        int min = - 1;
+                        boolean down = false;
+                        for (int j = lastDownMatrixList.size() - 1; j > 1; j -= 2) {
+                            if (!down && lastDownMatrixList.get(j).getLow() <= lastDownMatrixList.get(1).getLow()) {
+                                down = true;
+                            }
+                            if (min == -1) {
+                                min = j;
+                            } else {
+                                min = lastDownMatrixList.get(min).getLow() < lastDownMatrixList.get(j).getLow() ? min : j;
+                            }
+                        }
+                        if (down) {
+                            if (min == lastDownMatrixList.size() - 1) {
+                                if (r5.getHigh() > r3.getHigh() && r6.getLow() >= r2.getLow()
+                                        && r4.getLow() >= lastDownMatrixList.get(3).getLow()) {
+                                    for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
+                                        lastDownMatrixList.remove(z);
+                                    }
+                                } else {
+                                    lastDownMatrixList.add(r3);
+                                    lastDownMatrixList.add(r4);
+                                }
+                            } else {
+                                if (r5.getHigh() > lastDownMatrixList.get(min + 1).getHigh()) {
+                                    for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
+                                        lastDownMatrixList.remove(z);
+                                    }
+                                } else {
+                                    lastDownMatrixList.add(r3);
+                                    lastDownMatrixList.add(r4);
+                                }
+                            }
+                        } else {
+                            if (r3.getHigh() <= lastDownMatrixList.get(0).getHigh()) {
+                                lastDownMatrixList.add(r3);
+                                lastDownMatrixList.add(r4);
+                            } else {
+                                downMatrixList.remove(downMatrixList.size() - 1);
+                            }
+                        }
+                    } else {
+                        if (r1.getHigh() >= r3.getHigh()) {
+                            matrixKlineRows.add(r1);
+                            matrixKlineRows.add(r2);
+                            matrixKlineRows.add(r3);
+                            matrixKlineRows.add(r4);
+                            downMatrixList.add(matrixKlineRows);
+                        }
+                    }
+                }
+            }
         }
         upMatrixList.stream().forEach(m -> System.out.println("up:" + m.get(0).getDate() + "_" + m.get(m.size() - 1).getDate()));
         System.out.println("---------------------------------------");
         System.out.println("---------------------------------------");
         System.out.println("---------------------------------------");
-        //downMatrixList.stream().forEach(m -> System.out.println("down:" + m.get(0).getDate() + "_" + m.get(m.size() - 1).getDate()));
+        downMatrixList.stream().forEach(m -> System.out.println("down:" + m.get(0).getDate() + "_" + m.get(m.size() - 1).getDate()));
     }
 
 
