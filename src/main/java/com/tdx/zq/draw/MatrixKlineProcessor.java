@@ -43,8 +43,6 @@ public class MatrixKlineProcessor {
                 } else {
                     List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
                     if (lastUpMatrixList.get(lastUpMatrixList.size() - 1) == r2) {
-                        //lastUpMatrixList.add(r3);
-                        //lastUpMatrixList.add(r4);
                         int max = - 1;
                         boolean up = false;
                         for (int j = lastUpMatrixList.size() - 1; j > 1; j -= 2) {
@@ -80,9 +78,6 @@ public class MatrixKlineProcessor {
                                 }
                             }
                         } else {
-//                            if (r3.getLow() < lastUpMatrixList.get(0).getLow()) {
-//                                upMatrixList.remove(upMatrixList.size() - 1);
-//                            }
                             if (r3.getLow() >= lastUpMatrixList.get(0).getLow()) {
                                 lastUpMatrixList.add(r3);
                                 lastUpMatrixList.add(r4);
@@ -113,8 +108,6 @@ public class MatrixKlineProcessor {
                 } else {
                     List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
                     if (lastDownMatrixList.get(lastDownMatrixList.size() - 1) == r2) {
-                        //lastDownMatrixList.add(r3);
-                        //lastDownMatrixList.add(r4);
                         int min = - 1;
                         boolean down = false;
                         for (int j = lastDownMatrixList.size() - 1; j > 1; j -= 2) {
@@ -150,9 +143,6 @@ public class MatrixKlineProcessor {
                                 }
                             }
                         } else {
-//                            if (r3.getHigh() > lastDownMatrixList.get(0).getHigh()) {
-//                                downMatrixList.remove(downMatrixList.size() - 1);
-//                            }
                             if (r3.getHigh() <= lastDownMatrixList.get(0).getHigh()) {
                                 lastDownMatrixList.add(r3);
                                 lastDownMatrixList.add(r4);
@@ -177,8 +167,35 @@ public class MatrixKlineProcessor {
         System.out.println("---------------------------------------");
         System.out.println("---------------------------------------");
         downMatrixList.stream().forEach(m -> System.out.println("down:" + m.get(0).getDate() + "_" + m.get(m.size() - 1).getDate()));
-    }
+        System.out.println("---------------------------------------");
+        System.out.println("---------------------------------------");
+        System.out.println("---------------------------------------");
 
+        long targetDate = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate()
+                ? upMatrixList.get(0).get(0).getDate() : downMatrixList.get(0).get(0).getDate();
+        while (true) {
+            List<MatrixKlineRow> currKlineRowList = null;
+            for (int i = 0; i < upMatrixList.size(); i++) {
+                if (targetDate == upMatrixList.get(i).get(0).getDate()) {
+                    currKlineRowList = upMatrixList.get(i);
+                    targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
+                    System.out.println("up:     " + currKlineRowList.get(0).getDate() + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
+                    break;
+                }
+            }
+            for (int i = 0; i < downMatrixList.size(); i++) {
+                if (targetDate == downMatrixList.get(i).get(0).getDate()) {
+                    currKlineRowList = downMatrixList.get(i);
+                    targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
+                    System.out.println("down:   " + currKlineRowList.get(0).getDate() + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
+                    break;
+                }
+            }
+            if (currKlineRowList == null) {
+                break;
+            }
+        }
+    }
 
 //    public void setMatrixTendency() {
 //        for (int i = 0; i < matrixKlineRowList.size() - 4; i++) {
