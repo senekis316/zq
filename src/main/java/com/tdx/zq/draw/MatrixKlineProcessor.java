@@ -14,7 +14,6 @@ public class MatrixKlineProcessor {
     private List<List<MatrixKlineRow>> upMatrixList;
     private List<List<MatrixKlineRow>> downMatrixList;
 
-
     public MatrixKlineProcessor(List<MatrixKlineRow> matrixKlineRowList) {
         this.matrixKlineRowList = matrixKlineRowList;
         this.upMatrixList = new ArrayList<>();
@@ -96,8 +95,18 @@ public class MatrixKlineProcessor {
                         }
                     }
                 }
-            }
-            else {
+                if (i == matrixKlineRowList.size() - 7) {
+                    MatrixKlineRow r7 = matrixKlineRowList.get(i + 6);
+                    if (r4.getHigh() > r6.getHigh() && r5.getLow() > r7.getLow()) {
+                        List<MatrixKlineRow> downMatrixKlineRows = new ArrayList<>();
+                        downMatrixKlineRows.add(r4);
+                        downMatrixKlineRows.add(r5);
+                        downMatrixKlineRows.add(r6);
+                        downMatrixKlineRows.add(r7);
+                        downMatrixList.add(downMatrixKlineRows);
+                    }
+                }
+            } else {
                 if (downMatrixList.size() == 0) {
                     if (r1.getHigh() >= r3.getHigh()) {
                         matrixKlineRows.add(r1);
@@ -162,8 +171,20 @@ public class MatrixKlineProcessor {
                         }
                     }
                 }
+                if (i == matrixKlineRowList.size() - 7) {
+                    MatrixKlineRow r7 = matrixKlineRowList.get(i + 6);
+                    if (r4.getLow() < r6.getLow() && r5.getHigh() < r7.getHigh()) {
+                        List<MatrixKlineRow> upMatrixKlineRows = new ArrayList<>();
+                        upMatrixKlineRows.add(r4);
+                        upMatrixKlineRows.add(r5);
+                        upMatrixKlineRows.add(r6);
+                        upMatrixKlineRows.add(r7);
+                        upMatrixList.add(upMatrixKlineRows);
+                    }
+                }
             }
         }
+
         upMatrixList.stream().forEach(m -> System.out.println("up:" + m.get(0).getDate() + "_" + m.get(m.size() - 1).getDate()));
         System.out.println("---------------------------------------");
         System.out.println("---------------------------------------");
@@ -198,5 +219,7 @@ public class MatrixKlineProcessor {
             }
         }
     }
+
+
 
 }
