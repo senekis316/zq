@@ -56,11 +56,12 @@ public class MatrixKlineProcessor {
                         }
                         if (up) {
                             if (max == lastUpMatrixList.size() - 1) {
-                                if (r5.getLow() < r3.getLow() && r6.getHigh() <= r2.getHigh()
+                                if ( r5.getLow() < r3.getLow()
+                                        && r6.getHigh() <= r2.getHigh()
                                         && r4.getHigh() <= lastUpMatrixList.get(max).getHigh()) {
                                     for (int z = lastUpMatrixList.size() - 1; z > max; z--) {
                                         lastUpMatrixList.remove(z);
-                                   }
+                                    }
                                 } else {
                                     lastUpMatrixList.add(r3);
                                     lastUpMatrixList.add(r4);
