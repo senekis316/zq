@@ -56,11 +56,33 @@ public class MatrixKlineProcessor {
                         }
                         if (up) {
                             if (max == lastUpMatrixList.size() - 1) {
-                                if ( r5.getLow() < r3.getLow()
+                                if (r5.getLow() < r3.getLow()
                                         && r6.getHigh() <= r2.getHigh()
                                         && r4.getHigh() <= lastUpMatrixList.get(max).getHigh()) {
                                     for (int z = lastUpMatrixList.size() - 1; z > max; z--) {
                                         lastUpMatrixList.remove(z);
+                                    }
+                                } else if (r5.getLow() > r3.getLow()
+                                            && r4.getHigh() <= r2.getHigh()
+                                            && r6.getHigh() <= r2.getHigh()) {
+                                    int j = i + 6;
+                                    while (j < matrixKlineRowList.size()) {
+                                        MatrixKlineRow r7 = matrixKlineRowList.get(j);
+                                        if (r7.getShape() == PeakShapeEnum.FLOOR) {
+                                            if (r3.getLow() > r7.getLow()) {
+                                                for (int z = lastUpMatrixList.size() - 1; z > max; z--) {
+                                                    lastUpMatrixList.remove(z);
+                                                }
+                                                break;
+                                            }
+                                        } else {
+                                            if (r7.getHigh() > r2.getHigh()) {
+                                                lastUpMatrixList.add(r3);
+                                                lastUpMatrixList.add(r4);
+                                                break;
+                                            }
+                                        }
+                                        j++;
                                     }
                                 } else {
                                     lastUpMatrixList.add(r3);
@@ -98,6 +120,14 @@ public class MatrixKlineProcessor {
                 }
                 if (i == matrixKlineRowList.size() - 7) {
                     MatrixKlineRow r7 = matrixKlineRowList.get(i + 6);
+                    if (r6.getHigh() > r4.getHigh()
+                        && r6.getHigh() > r2.getHigh()
+                        && r1.getLow() < r3.getLow()
+                        && r1.getLow() < r5.getLow()) {
+                        List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
+                        lastUpMatrixList.add(r5);
+                        lastUpMatrixList.add(r6);
+                    }
                     if (r4.getHigh() > r6.getHigh() && r5.getLow() > r7.getLow()) {
                         List<MatrixKlineRow> downMatrixKlineRows = new ArrayList<>();
                         downMatrixKlineRows.add(r4);
@@ -133,10 +163,33 @@ public class MatrixKlineProcessor {
                         }
                         if (down) {
                             if (min == lastDownMatrixList.size() - 1) {
-                                if (r5.getHigh() > r3.getHigh() && r6.getLow() >= r2.getLow()
+                                if (r5.getHigh() > r3.getHigh()
+                                        && r6.getLow() >= r2.getLow()
                                         && r4.getLow() >= lastDownMatrixList.get(min).getLow()) {
                                     for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
                                         lastDownMatrixList.remove(z);
+                                    }
+                                } else if (r5.getHigh() < r3.getHigh()
+                                        && r4.getLow() >= r2.getLow()
+                                        && r6.getLow() >= r2.getLow()) {
+                                    int j = i + 6;
+                                    while (j < matrixKlineRowList.size()) {
+                                        MatrixKlineRow r7 = matrixKlineRowList.get(j);
+                                        if (r7.getShape() == PeakShapeEnum.TOP) {
+                                            if (r3.getHigh() < r7.getHigh()) {
+                                                for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
+                                                    lastDownMatrixList.remove(z);
+                                                }
+                                                break;
+                                            }
+                                        } else {
+                                            if (r7.getLow() < r2.getLow()) {
+                                                lastDownMatrixList.add(r3);
+                                                lastDownMatrixList.add(r4);
+                                                break;
+                                            }
+                                        }
+                                        j++;
                                     }
                                 } else {
                                     lastDownMatrixList.add(r3);
@@ -174,6 +227,14 @@ public class MatrixKlineProcessor {
                 }
                 if (i == matrixKlineRowList.size() - 7) {
                     MatrixKlineRow r7 = matrixKlineRowList.get(i + 6);
+                    if (r6.getLow() < r4.getLow()
+                            && r6.getLow() < r2.getLow()
+                            && r1.getHigh() > r3.getHigh()
+                            && r1.getHigh() > r5.getHigh()) {
+                        List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
+                        lastDownMatrixList.add(r5);
+                        lastDownMatrixList.add(r6);
+                    }
                     if (r4.getLow() < r6.getLow() && r5.getHigh() < r7.getHigh()) {
                         List<MatrixKlineRow> upMatrixKlineRows = new ArrayList<>();
                         upMatrixKlineRows.add(r4);
