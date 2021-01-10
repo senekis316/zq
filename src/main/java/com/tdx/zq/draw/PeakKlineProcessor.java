@@ -498,7 +498,7 @@ public class PeakKlineProcessor {
                 if (tendencyPeakKlineList.get(0).getPeakShape() == PeakShapeEnum.FLOOR) {
                     if (one.getLow() <= two.getLow()) {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getLow()));
-                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.TOP));
+                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.FLOOR));
                         skip++;
                     } else {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
@@ -507,7 +507,7 @@ public class PeakKlineProcessor {
                 } else {
                     if (one.getHigh() >= two.getHigh()) {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
-                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.FLOOR));
+                        matrixKlineRows.add(new MatrixKlineRow(one.getLow(), one.getHigh(), one.getMergeKline().getDate(), PeakShapeEnum.TOP));
                         skip++;
                     } else {
                         klineRows.add(new KlineRow(one.getMergeKline().getDate(), one.getHigh()));
