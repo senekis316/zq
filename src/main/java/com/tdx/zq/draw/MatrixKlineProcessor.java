@@ -2,6 +2,7 @@ package com.tdx.zq.draw;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.tdx.zq.draw.PeakKlineProcessor.MatrixKlineRow;
 import com.tdx.zq.enums.PeakShapeEnum;
@@ -278,6 +279,23 @@ public class MatrixKlineProcessor {
         long targetDate = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate()
                 ? upMatrixList.get(0).get(0).getDate() : downMatrixList.get(0).get(0).getDate();
         boolean searchUp = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate() ? true : false;
+
+        if (searchUp) {
+            if (upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
+                    >= downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
+                    && upMatrixList.get(0).get(0).getDate() == matrixKlineRowList.get(0).getDate()) {
+                new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= downMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
+                return;
+            }
+        } else {
+            if (downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
+                    >= upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
+                    && downMatrixList.get(0).get(0).getDate() == matrixKlineRowList.get(0).getDate()) {
+                new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= upMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
+                return;
+            }
+        }
+
         while (true) {
             List<MatrixKlineRow> currKlineRowList;
             if (searchUp) {
