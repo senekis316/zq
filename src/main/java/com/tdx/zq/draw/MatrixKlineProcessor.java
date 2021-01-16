@@ -109,13 +109,6 @@ public class MatrixKlineProcessor {
                             }
                         }
                     } else {
-//                        if (r3.getLow() <= r5.getLow()) {
-//                            matrixKlineRows.add(r1);
-//                            matrixKlineRows.add(r2);
-//                            matrixKlineRows.add(r3);
-//                            matrixKlineRows.add(r4);
-//                            upMatrixList.add(matrixKlineRows);
-//                        }
                         if (r1.getLow() <= r3.getLow()) {
                             matrixKlineRows.add(r1);
                             matrixKlineRows.add(r2);
@@ -135,12 +128,6 @@ public class MatrixKlineProcessor {
                         lastUpMatrixList.add(r5);
                         lastUpMatrixList.add(r6);
                     }
-//                    else {
-//                        //List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-//                        if (lastUpMatrixList.size() == 4 && r2.getHigh() > r4.getHigh()) {
-//                            upMatrixList.remove(upMatrixList.size() - 1);
-//                        }
-//                    }
                     if (r4.getHigh() > r6.getHigh() && r5.getLow() > r7.getLow()) {
                         List<MatrixKlineRow> downMatrixKlineRows = new ArrayList<>();
                         downMatrixKlineRows.add(r4);
@@ -248,12 +235,6 @@ public class MatrixKlineProcessor {
                         lastDownMatrixList.add(r5);
                         lastDownMatrixList.add(r6);
                     }
-//                    else {
-//                        if (lastDownMatrixList.size() == 4 && r2.getLow() < r4.getLow()) {
-//                            downMatrixList.remove(downMatrixList.size() - 1);
-//                        }
-//                        //downMatrixList.remove(downMatrixList.size() - 1);
-//                    }
 
                     if (r4.getLow() < r6.getLow() && r5.getHigh() < r7.getHigh()) {
                         List<MatrixKlineRow> upMatrixKlineRows = new ArrayList<>();
@@ -267,18 +248,7 @@ public class MatrixKlineProcessor {
             }
         }
 
-        //                    else {
-//                        //List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-//                        if (lastUpMatrixList.size() == 4 && r2.getHigh() > r4.getHigh()) {
-//                            upMatrixList.remove(upMatrixList.size() - 1);
-//                        }
-//                    }
-        //                    else {
-//                        if (lastDownMatrixList.size() == 4 && r2.getLow() < r4.getLow()) {
-//                            downMatrixList.remove(downMatrixList.size() - 1);
-//                        }
-//                        //downMatrixList.remove(downMatrixList.size() - 1);
-//                    }
+
 
         if (upMatrixList.size() != 0 && downMatrixList.size() != 0) {
             List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
@@ -307,28 +277,41 @@ public class MatrixKlineProcessor {
 
         long targetDate = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate()
                 ? upMatrixList.get(0).get(0).getDate() : downMatrixList.get(0).get(0).getDate();
+        boolean searchUp = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate() ? true : false;
         while (true) {
-            List<MatrixKlineRow> currKlineRowList = null;
-            for (int i = 0; i < upMatrixList.size(); i++) {
-                if (targetDate == upMatrixList.get(i).get(0).getDate()) {
-                    currKlineRowList = upMatrixList.get(i);
-                    targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
-                    System.out.println("up:     " + currKlineRowList.get(0).getDate() + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
+            List<MatrixKlineRow> currKlineRowList;
+            if (searchUp) {
+                for (int i = 0; i < upMatrixList.size(); i++) {
+                    if (targetDate >= upMatrixList.get(i).get(0).getDate()
+                            && targetDate < upMatrixList.get(i).get(upMatrixList.get(i).size() - 1).getDate()) {
+                        currKlineRowList = upMatrixList.get(i);
+                        System.out.println("up:     " + targetDate + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
+                        targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
+                        searchUp = false;
+                        break;
+                    }
+                }
+                if (searchUp) {
+                    break;
+                }
+            } else {
+                for (int i = 0; i < downMatrixList.size(); i++) {
+                    if (targetDate >= downMatrixList.get(i).get(0).getDate()
+                            && targetDate < downMatrixList.get(i).get(downMatrixList.get(i).size() - 1).getDate()) {
+                        currKlineRowList = downMatrixList.get(i);
+                        System.out.println("down:   " + targetDate + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
+                        targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
+                        searchUp = true;
+                        break;
+                    }
+                }
+                if (!searchUp) {
                     break;
                 }
             }
-            for (int i = 0; i < downMatrixList.size(); i++) {
-                if (targetDate == downMatrixList.get(i).get(0).getDate()) {
-                    currKlineRowList = downMatrixList.get(i);
-                    targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
-                    System.out.println("down:   " + currKlineRowList.get(0).getDate() + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
-                    break;
-                }
-            }
-            if (currKlineRowList == null) {
-                break;
-            }
+
         }
+
     }
 
 
