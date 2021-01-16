@@ -276,9 +276,21 @@ public class MatrixKlineProcessor {
         System.out.println("---------------------------------------");
         System.out.println("---------------------------------------");
 
+
+        if (upMatrixList.size() == 0 || downMatrixList.size() == 0) {
+            if (upMatrixList.size() > 0) {
+                System.out.println("up:     " + upMatrixList.get(0).get(0).getDate() + "_" + upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate());
+            }
+            if (downMatrixList.size() > 0) {
+                System.out.println("down:     " + downMatrixList.get(0).get(0).getDate() + "_" + downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate());
+            }
+            return;
+        }
+
         long targetDate = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate()
                 ? upMatrixList.get(0).get(0).getDate() : downMatrixList.get(0).get(0).getDate();
         boolean searchUp = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate() ? true : false;
+
 
         if (searchUp) {
             if (upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
