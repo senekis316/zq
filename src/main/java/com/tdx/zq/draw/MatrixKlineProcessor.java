@@ -369,16 +369,28 @@ public class MatrixKlineProcessor {
                     >= downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
                     && upMatrixList.get(0).get(0).getDate() == matrixKlineRowList.get(0).getDate()
                     && upMatrixList.get(0).get(3).getDate() > downMatrixList.get(0).get(0).getDate()) {
-                new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= downMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
-                return;
+                for (int i = 0; i < matrixKlineRowList.size() - 3; i++) {
+                    if (matrixKlineRowList.get(i).getDate() == downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
+                        && matrixKlineRowList.get(i + 1).getHigh() <= upMatrixList.get(0).get(1).getHigh()
+                            && matrixKlineRowList.get(i + 3).getHigh() <= upMatrixList.get(0).get(1).getHigh()) {
+                        new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= downMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
+                        return;
+                    }
+                }
             }
         } else {
             if (downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
                     >= upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
                     && downMatrixList.get(0).get(0).getDate() == matrixKlineRowList.get(0).getDate()
                     && downMatrixList.get(0).get(3).getDate() > upMatrixList.get(0).get(0).getDate()) {
-                new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= upMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
-                return;
+                for (int i = 0; i < matrixKlineRowList.size() - 3; i++) {
+                    if (matrixKlineRowList.get(i).getDate() == upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
+                            && matrixKlineRowList.get(i + 1).getLow() >= downMatrixList.get(0).get(1).getLow()
+                            && matrixKlineRowList.get(i + 3).getLow() >= downMatrixList.get(0).get(1).getLow()) {
+                        new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= upMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
+                        return;
+                    }
+                }
             }
         }
 
