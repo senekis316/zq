@@ -280,10 +280,10 @@ public class MatrixKlineProcessor {
             MatrixKlineRow lastUpMatrixRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
             MatrixKlineRow lastDownMatrixRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
 
-            if (lastUpMatrixRow.getDate() > lastDownMatrixRow.getDate()
+            if (lastDownMatrixRow.getDate() <= matrixKlineRowList.get(matrixKlineRowList.size() - 2).getDate()
                     && lastUpMatrixRow.getDate() == matrixKlineRowList.get(matrixKlineRowList.size() - 3).getDate()
                     && lastUpMatrixRow.getHigh() < matrixKlineRowList.get(matrixKlineRowList.size() - 1).getHigh()
-                    && lastUpMatrixList.get(lastUpMatrixList.size() - 2).getLow() < matrixKlineRowList.get(matrixKlineRowList.size() - 2).getLow()) {
+                    && lastUpMatrixList.get(lastUpMatrixList.size() - 1).getHigh() < matrixKlineRowList.get(matrixKlineRowList.size() - 1).getHigh()) {
                 lastUpMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 2));
                 lastUpMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 1));
             }
@@ -295,10 +295,10 @@ public class MatrixKlineProcessor {
             MatrixKlineRow lastUpMatrixRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
             MatrixKlineRow lastDownMatrixRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
 
-            if (lastUpMatrixRow.getDate() < lastDownMatrixRow.getDate()
+            if (lastUpMatrixRow.getDate() <= matrixKlineRowList.get(matrixKlineRowList.size() - 2).getDate()
                     && lastDownMatrixRow.getDate() == matrixKlineRowList.get(matrixKlineRowList.size() - 3).getDate()
                     && lastDownMatrixRow.getLow() > matrixKlineRowList.get(matrixKlineRowList.size() - 1).getLow()
-                    && lastDownMatrixList.get(lastDownMatrixList.size() - 2).getHigh() > matrixKlineRowList.get(matrixKlineRowList.size() - 2).getHigh()) {
+                    && lastDownMatrixList.get(lastDownMatrixList.size() - 1).getLow() > matrixKlineRowList.get(matrixKlineRowList.size() - 1).getLow()) {
                 lastDownMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 2));
                 lastDownMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 1));
             }
