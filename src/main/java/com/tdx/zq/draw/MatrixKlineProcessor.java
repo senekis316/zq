@@ -124,12 +124,20 @@ public class MatrixKlineProcessor {
                     List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
                     if (r6.getHigh() > r4.getHigh()
                         && r6.getHigh() > r2.getHigh()
-                        && r1.getLow() < r3.getLow()
-                        && r1.getLow() < r5.getLow()) {
+                        && r1.getLow() < r3.getLow()) {
+                        //&& r1.getLow() < r5.getLow()) {
                         lastUpMatrixList.add(r5);
                         lastUpMatrixList.add(r6);
-                    }
-                    if (r4.getHigh() > r6.getHigh() && r5.getLow() > r7.getLow()) {
+                    } else if (lastUpMatrixList.get(lastUpMatrixList.size() - 1).getDate() < r3.getDate()
+                            && r3.getLow() < r5.getLow()
+                            && r4.getHigh() < r6.getHigh()) {
+                        List<MatrixKlineRow> upMatrixKlineRows = new ArrayList<>();
+                        upMatrixKlineRows.add(r3);
+                        upMatrixKlineRows.add(r4);
+                        upMatrixKlineRows.add(r5);
+                        upMatrixKlineRows.add(r6);
+                        upMatrixList.add(upMatrixKlineRows);
+                    } else if (r4.getHigh() > r6.getHigh() && r5.getLow() > r7.getLow()) {
                         List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
                         MatrixKlineRow lastDownRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
                         if (r5.getLow() > lastDownRow.getLow()) {
@@ -235,13 +243,20 @@ public class MatrixKlineProcessor {
                     List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
                     if (r6.getLow() < r4.getLow()
                             && r6.getLow() < r2.getLow()
-                            && r1.getHigh() > r3.getHigh()
-                            && r1.getHigh() > r5.getHigh()) {
+                            && r1.getHigh() > r3.getHigh()) {
+                            //&& r1.getHigh() > r5.getHigh()) {
                         lastDownMatrixList.add(r5);
                         lastDownMatrixList.add(r6);
-                    }
-
-                    if (r4.getLow() < r6.getLow() && r5.getHigh() < r7.getHigh()) {
+                    } else if (lastDownMatrixList.get(lastDownMatrixList.size() - 1).getDate() < r3.getDate()
+                            && r3.getHigh() > r5.getHigh()
+                            && r4.getLow() > r6.getLow()) {
+                        List<MatrixKlineRow> downMatrixKlineRows = new ArrayList<>();
+                        downMatrixKlineRows.add(r3);
+                        downMatrixKlineRows.add(r4);
+                        downMatrixKlineRows.add(r5);
+                        downMatrixKlineRows.add(r6);
+                        downMatrixList.add(downMatrixKlineRows);
+                    } else if (r4.getLow() < r6.getLow() && r5.getHigh() < r7.getHigh()) {
                         List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
                         MatrixKlineRow lastUpRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
                         if (r5.getHigh() < lastUpRow.getHigh()) {
@@ -257,36 +272,52 @@ public class MatrixKlineProcessor {
             }
         }
 
+//        if (upMatrixList.size() > 0) {
+//            List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
+//            List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
+//            if (lastUpMatrixList.get(lastUpMatrixList.size() - 1).getDate() >
+//                    lastDownMatrixList.get(lastDownMatrixList.size() - 1).getDate()) {
+//                for (int i = 0; i <= matrixKlineRowList.size() - 2; i++) {
+//                    if (matrixKlineRowList.get(i).getDate() > lastUpMatrixList.get(lastUpMatrixList.size() - 1).getDate()
+//                            && matrixKlineRowList.get(i + 1).getHigh() > lastUpMatrixList.get(lastUpMatrixList.size() - 1).getHigh()) {
+//                        lastUpMatrixList.add(matrixKlineRowList.get(i));
+//                        lastUpMatrixList.add(matrixKlineRowList.get(i + 1));
+//                    }
+//                }
+//            }
+//        }
+//
+
+
         if (upMatrixList.size() > 0) {
             List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
             List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-            if (lastUpMatrixList.get(lastUpMatrixList.size() - 1).getDate() >
-                    lastDownMatrixList.get(lastDownMatrixList.size() - 1).getDate()) {
-                for (int i = 0; i <= matrixKlineRowList.size() - 2; i++) {
-                    if (matrixKlineRowList.get(i).getDate() > lastUpMatrixList.get(lastUpMatrixList.size() - 1).getDate()
-                            && matrixKlineRowList.get(i + 1).getHigh() > lastUpMatrixList.get(lastUpMatrixList.size() - 1).getHigh()) {
-                        lastUpMatrixList.add(matrixKlineRowList.get(i));
-                        lastUpMatrixList.add(matrixKlineRowList.get(i + 1));
-                    }
-                }
+            MatrixKlineRow lastUpMatrixRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
+            MatrixKlineRow lastDownMatrixRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
+
+            if (lastUpMatrixRow.getDate() > lastDownMatrixRow.getDate()
+                    && lastUpMatrixRow.getDate() == matrixKlineRowList.get(matrixKlineRowList.size() - 3).getDate()
+                    && lastUpMatrixRow.getHigh() < matrixKlineRowList.get(matrixKlineRowList.size() - 1).getHigh()
+                    && lastUpMatrixList.get(lastUpMatrixList.size() - 2).getLow() < matrixKlineRowList.get(matrixKlineRowList.size() - 2).getLow()) {
+                lastUpMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 2));
+                lastUpMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 1));
             }
         }
 
         if (downMatrixList.size() > 0) {
             List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
             List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-            if (lastUpMatrixList.get(lastUpMatrixList.size() - 1).getDate() <
-                    lastDownMatrixList.get(lastDownMatrixList.size() - 1).getDate()) {
-                for (int i = 0; i <= matrixKlineRowList.size() - 2; i++) {
-                    if (matrixKlineRowList.get(i).getDate() > lastDownMatrixList.get(lastDownMatrixList.size() - 1).getDate()
-                            && matrixKlineRowList.get(i + 1).getLow() < lastDownMatrixList.get(lastDownMatrixList.size() - 1).getLow()) {
-                        lastDownMatrixList.add(matrixKlineRowList.get(i));
-                        lastDownMatrixList.add(matrixKlineRowList.get(i + 1));
-                    }
-                }
+            MatrixKlineRow lastUpMatrixRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
+            MatrixKlineRow lastDownMatrixRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
+
+            if (lastUpMatrixRow.getDate() < lastDownMatrixRow.getDate()
+                    && lastDownMatrixRow.getDate() == matrixKlineRowList.get(matrixKlineRowList.size() - 3).getDate()
+                    && lastDownMatrixRow.getLow() > matrixKlineRowList.get(matrixKlineRowList.size() - 1).getLow()
+                    && lastDownMatrixList.get(lastDownMatrixList.size() - 2).getHigh() > matrixKlineRowList.get(matrixKlineRowList.size() - 2).getHigh()) {
+                lastDownMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 2));
+                lastDownMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 1));
             }
         }
-
 
         while (true) {
             if (upMatrixList.size() != 0 && downMatrixList.size() != 0) {
