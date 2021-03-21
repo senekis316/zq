@@ -105,16 +105,16 @@ public class MatrixKlineProcessor {
         @Override
         public String toString() {
             final StringBuilder sb = new StringBuilder("{");
-            sb.append("\"high\":")
-                    .append(high);
-            sb.append(",\"low\":")
-                    .append(low);
+            sb.append("\"tendency\":")
+                    .append(tendency);
             sb.append(",\"startDate\":")
                     .append(startDate);
             sb.append(",\"endDate\":")
                     .append(endDate);
-            sb.append(",\"tendency\":")
-                    .append(tendency);
+            sb.append(",\"high\":")
+                    .append(high);
+            sb.append(",\"low\":")
+                    .append(low);
             sb.append('}');
             return sb.toString();
         }
@@ -246,7 +246,13 @@ public class MatrixKlineProcessor {
             }
         }
         this.matrixList = matrixList;
-        System.out.println(matrixList);
+
+        System.out.println();
+        System.out.println("---------- Matrix List ----------");
+        matrixList.stream().forEach(matrix -> System.out.println(matrix));
+        System.out.println("-------------- END --------------");
+        System.out.println();
+
     }
 
 

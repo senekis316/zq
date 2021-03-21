@@ -6,6 +6,6 @@ public enum TendencyTypeEnum {
 
   @Override
   public String toString() {
-    return "\"" + this.name() + "\"";
+    return "\"" + this.name() + (this.name().equals(TendencyTypeEnum.UP.name()) ? "  " : "") + "\"";
   }
 }
