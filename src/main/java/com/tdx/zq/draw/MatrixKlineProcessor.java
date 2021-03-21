@@ -2,9 +2,11 @@ package com.tdx.zq.draw;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.tdx.zq.draw.PeakKlineProcessor.MatrixKlineRow;
 import com.tdx.zq.enums.PeakShapeEnum;
+import com.tdx.zq.enums.TendencyTypeEnum;
 import lombok.Data;
 
 public class MatrixKlineProcessor {
@@ -14,12 +16,15 @@ public class MatrixKlineProcessor {
     private List<MatrixKlineRow> downMatrixKlineRowList;
     private List<List<MatrixKlineRow>> upMatrixList;
     private List<List<MatrixKlineRow>> downMatrixList;
+    private List<MatrixRange> matrixRangeList;
+    private List<Matrix> matrixList;
 
     public MatrixKlineProcessor(List<MatrixKlineRow> matrixKlineRowList) {
         this.matrixKlineRowList = matrixKlineRowList;
         this.upMatrixList = new ArrayList<>();
         this.downMatrixList = new ArrayList<>();
         setMatrixTendency();
+        setMatrixList();
     }
 
     public class MatrixSegment {
@@ -60,6 +65,61 @@ public class MatrixKlineProcessor {
 
     }
 
+    public class MatrixRange {
+        private long startDate;
+        private long endDate;
+        private TendencyTypeEnum tendency;
+        private List<MatrixKlineRow> rows;
+        public MatrixRange(long startDate, long endDate, TendencyTypeEnum tendency) {
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.tendency = tendency;
+            this.rows = new ArrayList<>();
+        }
+        public void setRows(List<MatrixKlineRow> rows) {
+            this.rows = rows;
+        }
+        public List<MatrixKlineRow> getRows() {
+            return this.rows;
+        }
+        public TendencyTypeEnum getTendency() {
+            return this.tendency;
+        }
+    }
+
+    @Data
+    public class Matrix {
+        private long high;
+        private long low;
+        private long startDate;
+        private long endDate;
+        private TendencyTypeEnum tendency;
+        public Matrix(long high, long low, long startDate, long endDate, TendencyTypeEnum tendency) {
+            this.high = high;
+            this.low = low;
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.tendency = tendency;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("{");
+            sb.append("\"high\":")
+                    .append(high);
+            sb.append(",\"low\":")
+                    .append(low);
+            sb.append(",\"startDate\":")
+                    .append(startDate);
+            sb.append(",\"endDate\":")
+                    .append(endDate);
+            sb.append(",\"tendency\":")
+                    .append(tendency);
+            sb.append('}');
+            return sb.toString();
+        }
+    }
+
     public void setMatrixTendency() {
 
         if (matrixKlineRowList.size() < 3) {
@@ -74,6 +134,8 @@ public class MatrixKlineProcessor {
             matrixSegmentList.add(new MatrixSegment(prev, curr));
         }
 
+        // 2.获取所有的上升下降区间
+        List<MatrixRange> matrixRangeList = new ArrayList<>();
         MatrixContext lowerContext = null;
         MatrixContext upperContext = null;
         PeakShapeEnum tendency = PeakShapeEnum.NONE;
@@ -89,10 +151,13 @@ public class MatrixKlineProcessor {
                 } else {
                     if (curr.lower < lowerContext.lower) {
                         if (next != null && upperContext != null
-                                && next.upper > upperContext.upper && tendency == PeakShapeEnum.TOP) {
+                                && next.upper > upperContext.upper
+                                && tendency == PeakShapeEnum.TOP
+                                && curr.lower > upperContext.lower) {
                             continue;
                         }
                         if (tendency == PeakShapeEnum.TOP && upperContext != null) {
+                            matrixRangeList.add(new MatrixRange(upperContext.startDate, lowerContext.startDate, TendencyTypeEnum.UP));
                             System.out.println("up  : " + upperContext.startDate + " - " + lowerContext.startDate);
                         }
                         upperContext = null;
@@ -106,10 +171,13 @@ public class MatrixKlineProcessor {
                 } else {
                     if (curr.upper > upperContext.upper) {
                         if (next != null && lowerContext != null
-                                && next.lower < lowerContext.lower && tendency == PeakShapeEnum.FLOOR) {
+                                && next.lower < lowerContext.lower
+                                && tendency == PeakShapeEnum.FLOOR
+                                && curr.upper < lowerContext.upper) {
                             continue;
                         }
                         if (tendency == PeakShapeEnum.FLOOR && lowerContext != null) {
+                            matrixRangeList.add(new MatrixRange(lowerContext.startDate, upperContext.startDate, TendencyTypeEnum.DOWN));
                             System.out.println("down: " + lowerContext.startDate + " - " + upperContext.startDate);
                         }
                         lowerContext = null;
@@ -121,15 +189,66 @@ public class MatrixKlineProcessor {
 
             if (i == matrixSegmentList.size() - 1 && tendency != null) {
                 if (tendency == PeakShapeEnum.FLOOR) {
+                    matrixRangeList.add(new MatrixRange(lowerContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.DOWN));
                     System.out.println("down: " + lowerContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
                 } else {
+                    matrixRangeList.add(new MatrixRange(upperContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.UP));
                     System.out.println("up:   " + upperContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
-
                 }
             }
         }
 
+        // 3.对上升下降区间内的K线列表进行赋值
+        int index = 0;
+        for (MatrixRange matrixRange : matrixRangeList) {
+            List<MatrixKlineRow> rows = new ArrayList<>();
+            for (int i = index; i < matrixKlineRowList.size(); i++) {
+                MatrixKlineRow row = matrixKlineRowList.get(i);
+                if (row.getDate() >= matrixRange.startDate && row.getDate() <= matrixRange.endDate) {
+                    rows.add(row);
+                }
+                if (row.getDate() == matrixRange.endDate) {
+                    matrixRange.setRows(rows);
+                    index = i;
+                    break;
+                }
+            }
+        }
+
+        this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
+        System.out.println(matrixRangeList);
     }
+
+
+    private void setMatrixList() {
+        List<Matrix> matrixList = new ArrayList<>();
+        for (int i = 0; i < matrixRangeList.size(); i++) {
+            MatrixRange range = matrixRangeList.get(i);
+            List<MatrixKlineRow> rows = range.getRows();
+            for (int j = 0; j <= rows.size() - 5;) {
+                MatrixKlineRow r1 = rows.get(j + 1);
+                MatrixKlineRow r2 = rows.get(j + 2);
+                MatrixKlineRow r3 = rows.get(j + 3);
+                MatrixKlineRow r4 = rows.get(j + 4);
+                if (range.getTendency() == TendencyTypeEnum.DOWN && r1.getLow() <= r4.getHigh()) {
+                    long low = Math.max(r1.getLow(), r3.getLow());
+                    long high = Math.min(r2.getHigh(), r4.getHigh());
+                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.DOWN));
+                    j = j + 4;
+                } else if (range.getTendency() == TendencyTypeEnum.UP && r1.getHigh() >= r4.getLow()) {
+                    long high = Math.min(r1.getHigh(), r3.getHigh());
+                    long low = Math.max(r2.getLow(), r4.getLow());
+                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.UP));
+                    j = j + 4;
+                } else {
+                    j++;
+                }
+            }
+        }
+        this.matrixList = matrixList;
+        System.out.println(matrixList);
+    }
+
 
 
 //    // 对上升区间进行处理
