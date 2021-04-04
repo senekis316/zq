@@ -95,12 +95,19 @@ public class MatrixKlineProcessor {
         private long startDate;
         private long endDate;
         private TendencyTypeEnum tendency;
-        public Matrix(long high, long low, long startDate, long endDate, TendencyTypeEnum tendency) {
+        private int rangeIndex;
+        private long rangeLow;
+        private long rangeHigh;
+        public Matrix(long high, long low, long startDate, long endDate,
+                      TendencyTypeEnum tendency, int rangeIndex, long rangeLow, long rangeHigh) {
             this.high = high;
             this.low = low;
             this.startDate = startDate;
             this.endDate = endDate;
             this.tendency = tendency;
+            this.rangeIndex = rangeIndex;
+            this.rangeLow = rangeLow;
+            this.rangeHigh = rangeHigh;
         }
 
         @Override
@@ -219,7 +226,6 @@ public class MatrixKlineProcessor {
         this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
     }
 
-
     private void setMatrixList() {
         List<Matrix> matrixList = new ArrayList<>();
         for (int i = 0; i < matrixRangeList.size(); i++) {
@@ -233,12 +239,16 @@ public class MatrixKlineProcessor {
                 if (range.getTendency() == TendencyTypeEnum.DOWN && r1.getLow() <= r4.getHigh()) {
                     long low = Math.max(r1.getLow(), r3.getLow());
                     long high = Math.min(r2.getHigh(), r4.getHigh());
-                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.DOWN));
+                    long rangeLow = Math.min(r1.getLow(), r3.getLow());
+                    long rangeHigh = Math.max(r2.getHigh(), r4.getHigh());
+                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.DOWN, i, rangeLow, rangeHigh));
                     j = j + 4;
                 } else if (range.getTendency() == TendencyTypeEnum.UP && r1.getHigh() >= r4.getLow()) {
                     long high = Math.min(r1.getHigh(), r3.getHigh());
                     long low = Math.max(r2.getLow(), r4.getLow());
-                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.UP));
+                    long rangeLow = Math.min(r2.getLow(), r4.getLow());
+                    long rangeHigh = Math.max(r1.getHigh(), r3.getHigh());
+                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.UP, i, rangeLow, rangeHigh));
                     j = j + 4;
                 } else {
                     j++;
@@ -280,9 +290,31 @@ public class MatrixKlineProcessor {
     }
 
     private void setMatrixMerge() {
+        for (int i = 1; i < matrixList.size();) {
+            Matrix prev = matrixList.get(i - 1);
+            Matrix curr = matrixList.get(i);
+            if (prev.getTendency() == curr.getTendency()
+                    && prev.getRangeIndex() == curr.getRangeIndex()
+                    && !(prev.getRangeHigh() < curr.getRangeLow() || prev.getRangeLow() > curr.getRangeHigh())) {
+                Matrix matrix = new Matrix(
+                        Math.max(prev.getHigh(), curr.getHigh()),
+                        Math.min(prev.getLow(), curr.getLow()),
+                        prev.getStartDate(), curr.getEndDate(), curr.getTendency(), prev.rangeIndex,
+                        Math.min(prev.getRangeLow(), curr.getRangeLow()),
+                        Math.max(prev.getRangeHigh(), curr.getRangeHigh()));
+                matrixList.set(i - 1, matrix);
+                matrixList.remove(i);
+            } else {
+                i++;
+            }
+        }
+
+        System.out.println("---------- Merge Matrix List ----------");
+        matrixList.stream().forEach(matrix -> System.out.println(matrix));
+        System.out.println("-------------- END --------------");
+        System.out.println();
 
     }
-
 
 //    // 对上升区间进行处理
 //    public void upperSegment(List<MatrixSegment> upperSegmentList, List<MatrixSegment> matrixSegmentList) {
