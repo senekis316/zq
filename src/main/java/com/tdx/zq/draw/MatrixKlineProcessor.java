@@ -25,6 +25,7 @@ public class MatrixKlineProcessor {
         this.downMatrixList = new ArrayList<>();
         setMatrixTendency();
         setMatrixList();
+        setMatrixMerge();
     }
 
     public class MatrixSegment {
@@ -216,7 +217,6 @@ public class MatrixKlineProcessor {
         }
 
         this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
-        System.out.println(matrixRangeList);
     }
 
 
@@ -243,6 +243,30 @@ public class MatrixKlineProcessor {
                 } else {
                     j++;
                 }
+                if (j > rows.size() - 5) {
+                    boolean isBreak = false;
+                    if (range.getTendency() == TendencyTypeEnum.DOWN) {
+                        for (int z = j; z < rows.size(); z++) {
+                            MatrixKlineRow r5 = rows.get(z);
+                            if (r5.getShape() == PeakShapeEnum.FLOOR && r5.getLow() < r3.getLow()) {
+                                isBreak = true;
+                            }
+                        }
+                        if (isBreak == false) {
+                            matrixList.remove(matrixList.size() - 1);
+                        }
+                    } else if (range.getTendency() == TendencyTypeEnum.UP) {
+                        for (int z = j; z < rows.size(); z++) {
+                            MatrixKlineRow r5 = rows.get(z);
+                            if (r5.getShape() == PeakShapeEnum.TOP && r5.getHigh() > r3.getHigh()) {
+                                isBreak = true;
+                            }
+                        }
+                        if (isBreak == false) {
+                            matrixList.remove(matrixList.size() - 1);
+                        }
+                    }
+                }
             }
         }
         this.matrixList = matrixList;
@@ -255,6 +279,9 @@ public class MatrixKlineProcessor {
 
     }
 
+    private void setMatrixMerge() {
+
+    }
 
 
 //    // 对上升区间进行处理
