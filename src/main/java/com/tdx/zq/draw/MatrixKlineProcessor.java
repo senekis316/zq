@@ -52,13 +52,11 @@ public class MatrixKlineProcessor {
 
     public class MatrixContext {
 
-        private int range;
         private long upper;
         private long lower;
         private long startDate;
 
         public MatrixContext(MatrixSegment matrixSegment) {
-            this.range = 1;
             this.lower = matrixSegment.lower;
             this.upper = matrixSegment.upper;
             this.startDate = matrixSegment.startDate;
@@ -85,6 +83,17 @@ public class MatrixKlineProcessor {
         }
         public TendencyTypeEnum getTendency() {
             return this.tendency;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder()
+                    .append(tendency.name().toLowerCase())
+                    .append(tendency == TendencyTypeEnum.UP ? "  : " : ": ")
+                    .append(startDate)
+                    .append(" - ")
+                    .append(endDate);
+            return sb.toString();
         }
     }
 
@@ -142,6 +151,8 @@ public class MatrixKlineProcessor {
             matrixSegmentList.add(new MatrixSegment(prev, curr));
         }
 
+
+        // 2020-07-14 -- 2020-12-25
         // 2.获取所有的上升下降区间
         List<MatrixRange> matrixRangeList = new ArrayList<>();
         MatrixContext lowerContext = null;
@@ -166,7 +177,7 @@ public class MatrixKlineProcessor {
                         }
                         if (tendency == PeakShapeEnum.TOP && upperContext != null) {
                             matrixRangeList.add(new MatrixRange(upperContext.startDate, lowerContext.startDate, TendencyTypeEnum.UP));
-                            System.out.println("up  : " + upperContext.startDate + " - " + lowerContext.startDate);
+                            //System.out.println("up  : " + upperContext.startDate + " - " + lowerContext.startDate);
                         }
                         upperContext = null;
                         lowerContext.lower = curr.lower;
@@ -186,7 +197,7 @@ public class MatrixKlineProcessor {
                         }
                         if (tendency == PeakShapeEnum.FLOOR && lowerContext != null) {
                             matrixRangeList.add(new MatrixRange(lowerContext.startDate, upperContext.startDate, TendencyTypeEnum.DOWN));
-                            System.out.println("down: " + lowerContext.startDate + " - " + upperContext.startDate);
+                            //System.out.println("down: " + lowerContext.startDate + " - " + upperContext.startDate);
                         }
                         lowerContext = null;
                         upperContext.upper = curr.upper;
@@ -198,13 +209,15 @@ public class MatrixKlineProcessor {
             if (i == matrixSegmentList.size() - 1 && tendency != null) {
                 if (tendency == PeakShapeEnum.FLOOR) {
                     matrixRangeList.add(new MatrixRange(lowerContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.DOWN));
-                    System.out.println("down: " + lowerContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
+                    //System.out.println("down: " + lowerContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
                 } else {
                     matrixRangeList.add(new MatrixRange(upperContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.UP));
-                    System.out.println("up:   " + upperContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
+                    //System.out.println("up:   " + upperContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
                 }
             }
         }
+//
+//        MatrixRange tail = matrixRangeList.get(matrixRangeList.size() - 1);
 
         // 3.对上升下降区间内的K线列表进行赋值
         int index = 0;
@@ -222,6 +235,37 @@ public class MatrixKlineProcessor {
                 }
             }
         }
+
+        // 头部趋势调整范围
+        MatrixRange head = matrixRangeList.get(0);
+        List<MatrixKlineRow> headRows = head.getRows();
+        if (head.getTendency() == TendencyTypeEnum.DOWN) {
+            long max = Long.MIN_VALUE;
+            for (int i = 0; i < headRows.size(); i++) {
+                MatrixKlineRow headRow = headRows.get(i);
+                if (headRow.getShape() == PeakShapeEnum.TOP) {
+                    max = Math.max(headRow.getHigh(), max);
+                }
+            }
+            int idx = 0;
+            for (int i = 0; i < headRows.size(); i++) {
+                MatrixKlineRow headRow = headRows.get(i);
+                if (headRow.getHigh() == max) {
+                    idx = i;
+                    head.startDate = headRow.getDate();
+                    break;
+                }
+            }
+            for (int i = idx; i >= 0; i--) {
+                headRows.remove(i);
+            }
+        }
+
+        System.out.println();
+        System.out.println("---------- Tendency Range List ----------");
+        matrixRangeList.stream().forEach(matrixRange -> System.out.println(matrixRange));
+        System.out.println("-------------- END --------------");
+
 
         this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
     }
@@ -285,7 +329,6 @@ public class MatrixKlineProcessor {
         System.out.println("---------- Matrix List ----------");
         matrixList.stream().forEach(matrix -> System.out.println(matrix));
         System.out.println("-------------- END --------------");
-        System.out.println();
 
     }
 
@@ -309,10 +352,12 @@ public class MatrixKlineProcessor {
             }
         }
 
+        System.out.println();
         System.out.println("---------- Merge Matrix List ----------");
         matrixList.stream().forEach(matrix -> System.out.println(matrix));
         System.out.println("-------------- END --------------");
         System.out.println();
+
 
     }
 
