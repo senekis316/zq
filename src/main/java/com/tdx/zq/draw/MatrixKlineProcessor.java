@@ -26,6 +26,7 @@ public class MatrixKlineProcessor {
         setMatrixTendency();
         setMatrixList();
         setMatrixMerge();
+        setWeak1B();
     }
 
     public class MatrixSegment {
@@ -69,14 +70,39 @@ public class MatrixKlineProcessor {
         private long endDate;
         private TendencyTypeEnum tendency;
         private List<MatrixKlineRow> rows;
+        private List<Matrix> matrixs;
+        private int upperRowIdx;
+        private int lowerRowIdx;
+        private MatrixKlineRow upperRow;
+        private MatrixKlineRow lowerRow;
         public MatrixRange(long startDate, long endDate, TendencyTypeEnum tendency) {
             this.startDate = startDate;
             this.endDate = endDate;
             this.tendency = tendency;
             this.rows = new ArrayList<>();
+            this.matrixs = new ArrayList<>();
         }
         public void setRows(List<MatrixKlineRow> rows) {
             this.rows = rows;
+            long min = Long.MAX_VALUE;
+            long max = Long.MIN_VALUE;
+            for (MatrixKlineRow row : rows) {
+                min = Math.min(min, row.getLow());
+                max = Math.max(max, row.getHigh());
+            }
+            for (int i = 0; i < rows.size(); i++) {
+                if (rows.get(i).getHigh() == max) {
+                    upperRowIdx = i;
+                    upperRow = rows.get(i);
+                }
+                if (rows.get(i).getLow() == min) {
+                    lowerRowIdx = i;
+                    lowerRow = rows.get(i);
+                }
+            }
+        }
+        public void addMatrix(Matrix matrix) {
+            matrixs.add(matrix);
         }
         public List<MatrixKlineRow> getRows() {
             return this.rows;
@@ -152,7 +178,6 @@ public class MatrixKlineProcessor {
             MatrixKlineRow curr = matrixKlineRowList.get(i);
             matrixSegmentList.add(new MatrixSegment(prev, curr));
         }
-
 
         // 2020-07-14 -- 2020-12-25
         // 2.获取所有的上升下降区间
@@ -286,10 +311,13 @@ public class MatrixKlineProcessor {
         matrixRangeList.stream().forEach(matrixRange -> System.out.println(matrixRange));
         System.out.println("-------------- END --------------");
 
-        this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
+        this.matrixRangeList = matrixRangeList;
+
+        //this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
     }
 
     private void setMatrixList() {
+        List<MatrixRange> matrixRangeList = this.matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
         List<Matrix> matrixList = new ArrayList<>();
         for (int i = 0; i < matrixRangeList.size(); i++) {
             MatrixRange range = matrixRangeList.get(i);
@@ -391,8 +419,52 @@ public class MatrixKlineProcessor {
             System.out.println();
         }
 
+    }
+
+    public void setWeak1B() {
+
+        for (MatrixRange matrixRange : matrixRangeList) {
+            for (Matrix matrix : matrixList) {
+                if (matrix.startDate > matrixRange.endDate) {
+                    break;
+                }
+                if (matrix.startDate > matrixRange.startDate && matrix.endDate < matrixRange.endDate) {
+                    matrixRange.addMatrix(matrix);
+                }
+            }
+        }
+
+        //List<MatrixRange> weakMatrixRangeList = matrixRangeList.stream().filter(range -> range.matrixs.size() == 0).collect(Collectors.toList());
+
+        System.out.println("---------- 1B Point ----------");
+        for (MatrixRange matrixRange : matrixRangeList) {
+            if (matrixRange.getTendency() == TendencyTypeEnum.DOWN) {
+                if (matrixRange.matrixs.size() == 0) {
+                    System.out.println("Weak1B Date: " + matrixRange.lowerRow.getDate());
+                } else {
+                    System.out.println("1B Date    : " + matrixRange.lowerRow.getDate() + ", Matrix Count: " + matrixRange.matrixs.size());
+                }
+            }
+        }
+        System.out.println("-------------- END --------------");
+        System.out.println();
+
+        System.out.println("---------- 1S Point ----------");
+        for (MatrixRange matrixRange : matrixRangeList) {
+            if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
+                if (matrixRange.matrixs.size() == 0) {
+                    System.out.println("Weak1S Date: " + matrixRange.upperRow.getDate());
+                } else {
+                    System.out.println("1S Date    : " + matrixRange.upperRow.getDate() + ", Matrix Count: " + matrixRange.matrixs.size());
+                }
+            }
+        }
+        System.out.println("-------------- END --------------");
+        System.out.println();
 
     }
+
+
 
 //    // 对上升区间进行处理
 //    public void upperSegment(List<MatrixSegment> upperSegmentList, List<MatrixSegment> matrixSegmentList) {
