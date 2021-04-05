@@ -107,8 +107,9 @@ public class MatrixKlineProcessor {
         private int rangeIndex;
         private long rangeLow;
         private long rangeHigh;
+        private MatrixKlineRow tailRow;
         public Matrix(long high, long low, long startDate, long endDate,
-                      TendencyTypeEnum tendency, int rangeIndex, long rangeLow, long rangeHigh) {
+                      TendencyTypeEnum tendency, int rangeIndex, long rangeLow, long rangeHigh, MatrixKlineRow tailRow) {
             this.high = high;
             this.low = low;
             this.startDate = startDate;
@@ -117,6 +118,7 @@ public class MatrixKlineProcessor {
             this.rangeIndex = rangeIndex;
             this.rangeLow = rangeLow;
             this.rangeHigh = rangeHigh;
+            this.tailRow = tailRow;
         }
 
         @Override
@@ -284,7 +286,6 @@ public class MatrixKlineProcessor {
         matrixRangeList.stream().forEach(matrixRange -> System.out.println(matrixRange));
         System.out.println("-------------- END --------------");
 
-
         this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
     }
 
@@ -298,19 +299,22 @@ public class MatrixKlineProcessor {
                 MatrixKlineRow r2 = rows.get(j + 2);
                 MatrixKlineRow r3 = rows.get(j + 3);
                 MatrixKlineRow r4 = rows.get(j + 4);
+                MatrixKlineRow r6 = j + 6 < rows.size() ? rows.get(j + 6) : null;
                 if (range.getTendency() == TendencyTypeEnum.DOWN && r1.getLow() <= r4.getHigh()) {
                     long low = Math.max(r1.getLow(), r3.getLow());
                     long high = Math.min(r2.getHigh(), r4.getHigh());
                     long rangeLow = Math.min(r1.getLow(), r3.getLow());
                     long rangeHigh = Math.max(r2.getHigh(), r4.getHigh());
-                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.DOWN, i, rangeLow, rangeHigh));
+                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(),
+                            TendencyTypeEnum.DOWN, i, rangeLow, rangeHigh, r6));
                     j = j + 4;
                 } else if (range.getTendency() == TendencyTypeEnum.UP && r1.getHigh() >= r4.getLow()) {
                     long high = Math.min(r1.getHigh(), r3.getHigh());
                     long low = Math.max(r2.getLow(), r4.getLow());
                     long rangeLow = Math.min(r2.getLow(), r4.getLow());
                     long rangeHigh = Math.max(r1.getHigh(), r3.getHigh());
-                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(), TendencyTypeEnum.UP, i, rangeLow, rangeHigh));
+                    matrixList.add(new Matrix(high, low, r1.getDate(), r4.getDate(),
+                            TendencyTypeEnum.UP, i, rangeLow, rangeHigh, r6));
                     j = j + 4;
                 } else {
                     j++;
@@ -320,7 +324,9 @@ public class MatrixKlineProcessor {
                     if (range.getTendency() == TendencyTypeEnum.DOWN) {
                         for (int z = j; z < rows.size(); z++) {
                             MatrixKlineRow r5 = rows.get(z);
-                            if (r5.getShape() == PeakShapeEnum.FLOOR && r5.getLow() < r3.getLow()) {
+                            if (r5.getShape() == PeakShapeEnum.FLOOR
+                                    && r5.getLow() < r3.getLow()
+                                    && r5.getLow() < r1.getLow()) {
                                 isBreak = true;
                             }
                         }
@@ -330,7 +336,9 @@ public class MatrixKlineProcessor {
                     } else if (range.getTendency() == TendencyTypeEnum.UP) {
                         for (int z = j; z < rows.size(); z++) {
                             MatrixKlineRow r5 = rows.get(z);
-                            if (r5.getShape() == PeakShapeEnum.TOP && r5.getHigh() > r3.getHigh()) {
+                            if (r5.getShape() == PeakShapeEnum.TOP
+                                    && r5.getHigh() > r3.getHigh()
+                                    && r5.getHigh() > r1.getHigh()) {
                                 isBreak = true;
                             }
                         }
@@ -351,30 +359,37 @@ public class MatrixKlineProcessor {
     }
 
     private void setMatrixMerge() {
+        boolean hasMerge = false;
         for (int i = 1; i < matrixList.size();) {
             Matrix prev = matrixList.get(i - 1);
             Matrix curr = matrixList.get(i);
             if (prev.getTendency() == curr.getTendency()
                     && prev.getRangeIndex() == curr.getRangeIndex()
-                    && !(prev.getRangeHigh() < curr.getRangeLow() || prev.getRangeLow() > curr.getRangeHigh())) {
+                    && (!(prev.getRangeHigh() < curr.getRangeLow() || prev.getRangeLow() > curr.getRangeHigh())
+                        || !(prev.getRangeHigh() < curr.getTailRow().getLow() || prev.getRangeLow() > curr.getTailRow().getHigh()))) {
                 Matrix matrix = new Matrix(
                         Math.max(prev.getHigh(), curr.getHigh()),
                         Math.min(prev.getLow(), curr.getLow()),
                         prev.getStartDate(), curr.getEndDate(), curr.getTendency(), prev.rangeIndex,
                         Math.min(prev.getRangeLow(), curr.getRangeLow()),
-                        Math.max(prev.getRangeHigh(), curr.getRangeHigh()));
+                        Math.max(prev.getRangeHigh(), curr.getRangeHigh()), curr.tailRow);
                 matrixList.set(i - 1, matrix);
                 matrixList.remove(i);
+                hasMerge = true;
             } else {
                 i++;
             }
         }
 
-        System.out.println();
-        System.out.println("---------- Merge Matrix List ----------");
-        matrixList.stream().forEach(matrix -> System.out.println(matrix));
-        System.out.println("-------------- END --------------");
-        System.out.println();
+        if (hasMerge) {
+            setMatrixMerge();
+        } else {
+            System.out.println();
+            System.out.println("---------- Merge Matrix List ----------");
+            matrixList.stream().forEach(matrix -> System.out.println(matrix));
+            System.out.println("-------------- END --------------");
+            System.out.println();
+        }
 
 
     }
