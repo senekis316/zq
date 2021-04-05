@@ -177,7 +177,6 @@ public class MatrixKlineProcessor {
                         }
                         if (tendency == PeakShapeEnum.TOP && upperContext != null) {
                             matrixRangeList.add(new MatrixRange(upperContext.startDate, lowerContext.startDate, TendencyTypeEnum.UP));
-                            //System.out.println("up  : " + upperContext.startDate + " - " + lowerContext.startDate);
                         }
                         upperContext = null;
                         lowerContext.lower = curr.lower;
@@ -197,7 +196,6 @@ public class MatrixKlineProcessor {
                         }
                         if (tendency == PeakShapeEnum.FLOOR && lowerContext != null) {
                             matrixRangeList.add(new MatrixRange(lowerContext.startDate, upperContext.startDate, TendencyTypeEnum.DOWN));
-                            //System.out.println("down: " + lowerContext.startDate + " - " + upperContext.startDate);
                         }
                         lowerContext = null;
                         upperContext.upper = curr.upper;
@@ -209,15 +207,11 @@ public class MatrixKlineProcessor {
             if (i == matrixSegmentList.size() - 1 && tendency != null) {
                 if (tendency == PeakShapeEnum.FLOOR) {
                     matrixRangeList.add(new MatrixRange(lowerContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.DOWN));
-                    //System.out.println("down: " + lowerContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
                 } else {
                     matrixRangeList.add(new MatrixRange(upperContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.UP));
-                    //System.out.println("up:   " + upperContext.startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).endDate);
                 }
             }
         }
-//
-//        MatrixRange tail = matrixRangeList.get(matrixRangeList.size() - 1);
 
         // 3.对上升下降区间内的K线列表进行赋值
         int index = 0;
@@ -236,7 +230,7 @@ public class MatrixKlineProcessor {
             }
         }
 
-        // 头部趋势调整范围
+        // 3.1 头部趋势调整范围
         MatrixRange head = matrixRangeList.get(0);
         List<MatrixKlineRow> headRows = head.getRows();
         if (head.getTendency() == TendencyTypeEnum.DOWN) {
@@ -256,8 +250,32 @@ public class MatrixKlineProcessor {
                     break;
                 }
             }
-            for (int i = idx; i >= 0; i--) {
-                headRows.remove(i);
+            if (idx > 0) {
+                for (int i = idx; i >= 0; i--) {
+                    headRows.remove(i);
+                }
+            }
+        } else if (head.getTendency() == TendencyTypeEnum.DOWN) {
+            long min = Long.MAX_VALUE;
+            for (int i = 0; i < headRows.size(); i++) {
+                MatrixKlineRow headRow = headRows.get(i);
+                if (headRow.getShape() == PeakShapeEnum.FLOOR) {
+                    min = Math.min(headRow.getLow(), min);
+                }
+            }
+            int idx = 0;
+            for (int i = 0; i < headRows.size(); i++) {
+                MatrixKlineRow headRow = headRows.get(i);
+                if (headRow.getLow() == min) {
+                    idx = i;
+                    head.startDate = headRow.getDate();
+                    break;
+                }
+            }
+            if (idx > 0) {
+                for (int i = idx; i >= 0; i--) {
+                    headRows.remove(i);
+                }
             }
         }
 
