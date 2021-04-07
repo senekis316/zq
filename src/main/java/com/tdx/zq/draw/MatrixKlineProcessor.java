@@ -327,7 +327,7 @@ public class MatrixKlineProcessor {
                 MatrixKlineRow r2 = rows.get(j + 2);
                 MatrixKlineRow r3 = rows.get(j + 3);
                 MatrixKlineRow r4 = rows.get(j + 4);
-                MatrixKlineRow r6 = j + 6 < rows.size() ? rows.get(j + 6) : null;
+                MatrixKlineRow r6 = r4.getIdx() + 2 < matrixKlineRowList.size() ? matrixKlineRowList.get(r4.getIdx() + 2) : null;
                 if (range.getTendency() == TendencyTypeEnum.DOWN && r1.getLow() <= r4.getHigh()) {
                     long low = Math.max(r1.getLow(), r3.getLow());
                     long high = Math.min(r2.getHigh(), r4.getHigh());
