@@ -499,16 +499,16 @@ public class MatrixKlineProcessor {
         if (b1PointDates.get(b1PointDates.size() - 1).getDate() > b2PointDates.get(b2PointDates.size() - 1).getDate()) {
             System.out.println(b1PointTypes.get(b1PointTypes.size() - 1) + ": " + b1PointDates.get(b1PointDates.size() - 1).getDate());
         } else {
-            System.out.println("2B    : " + b2PointDates.get(b2PointDates.size() - 1).getDate());
+            System.out.println("2B: " + b2PointDates.get(b2PointDates.size() - 1).getDate());
         }
         System.out.println("-------------- END --------------");
         System.out.println();
 
         System.out.println("---------- NewS Point ----------");
-        if (b1PointDates.get(s1PointDates.size() - 1).getDate() > b2PointDates.get(s2PointDates.size() - 1).getDate()) {
+        if (s1PointDates.get(s1PointDates.size() - 1).getDate() > s2PointDates.get(s2PointDates.size() - 1).getDate()) {
             System.out.println(s1PointTypes.get(s1PointTypes.size() - 1) + ": " + s1PointDates.get(s1PointDates.size() - 1).getDate());
         } else {
-            System.out.println("2S :" + s2PointDates.get(s2PointDates.size() - 1).getDate());
+            System.out.println("2S:" + s2PointDates.get(s2PointDates.size() - 1).getDate());
         }
         System.out.println("-------------- END --------------");
         System.out.println();
