@@ -347,7 +347,7 @@ public class MatrixKlineProcessor {
                 } else {
                     j++;
                 }
-                if (j > rows.size() - 5) {
+                if (j > rows.size() - 5 && range.matrixs.size() > 0) {
                     boolean isBreak = false;
                     if (range.getTendency() == TendencyTypeEnum.DOWN) {
                         for (int z = j; z < rows.size(); z++) {
@@ -434,9 +434,19 @@ public class MatrixKlineProcessor {
             }
         }
 
+
+        MatrixRange firstMatrixRange = matrixRangeList.get(0);
+
         System.out.println("---------- 1B Point ----------");
         List<String> b1PointTypes = new ArrayList<>();
         List<MatrixKlineRow> b1PointDates = new ArrayList<>();
+
+        if (firstMatrixRange.getTendency() == TendencyTypeEnum.UP) {
+            b1PointTypes.add("Weak1B");
+            b1PointDates.add(firstMatrixRange.getRows().get(0));
+            System.out.println("Weak1B Date: " + firstMatrixRange.getRows().get(0).getDate());
+        }
+
         for (MatrixRange matrixRange : matrixRangeList) {
             if (matrixRange.getTendency() == TendencyTypeEnum.DOWN) {
                 if (matrixRange.matrixs.size() == 0) {
@@ -455,6 +465,13 @@ public class MatrixKlineProcessor {
         System.out.println("---------- 1S Point ----------");
         List<String> s1PointTypes = new ArrayList<>();
         List<MatrixKlineRow> s1PointDates = new ArrayList<>();
+
+        if (firstMatrixRange.getTendency() == TendencyTypeEnum.DOWN) {
+            s1PointTypes.add("Weak1S");
+            s1PointDates.add(firstMatrixRange.getRows().get(0));
+            System.out.println("Weak1S Date: " + firstMatrixRange.getRows().get(0).getDate());
+        }
+
         for (MatrixRange matrixRange : matrixRangeList) {
             if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
                 if (matrixRange.matrixs.size() == 0) {
@@ -479,7 +496,6 @@ public class MatrixKlineProcessor {
                 j++;
             }
         }
-
         System.out.println("-------------- END --------------");
         System.out.println();
 
@@ -495,23 +511,23 @@ public class MatrixKlineProcessor {
         System.out.println("-------------- END --------------");
         System.out.println();
 
-        System.out.println("---------- NewB Point ----------");
-        if (b1PointDates.get(b1PointDates.size() - 1).getDate() > b2PointDates.get(b2PointDates.size() - 1).getDate()) {
-            System.out.println(b1PointTypes.get(b1PointTypes.size() - 1) + ": " + b1PointDates.get(b1PointDates.size() - 1).getDate());
-        } else {
-            System.out.println("2B: " + b2PointDates.get(b2PointDates.size() - 1).getDate());
-        }
-        System.out.println("-------------- END --------------");
-        System.out.println();
-
-        System.out.println("---------- NewS Point ----------");
-        if (s1PointDates.get(s1PointDates.size() - 1).getDate() > s2PointDates.get(s2PointDates.size() - 1).getDate()) {
-            System.out.println(s1PointTypes.get(s1PointTypes.size() - 1) + ": " + s1PointDates.get(s1PointDates.size() - 1).getDate());
-        } else {
-            System.out.println("2S:" + s2PointDates.get(s2PointDates.size() - 1).getDate());
-        }
-        System.out.println("-------------- END --------------");
-        System.out.println();
+//        System.out.println("---------- NewB Point ----------");
+//        if (b1PointDates.get(b1PointDates.size() - 1).getDate() > b2PointDates.get(b2PointDates.size() - 1).getDate()) {
+//            System.out.println(b1PointTypes.get(b1PointTypes.size() - 1) + ": " + b1PointDates.get(b1PointDates.size() - 1).getDate());
+//        } else {
+//            System.out.println("2B Date: " + b2PointDates.get(b2PointDates.size() - 1).getDate());
+//        }
+//        System.out.println("-------------- END --------------");
+//        System.out.println();
+//
+//        System.out.println("---------- NewS Point ----------");
+//        if (s1PointDates.get(s1PointDates.size() - 1).getDate() > s2PointDates.get(s2PointDates.size() - 1).getDate()) {
+//            System.out.println(s1PointTypes.get(s1PointTypes.size() - 1) + " Date: " + s1PointDates.get(s1PointDates.size() - 1).getDate());
+//        } else {
+//            System.out.println("2S Date:" + s2PointDates.get(s2PointDates.size() - 1).getDate());
+//        }
+//        System.out.println("-------------- END --------------");
+//        System.out.println();
 
 
     }
