@@ -2,6 +2,7 @@ package com.tdx.zq.draw;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.stream.Collectors;
 
 import com.tdx.zq.draw.PeakKlineProcessor.MatrixKlineRow;
@@ -26,7 +27,7 @@ public class MatrixKlineProcessor {
         setMatrixTendency();
         setMatrixList();
         setMatrixMerge();
-        setWeak1B();
+        setBSPoint();
     }
 
     public class MatrixSegment {
@@ -109,6 +110,9 @@ public class MatrixKlineProcessor {
         }
         public TendencyTypeEnum getTendency() {
             return this.tendency;
+        }
+        public List<Matrix> getMatrixs() {
+            return this.matrixs;
         }
 
         @Override
@@ -312,8 +316,6 @@ public class MatrixKlineProcessor {
         System.out.println("-------------- END --------------");
 
         this.matrixRangeList = matrixRangeList;
-
-        //this.matrixRangeList = matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
     }
 
     private void setMatrixList() {
@@ -421,7 +423,7 @@ public class MatrixKlineProcessor {
 
     }
 
-    public void setWeak1B() {
+    public void setBSPoint() {
 
         for (MatrixRange matrixRange : matrixRangeList) {
             for (Matrix matrix : matrixList) {
@@ -434,564 +436,196 @@ public class MatrixKlineProcessor {
             }
         }
 
-
-        MatrixRange firstMatrixRange = matrixRangeList.get(0);
-
-        System.out.println("---------- 1B Point ----------");
-        List<String> b1PointTypes = new ArrayList<>();
-        List<MatrixKlineRow> b1PointDates = new ArrayList<>();
-
-        if (firstMatrixRange.getTendency() == TendencyTypeEnum.UP) {
-            b1PointTypes.add("Weak1B");
-            b1PointDates.add(firstMatrixRange.getRows().get(0));
-            System.out.println("Weak1B Date: " + firstMatrixRange.getRows().get(0).getDate());
-        }
-
-        for (MatrixRange matrixRange : matrixRangeList) {
-            if (matrixRange.getTendency() == TendencyTypeEnum.DOWN) {
-                if (matrixRange.matrixs.size() == 0) {
-                    b1PointTypes.add("Weak1B");
-                    System.out.println("Weak1B Date: " + matrixRange.lowerRow.getDate());
-                } else {
-                    b1PointTypes.add("1B");
-                    System.out.println("1B Date    : " + matrixRange.lowerRow.getDate() + ", Matrix Count: " + matrixRange.matrixs.size());
-                }
-                b1PointDates.add(matrixRange.lowerRow);
-            }
-        }
-        System.out.println("-------------- END --------------");
-        System.out.println();
-
-        System.out.println("---------- 1S Point ----------");
-        List<String> s1PointTypes = new ArrayList<>();
-        List<MatrixKlineRow> s1PointDates = new ArrayList<>();
-
-        if (firstMatrixRange.getTendency() == TendencyTypeEnum.DOWN) {
-            s1PointTypes.add("Weak1S");
-            s1PointDates.add(firstMatrixRange.getRows().get(0));
-            System.out.println("Weak1S Date: " + firstMatrixRange.getRows().get(0).getDate());
-        }
-
-        for (MatrixRange matrixRange : matrixRangeList) {
-            if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
-                if (matrixRange.matrixs.size() == 0) {
-                    s1PointTypes.add("Weak1S");
-                    System.out.println("Weak1S Date: " + matrixRange.upperRow.getDate());
-                } else {
-                    s1PointTypes.add("1S");
-                    System.out.println("1S Date    : " + matrixRange.upperRow.getDate() + ", Matrix Count: " + matrixRange.matrixs.size());
-                }
-                s1PointDates.add(matrixRange.upperRow);
-            }
-        }
-        System.out.println("-------------- END --------------");
-        System.out.println();
-
-        System.out.println("---------- 2B Point ----------");
-        List<MatrixKlineRow> b2PointDates = new ArrayList<>();
-        for (int i = 0, j = 0; i + 2 < matrixKlineRowList.size() && j < b1PointDates.size(); i++) {
-            if (matrixKlineRowList.get(i).getDate() == b1PointDates.get(j).getDate()) {
-                System.out.println("2B Date: " + matrixKlineRowList.get(i + 2).getDate());
-                b2PointDates.add(matrixKlineRowList.get(i + 2));
-                j++;
-            }
-        }
-        System.out.println("-------------- END --------------");
-        System.out.println();
-
-        System.out.println("---------- 2S Point ----------");
-        List<MatrixKlineRow> s2PointDates = new ArrayList<>();
-        for (int i = 0, j = 0; i + 2 < matrixKlineRowList.size() && j < s1PointDates.size(); i++) {
-            if (matrixKlineRowList.get(i).getDate() == s1PointDates.get(j).getDate()) {
-                System.out.println("2S Date: " + matrixKlineRowList.get(i + 2).getDate());
-                s2PointDates.add(matrixKlineRowList.get(i + 2));
-                j++;
-            }
-        }
-        System.out.println("-------------- END --------------");
-        System.out.println();
-
-//        System.out.println("---------- NewB Point ----------");
-//        if (b1PointDates.get(b1PointDates.size() - 1).getDate() > b2PointDates.get(b2PointDates.size() - 1).getDate()) {
-//            System.out.println(b1PointTypes.get(b1PointTypes.size() - 1) + ": " + b1PointDates.get(b1PointDates.size() - 1).getDate());
-//        } else {
-//            System.out.println("2B Date: " + b2PointDates.get(b2PointDates.size() - 1).getDate());
-//        }
-//        System.out.println("-------------- END --------------");
-//        System.out.println();
-//
-//        System.out.println("---------- NewS Point ----------");
-//        if (s1PointDates.get(s1PointDates.size() - 1).getDate() > s2PointDates.get(s2PointDates.size() - 1).getDate()) {
-//            System.out.println(s1PointTypes.get(s1PointTypes.size() - 1) + " Date: " + s1PointDates.get(s1PointDates.size() - 1).getDate());
-//        } else {
-//            System.out.println("2S Date:" + s2PointDates.get(s2PointDates.size() - 1).getDate());
-//        }
-//        System.out.println("-------------- END --------------");
-//        System.out.println();
-
-
-    }
-
-
-
-//    // 对上升区间进行处理
-//    public void upperSegment(List<MatrixSegment> upperSegmentList, List<MatrixSegment> matrixSegmentList) {
-//        long lower = upperSegmentList.get(0).getLower();
-//        long upper = upperSegmentList.get(0).getUpper();
-//        long startDate = upperSegmentList.get(0).getStartDate();
-//        int range = 1;
-//        PeakShapeEnum tendency = PeakShapeEnum.NONE;
-//        for (int i = 1; i < upperSegmentList.size(); i++) {
-//            MatrixSegment prev = upperSegmentList.get(i - 1);
-//            MatrixSegment curr = upperSegmentList.get(i);
-//            if (curr.lower < lower) {
-//                lower = curr.lower;
-//                upper = curr.upper;
-//                if (range > 1 && tendency == PeakShapeEnum.TOP) {
-//                    System.out.println("up: " + startDate + " - " + prev.endDate);
-//                    tendency = PeakShapeEnum.NONE;
-//                }
-//                startDate = curr.getStartDate();
-//                range = 1;
-//            } else if (curr.upper > upper){
-//                upper = curr.upper;
-//                range++;
-//                tendency = PeakShapeEnum.TOP;
-//            } else {
-//                range++;
-//                if (i == upperSegmentList.size() - 1 && tendency == PeakShapeEnum.TOP) {
-//                    System.out.println("up: " + startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).getEndDate());
-//                }
-//            }
-//        }
-//    }
-//
-//    // 对下降区间进行处理
-//    public void lowerSegment(List<MatrixSegment> lowerSegmentList, List<MatrixSegment> matrixSegmentList) {
-//        long lower = lowerSegmentList.get(0).getLower();
-//        long upper = lowerSegmentList.get(0).getUpper();
-//        long startDate = lowerSegmentList.get(0).getStartDate();
-//        int range = 1;
-//        PeakShapeEnum tendency = PeakShapeEnum.NONE;
-//        for (int i = 1; i < lowerSegmentList.size(); i++) {
-//            MatrixSegment prev = lowerSegmentList.get(i - 1);
-//            MatrixSegment curr = lowerSegmentList.get(i);
-//            if (curr.upper > upper) {
-//                lower = curr.lower;
-//                upper = curr.upper;
-//                if (range > 1 && tendency == PeakShapeEnum.FLOOR) {
-//                    System.out.println("down: " + startDate + " - " + prev.endDate);
-//                    tendency = PeakShapeEnum.NONE;
-//                }
-//                startDate = curr.getStartDate();
-//                range = 1;
-//            } else if (curr.lower < lower){
-//                lower = curr.lower;
-//                range++;
-//                tendency = PeakShapeEnum.FLOOR;
-//            } else {
-//                range++;
-//                if (i == lowerSegmentList.size() - 1 && tendency == PeakShapeEnum.FLOOR) {
-//                    System.out.println("down: " + startDate + " - " + matrixSegmentList.get(matrixSegmentList.size() - 1).getEndDate());
-//                }
-//            }
-//        }
-//    }
-
-
-    /*public void setMatrixTendency() {
-        for (int i = 0; i <= matrixKlineRowList.size() - 6; i++) {
-            List<MatrixKlineRow> matrixKlineRows = new ArrayList<>();
-            MatrixKlineRow r1 = matrixKlineRowList.get(i);
-            MatrixKlineRow r2 = matrixKlineRowList.get(i + 1);
-            MatrixKlineRow r3 = matrixKlineRowList.get(i + 2);
-            MatrixKlineRow r4 = matrixKlineRowList.get(i + 3);
-            MatrixKlineRow r5 = matrixKlineRowList.get(i + 4);
-            MatrixKlineRow r6 = matrixKlineRowList.get(i + 5);
-            if (matrixKlineRowList.get(i).getShape() == PeakShapeEnum.FLOOR) {
-                if (upMatrixList.size() == 0) {
-                    if (r1.getLow() <= r3.getLow()) {
-                        matrixKlineRows.add(r1);
-                        matrixKlineRows.add(r2);
-                        matrixKlineRows.add(r3);
-                        matrixKlineRows.add(r4);
-                        upMatrixList.add(matrixKlineRows);
-                    }
-                } else {
-                    List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-                    if (lastUpMatrixList.get(lastUpMatrixList.size() - 1) == r2) {
-                        int max = - 1;
-                        boolean up = false;
-                        for (int j = lastUpMatrixList.size() - 1; j > 1; j -= 2) {
-                            if (!up && lastUpMatrixList.get(j).getHigh() >= lastUpMatrixList.get(1).getHigh()) {
-                                up = true;
-                            }
-                            if (max == -1) {
-                                max = j;
-                            } else {
-                                max = lastUpMatrixList.get(max).getHigh() > lastUpMatrixList.get(j).getHigh() ? max : j;
-                            }
-                        }
-                        if (up) {
-                            if (max == lastUpMatrixList.size() - 1) {
-                                if (r5.getLow() < r3.getLow()
-                                        && r6.getHigh() <= r2.getHigh()
-                                        && r4.getHigh() <= lastUpMatrixList.get(max).getHigh()) {
-                                    for (int z = lastUpMatrixList.size() - 1; z > max; z--) {
-                                        lastUpMatrixList.remove(z);
-                                    }
-                                } else if (r5.getLow() > r3.getLow()
-                                            && r4.getHigh() <= r2.getHigh()
-                                            && r6.getHigh() <= r2.getHigh()) {
-                                    int j = i + 6;
-                                    while (j < matrixKlineRowList.size()) {
-                                        MatrixKlineRow r7 = matrixKlineRowList.get(j);
-                                        if (r7.getShape() == PeakShapeEnum.FLOOR) {
-                                            if (r3.getLow() > r7.getLow()) {
-                                                for (int z = lastUpMatrixList.size() - 1; z > max; z--) {
-                                                    lastUpMatrixList.remove(z);
-                                                }
-                                                break;
-                                            }
-                                        } else {
-                                            if (r7.getHigh() > r2.getHigh()) {
-                                                lastUpMatrixList.add(r3);
-                                                lastUpMatrixList.add(r4);
-                                                break;
-                                            }
-                                        }
-                                        j++;
-                                    }
-                                } else {
-                                    lastUpMatrixList.add(r3);
-                                    lastUpMatrixList.add(r4);
-                                }
-                            } else {
-                                if (r5.getLow() < lastUpMatrixList.get(max + 1).getLow()
-                                        && r4.getHigh() <= lastUpMatrixList.get(max).getLow()
-                                        && r6.getHigh() <= lastUpMatrixList.get(max).getHigh()) {
-                                    for (int z = lastUpMatrixList.size() - 1; z > max; z--) {
-                                        lastUpMatrixList.remove(z);
-                                    }
-                                } else {
-                                    lastUpMatrixList.add(r3);
-                                    lastUpMatrixList.add(r4);
-                                }
-                            }
-                        } else {
-                            if (r3.getLow() >= lastUpMatrixList.get(0).getLow()) {
-                                lastUpMatrixList.add(r3);
-                                lastUpMatrixList.add(r4);
-                            } else {
-                                upMatrixList.remove(upMatrixList.size() - 1);
-                            }
-                        }
-                    } else {
-                        if (r1.getLow() <= r3.getLow()) {
-                            matrixKlineRows.add(r1);
-                            matrixKlineRows.add(r2);
-                            matrixKlineRows.add(r3);
-                            matrixKlineRows.add(r4);
-                            upMatrixList.add(matrixKlineRows);
-                        }
-                    }
-                }
-                if (i == matrixKlineRowList.size() - 7) {
-                    MatrixKlineRow r7 = matrixKlineRowList.get(i + 6);
-                    List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-                    if (r6.getHigh() > r4.getHigh()
-                        && r6.getHigh() > r2.getHigh()
-                        && r1.getLow() < r3.getLow()) {
-                        //&& r1.getLow() < r5.getLow()) {
-                        lastUpMatrixList.add(r5);
-                        lastUpMatrixList.add(r6);
-                    } else if (lastUpMatrixList.get(lastUpMatrixList.size() - 1).getDate() < r3.getDate()
-                            && r3.getLow() < r5.getLow()
-                            && r4.getHigh() < r6.getHigh()) {
-                        List<MatrixKlineRow> upMatrixKlineRows = new ArrayList<>();
-                        upMatrixKlineRows.add(r3);
-                        upMatrixKlineRows.add(r4);
-                        upMatrixKlineRows.add(r5);
-                        upMatrixKlineRows.add(r6);
-                        upMatrixList.add(upMatrixKlineRows);
-                    } else if (r4.getHigh() > r6.getHigh() && r5.getLow() > r7.getLow()) {
-                        List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-                        MatrixKlineRow lastDownRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
-                        if (r5.getLow() > lastDownRow.getLow()
-                                && r3.getDate() > lastDownRow.getDate()) {
-                            List<MatrixKlineRow> downMatrixKlineRows = new ArrayList<>();
-                            downMatrixKlineRows.add(r4);
-                            downMatrixKlineRows.add(r5);
-                            downMatrixKlineRows.add(r6);
-                            downMatrixKlineRows.add(r7);
-                            downMatrixList.add(downMatrixKlineRows);
-                        }
-                    }
-                }
+        PriorityQueue<BSPoint> bsPoints = new PriorityQueue<>((o1, o2) -> {
+            if (o1.getDate() > o2.getDate()) {
+                return 1;
+            } else if (o1.getDate() < o2.getDate()) {
+                return -1;
             } else {
-                if (downMatrixList.size() == 0) {
-                    if (r1.getHigh() >= r3.getHigh()) {
-                        matrixKlineRows.add(r1);
-                        matrixKlineRows.add(r2);
-                        matrixKlineRows.add(r3);
-                        matrixKlineRows.add(r4);
-                        downMatrixList.add(matrixKlineRows);
-                    }
-                } else {
-                    List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-                    if (lastDownMatrixList.get(lastDownMatrixList.size() - 1) == r2) {
-                        int min = - 1;
-                        boolean down = false;
-                        for (int j = lastDownMatrixList.size() - 1; j > 1; j -= 2) {
-                            if (!down && lastDownMatrixList.get(j).getLow() <= lastDownMatrixList.get(1).getLow()) {
-                                down = true;
-                            }
-                            if (min == -1) {
-                                min = j;
-                            } else {
-                                min = lastDownMatrixList.get(min).getLow() < lastDownMatrixList.get(j).getLow() ? min : j;
-                            }
-                        }
-                        if (down) {
-                            if (min == lastDownMatrixList.size() - 1) {
-                                if (r5.getHigh() > r3.getHigh()
-                                        && r6.getLow() >= r2.getLow()
-                                        && r4.getLow() >= lastDownMatrixList.get(min).getLow()) {
-                                    for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
-                                        lastDownMatrixList.remove(z);
-                                    }
-                                } else if (r5.getHigh() < r3.getHigh()
-                                        && r4.getLow() >= r2.getLow()
-                                        && r6.getLow() >= r2.getLow()) {
-                                    int j = i + 6;
-                                    while (j < matrixKlineRowList.size()) {
-                                        MatrixKlineRow r7 = matrixKlineRowList.get(j);
-                                        if (r7.getShape() == PeakShapeEnum.TOP) {
-                                            if (r3.getHigh() < r7.getHigh()) {
-                                                for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
-                                                    lastDownMatrixList.remove(z);
-                                                }
-                                                break;
-                                            }
-                                        } else {
-                                            if (r7.getLow() < r2.getLow()) {
-                                                lastDownMatrixList.add(r3);
-                                                lastDownMatrixList.add(r4);
-                                                break;
-                                            }
-                                        }
-                                        j++;
-                                    }
-                                } else {
-                                    lastDownMatrixList.add(r3);
-                                    lastDownMatrixList.add(r4);
-                                }
-                            } else {
-                                if (r5.getHigh() > lastDownMatrixList.get(min + 1).getHigh()
-                                        && r4.getLow() >= lastDownMatrixList.get(min).getLow()
-                                        && r6.getLow() >= lastDownMatrixList.get(min).getLow()) {
-                                    for (int z = lastDownMatrixList.size() - 1; z > min; z--) {
-                                        lastDownMatrixList.remove(z);
-                                    }
-                                } else {
-                                    lastDownMatrixList.add(r3);
-                                    lastDownMatrixList.add(r4);
-                                }
-                            }
-                        } else {
-                            if (r3.getHigh() <= lastDownMatrixList.get(0).getHigh()) {
-                                lastDownMatrixList.add(r3);
-                                lastDownMatrixList.add(r4);
-                            } else {
-                                downMatrixList.remove(downMatrixList.size() - 1);
-                            }
-                        }
-                    } else {
-                        if (r1.getHigh() >= r3.getHigh()) {
-                            matrixKlineRows.add(r1);
-                            matrixKlineRows.add(r2);
-                            matrixKlineRows.add(r3);
-                            matrixKlineRows.add(r4);
-                            downMatrixList.add(matrixKlineRows);
-                        }
-                    }
-                }
-                if (i == matrixKlineRowList.size() - 7) {
-                    MatrixKlineRow r7 = matrixKlineRowList.get(i + 6);
-                    List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-                    if (r6.getLow() < r4.getLow()
-                            && r6.getLow() < r2.getLow()
-                            && r1.getHigh() > r3.getHigh()) {
-                            //&& r1.getHigh() > r5.getHigh()) {
-                        lastDownMatrixList.add(r5);
-                        lastDownMatrixList.add(r6);
-                    } else if (lastDownMatrixList.get(lastDownMatrixList.size() - 1).getDate() < r3.getDate()
-                            && r3.getHigh() > r5.getHigh()
-                            && r4.getLow() > r6.getLow()) {
-                        List<MatrixKlineRow> downMatrixKlineRows = new ArrayList<>();
-                        downMatrixKlineRows.add(r3);
-                        downMatrixKlineRows.add(r4);
-                        downMatrixKlineRows.add(r5);
-                        downMatrixKlineRows.add(r6);
-                        downMatrixList.add(downMatrixKlineRows);
-                    } else if (r4.getLow() < r6.getLow() && r5.getHigh() < r7.getHigh()) {
-                        List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-                        MatrixKlineRow lastUpRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
-                        if (r5.getHigh() < lastUpRow.getHigh()
-                            && r3.getDate() > lastUpRow.getDate()) {
-                            List<MatrixKlineRow> upMatrixKlineRows = new ArrayList<>();
-                            upMatrixKlineRows.add(r4);
-                            upMatrixKlineRows.add(r5);
-                            upMatrixKlineRows.add(r6);
-                            upMatrixKlineRows.add(r7);
-                            upMatrixList.add(upMatrixKlineRows);
-                        }
-                    }
-                }
+                return 0;
             }
-        }
-
-        if (upMatrixList.size() > 0) {
-            List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-            List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-            MatrixKlineRow lastUpMatrixRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
-            MatrixKlineRow lastDownMatrixRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
-
-            if (lastDownMatrixRow.getDate() <= matrixKlineRowList.get(matrixKlineRowList.size() - 2).getDate()
-                    && lastUpMatrixRow.getDate() == matrixKlineRowList.get(matrixKlineRowList.size() - 3).getDate()
-                    && lastUpMatrixRow.getHigh() < matrixKlineRowList.get(matrixKlineRowList.size() - 1).getHigh()
-                    && lastUpMatrixList.get(lastUpMatrixList.size() - 1).getHigh() < matrixKlineRowList.get(matrixKlineRowList.size() - 1).getHigh()) {
-                lastUpMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 2));
-                lastUpMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 1));
-            }
-        }
-
-        if (downMatrixList.size() > 0) {
-            List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-            List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-            MatrixKlineRow lastUpMatrixRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
-            MatrixKlineRow lastDownMatrixRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
-
-            if (lastUpMatrixRow.getDate() <= matrixKlineRowList.get(matrixKlineRowList.size() - 2).getDate()
-                    && lastDownMatrixRow.getDate() == matrixKlineRowList.get(matrixKlineRowList.size() - 3).getDate()
-                    && lastDownMatrixRow.getLow() > matrixKlineRowList.get(matrixKlineRowList.size() - 1).getLow()
-                    && lastDownMatrixList.get(lastDownMatrixList.size() - 1).getLow() > matrixKlineRowList.get(matrixKlineRowList.size() - 1).getLow()) {
-                lastDownMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 2));
-                lastDownMatrixList.add(matrixKlineRowList.get(matrixKlineRowList.size() - 1));
-            }
-        }
-
-        while (true) {
-            if (upMatrixList.size() != 0 && downMatrixList.size() != 0) {
-                List<MatrixKlineRow> lastUpMatrixList = upMatrixList.get(upMatrixList.size() - 1);
-                List<MatrixKlineRow> lastDownMatrixList = downMatrixList.get(downMatrixList.size() - 1);
-                MatrixKlineRow lastUpRow = lastUpMatrixList.get(lastUpMatrixList.size() - 1);
-                MatrixKlineRow lastDownRow = lastDownMatrixList.get(lastDownMatrixList.size() - 1);
-                if (lastUpRow.getDate() > lastDownRow.getDate()) {
-                    if (lastUpMatrixList.size() == 4 && lastUpMatrixList.get(1).getHigh() > lastUpMatrixList.get(3).getHigh()) {
-                        upMatrixList.remove(upMatrixList.size() - 1);
-                        continue;
-                    }
-                } else {
-                    if (lastDownMatrixList.size() == 4 && lastDownMatrixList.get(1).getLow() < lastDownMatrixList.get(3).getLow()) {
-                        downMatrixList.remove(downMatrixList.size() - 1);
-                        continue;
-                    }
-                }
-            }
-            break;
-        }
-
-        upMatrixList.stream().forEach(m -> System.out.println("up:" + m.get(0).getDate() + "_" + m.get(m.size() - 1).getDate()));
-        System.out.println("---------------------------------------");
-        System.out.println("---------------------------------------");
-        System.out.println("---------------------------------------");
-        downMatrixList.stream().forEach(m -> System.out.println("down:" + m.get(0).getDate() + "_" + m.get(m.size() - 1).getDate()));
-        System.out.println("---------------------------------------");
-        System.out.println("---------------------------------------");
-        System.out.println("---------------------------------------");
+        });
 
 
-        if (upMatrixList.size() == 0 || downMatrixList.size() == 0) {
-            if (upMatrixList.size() > 0) {
-                System.out.println("up:     " + upMatrixList.get(0).get(0).getDate() + "_" + upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate());
-            }
-            if (downMatrixList.size() > 0) {
-                System.out.println("down:     " + downMatrixList.get(0).get(0).getDate() + "_" + downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate());
-            }
-            return;
-        }
+        // 获取假设的MatrixRange
+        mockMatrixRange();
 
-        long targetDate = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate()
-                ? upMatrixList.get(0).get(0).getDate() : downMatrixList.get(0).get(0).getDate();
-        boolean searchUp = upMatrixList.get(0).get(0).getDate() < downMatrixList.get(0).get(0).getDate() ? true : false;
+        System.out.println("---------- Last BSPoints ----------");
 
-        if (searchUp) {
-            if (upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
-                    >= downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
-                    && upMatrixList.get(0).get(0).getDate() == matrixKlineRowList.get(0).getDate()
-                    && upMatrixList.get(0).get(3).getDate() > downMatrixList.get(0).get(0).getDate()) {
-                for (int i = 0; i < matrixKlineRowList.size() - 3; i++) {
-                    if (matrixKlineRowList.get(i).getDate() == downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
-                        && matrixKlineRowList.get(i + 1).getHigh() <= upMatrixList.get(0).get(1).getHigh()
-                            && matrixKlineRowList.get(i + 3).getHigh() <= upMatrixList.get(0).get(1).getHigh()) {
-                        new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= downMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
-                        return;
-                    }
-                }
+        // 最后的BSPoint
+        MatrixRange prevRange = matrixRangeList.get(matrixRangeList.size() - 2);
+        MatrixRange currRange = matrixRangeList.get(matrixRangeList.size() - 1);
+        if (prevRange.getMatrixs().size() > 0) {
+            if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.B1));
+            } else {
+                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.S1));
             }
         } else {
-            if (downMatrixList.get(0).get(downMatrixList.get(0).size() - 1).getDate()
-                    >= upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
-                    && downMatrixList.get(0).get(0).getDate() == matrixKlineRowList.get(0).getDate()
-                    && downMatrixList.get(0).get(3).getDate() > upMatrixList.get(0).get(0).getDate()) {
-                for (int i = 0; i < matrixKlineRowList.size() - 3; i++) {
-                    if (matrixKlineRowList.get(i).getDate() == upMatrixList.get(0).get(upMatrixList.get(0).size() - 1).getDate()
-                            && matrixKlineRowList.get(i + 1).getLow() >= downMatrixList.get(0).get(1).getLow()
-                            && matrixKlineRowList.get(i + 3).getLow() >= downMatrixList.get(0).get(1).getLow()) {
-                        new MatrixKlineProcessor(matrixKlineRowList.stream().filter(row -> row.getDate() >= upMatrixList.get(0).get(0).getDate()).collect(Collectors.toList()));
-                        return;
-                    }
-                }
+            if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_B1));
+            } else {
+                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_S1));
             }
         }
 
-        while (true) {
-            List<MatrixKlineRow> currKlineRowList;
-            if (searchUp) {
-                for (int i = 0; i < upMatrixList.size(); i++) {
-                    if (targetDate >= upMatrixList.get(i).get(0).getDate()
-                            && targetDate < upMatrixList.get(i).get(upMatrixList.get(i).size() - 1).getDate()) {
-                        currKlineRowList = upMatrixList.get(i);
-                        System.out.println("up:     " + targetDate + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
-                        targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
-                        searchUp = false;
-                        break;
-                    }
-                }
-                if (searchUp) {
-                    break;
+        if (currRange.getMatrixs().size() > 0) {
+            if (currRange.getTendency() == TendencyTypeEnum.DOWN) {
+                bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1));
+            } else {
+                bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1));
+            }
+        } else {
+            if (currRange.getTendency() == TendencyTypeEnum.DOWN) {
+                if (currRange.lowerRow.getLow() < currRange.getRows().get(1).getLow()) {
+                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1));
                 }
             } else {
-                for (int i = 0; i < downMatrixList.size(); i++) {
-                    if (targetDate >= downMatrixList.get(i).get(0).getDate()
-                            && targetDate < downMatrixList.get(i).get(downMatrixList.get(i).size() - 1).getDate()) {
-                        currKlineRowList = downMatrixList.get(i);
-                        System.out.println("down:   " + targetDate + "_" + currKlineRowList.get(currKlineRowList.size() - 1).getDate());
-                        targetDate = currKlineRowList.get(currKlineRowList.size() - 1).getDate();
-                        searchUp = true;
-                        break;
+                if (currRange.upperRow.getHigh() > currRange.getRows().get(1).getHigh()) {
+                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1));
+                }
+            }
+        }
+
+        if (currRange.getRows().size() >= 3) {
+            if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2));
+            } else {
+                bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2));
+            }
+        }
+
+        List<MatrixKlineRow> rows = currRange.getRows();
+
+        for (int i = 0; i <= rows.size() - 5; i += 2) {
+            MatrixKlineRow row2 = rows.get(i + 1);
+            MatrixKlineRow row4 = rows.get(i + 3);
+            MatrixKlineRow row5 = rows.get(i + 4);
+            if (currRange.matrixs.size() > 0 && row2.getDate() == currRange.startDate) {
+                if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                    if (row4.getHigh() > row2.getHigh()) {
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_B2));
+                    } else {
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_B2));
+                    }
+                } else {
+                    if (row4.getLow() < row2.getLow()) {
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_S2));
+                    } else {
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_S2));
                     }
                 }
-                if (!searchUp) {
-                    break;
+            } else {
+                if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                    if (row5.getLow() <= row2.getHigh()) {
+                        if (row4.getHigh() > row2.getHigh()) {
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_B2));
+                        } else {
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_B2));
+                        }
+                    }
+                } else {
+                    if (row5.getHigh() >= row2.getLow()) {
+                        if (row4.getLow() < row2.getLow()) {
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_S2));
+                        } else {
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_S2));
+                        }
+                    }
                 }
             }
 
+            if (i + 6 < rows.size()) {
+                MatrixKlineRow row6 = rows.get(i + 5);
+                if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                    if (row6.getHigh() > row2.getHigh() && row6.getHigh() > row4.getHigh()) {
+                        break;
+                    }
+                } else {
+                    if (row6.getLow() < row2.getLow() && row6.getLow() < row4.getLow()) {
+                        break;
+                    }
+                }
+            }
         }
 
-    }*/
+        int length = bsPoints.size();
+        for (int i = 0; i < length; i++) {
+            System.out.println(bsPoints.poll());
+        }
 
+        System.out.println("-------------- END --------------");
+        System.out.println();
+    }
 
+    // 创建假设MatrixRange
+    private void mockMatrixRange() {
+
+        MatrixRange range = matrixRangeList.get(matrixRangeList.size() - 1);
+        List<MatrixKlineRow> rows = range.getRows();
+
+        // 作出假设的range范围, 找出最低或最高的点作为假设的range分割点
+        MatrixKlineRow row = range.upperRow.getDate() > range.lowerRow.getDate()
+                ? range.upperRow : range.lowerRow;
+
+        // 根据是否存在矩阵, 判断是否切分矩阵
+        boolean split = range.matrixs.size() == 0 ? false : true;
+
+        // 判断假设的分割点是否有效
+        if (row == rows.get(0) || row == rows.get(rows.size() - 1)) {
+            split = false;
+        }
+
+        // 拆分原来的MatrixRange
+        if (split) {
+            // 先拆分MatrixKlineRow
+            List<MatrixKlineRow> rows1 = new ArrayList<>();
+            List<MatrixKlineRow> rows2 = new ArrayList<>();
+            for (int i = 0; i < rows.size(); i++) {
+                if (rows.get(i).getDate() < row.getDate()) {
+                    rows1.add(rows.get(i));
+                } else {
+                    rows2.add(rows.get(i));
+                }
+            }
+
+            // 创建拆分开的第一个矩阵
+            MatrixRange matrixRange1 = new MatrixRange(rows1.get(0).getDate(), rows1.get(rows1.size() - 1).getDate(), range.tendency);
+            matrixRange1.setRows(rows1);
+            matrixRange1.matrixs = range.getMatrixs();
+
+            // 创建拆分开的第二个矩阵
+            MatrixRange matrixRange2 = new MatrixRange(rows2.get(0).getDate(), rows2.get(rows2.size() - 1).getDate(),
+                    range.tendency == TendencyTypeEnum.DOWN ? TendencyTypeEnum.UP : TendencyTypeEnum.DOWN);
+            matrixRange2.setRows(rows2);
+
+            matrixRangeList.remove(matrixRangeList.size() - 1);
+            matrixRangeList.add(matrixRange1);
+            matrixRangeList.add(matrixRange2);
+
+        }
+    }
+
+    public enum PointType {
+        WEAK_B1, B1, B2, WEAK_S1, S1, S2,
+        SIMILAR_WEAK_B2, SIMILAR_B2, SIMILAR_WEAK_S2, SIMILAR_S2;
+    }
+
+    @Data
+    public class BSPoint {
+        private long date;
+        private PointType pointType;
+        public BSPoint(long date, PointType pointType) {
+            this.date = date;
+            this.pointType = pointType;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder();
+            sb.append(pointType).append(": ").append(date);
+            return sb.toString();
+        }
+    }
 
 }

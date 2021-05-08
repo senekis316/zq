@@ -552,11 +552,13 @@ public class PeakKlineProcessor {
                             if (lowest > klineList.get(j).getLow()) {
                                 lowest = klineList.get(j).getLow();
                                 date = klineList.get(j).getDate();
+                                highest = klineList.get(j).getHigh();
                             }
                         } else {
                             if (highest < klineList.get(j).getHigh()) {
                                 highest = klineList.get(j).getHigh();
                                 date = klineList.get(j).getDate();
+                                lowest = klineList.get(j).getLow();
                             }
                         }
                     }
@@ -630,9 +632,9 @@ public class PeakKlineProcessor {
                     value = peakKline.getPeakShape() == PeakShapeEnum.TOP ? lowest : highest;
                     klineRows.add(new KlineRow(date, value));
                     if (peakKline.getPeakShape() == PeakShapeEnum.TOP) {
-                        matrixKlineRows.add(new MatrixKlineRow(lowest, peakKline.getHighest(), date, PeakShapeEnum.FLOOR, matrixKlineRows.size()));
+                        matrixKlineRows.add(new MatrixKlineRow(lowest, highest, date, PeakShapeEnum.FLOOR, matrixKlineRows.size()));
                     } else {
-                        matrixKlineRows.add(new MatrixKlineRow(peakKline.getLowest(), highest, date, PeakShapeEnum.TOP, matrixKlineRows.size()));
+                        matrixKlineRows.add(new MatrixKlineRow(lowest, highest, date, PeakShapeEnum.TOP, matrixKlineRows.size()));
                     }
                 }
             }
