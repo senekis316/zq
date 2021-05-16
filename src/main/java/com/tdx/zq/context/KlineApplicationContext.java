@@ -9,18 +9,14 @@ import com.tdx.zq.enums.KlineType;
 import com.tdx.zq.model.Kline;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
-import com.tdx.zq.model.PeakKlinePrint;
-import com.tdx.zq.utils.JacksonUtils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
 
@@ -28,6 +24,7 @@ import org.springframework.util.CollectionUtils;
 public class KlineApplicationContext {
 
   private String outputPath;
+  private String klineCode;
   private KlineType klineType;
   private List<Kline> klineList;
   private Map<Long, Kline> klineMap;
@@ -37,8 +34,12 @@ public class KlineApplicationContext {
   private List<PeakKline> jumpPeakKlineList;
   private List<PeakKline> turnPeakKlineList;
   private List<MatrixKlineRow> matrixKlineRowList;
+  private Calendar calendar = Calendar.getInstance();
+  private SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
+  private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
 
-  public KlineApplicationContext(String path, KlineType klineType, String outputPath) throws IOException {
+  public KlineApplicationContext(String path, KlineType klineType, String outputPath) throws IOException, ParseException {
+    this.klineType = klineType;
     this.outputPath = outputPath;
     File file = new File(path);
     setKlineList(file, klineType);
@@ -48,7 +49,8 @@ public class KlineApplicationContext {
     setMatrixKlineList();
   }
 
-  public KlineApplicationContext(File file, KlineType klineType, String outputPath) throws IOException {
+  public KlineApplicationContext(File file, KlineType klineType, String outputPath) throws IOException, ParseException {
+    this.klineType = klineType;
     this.outputPath = outputPath;
     setKlineList(file, klineType);
     setKlineMap(klineList);
@@ -57,7 +59,7 @@ public class KlineApplicationContext {
     setMatrixKlineList();
   }
 
-  private void setKlineList(File file, KlineType klineType) throws IOException {
+  private void setKlineList(File file, KlineType klineType) throws IOException, ParseException {
 
     FileReader fileReader = new FileReader(file, Charset.forName("GBK"));
     BufferedReader bufferedReader = new BufferedReader(fileReader);
@@ -67,6 +69,7 @@ public class KlineApplicationContext {
     if (klineType == KlineType.HOUR_LINE && klineStrList.size() < 15);
     if (klineType == KlineType.TEN_MINUTES_LINE && klineStrList.size() < 5);
     klineStrList.remove(klineStrList.size() - 1);
+    klineCode = klineStrList.get(0).split(" ")[0];
     klineStrList.remove(0);
     boolean hasTime = klineStrList.get(0).split("\t")[1].trim().equals("时间");
     klineStrList.remove(0);
@@ -79,7 +82,7 @@ public class KlineApplicationContext {
         hourKlineList.add(klineStrList.get(i));
         if (hourKlineList.size() == 12) {
           try {
-            klineList.add(new Kline(hourKlineList, hasTime, klineList.size()));
+            klineList.add(new Kline(hourKlineList, hasTime, klineList.size(), klineType));
             hourKlineList.clear();
           } catch (Exception e) {
             throw e;
@@ -91,23 +94,59 @@ public class KlineApplicationContext {
         List<String> tenMinuteKlineList = new ArrayList<>();
         tenMinuteKlineList.add(klineStrList.get(i - 1));
         tenMinuteKlineList.add(klineStrList.get(i));
-        klineList.add(new Kline(tenMinuteKlineList, hasTime, klineList.size()));
+        klineList.add(new Kline(tenMinuteKlineList, hasTime, klineList.size(), klineType));
       }
     } else if (klineType == KlineType.DAY_LINE || klineType == KlineType.ONE_MINUTES_LINE) {
       for (String klineStr : klineStrList) {
         List<String> dayKlineList = new ArrayList<>();
         dayKlineList.add(klineStr);
-        klineList.add(new Kline(dayKlineList, hasTime, klineList.size()));
+        klineList.add(new Kline(dayKlineList, hasTime, klineList.size(), klineType));
       }
     } else if (klineType == KlineType.MONTH_LINE) {
-
+      List<String> monthKlineList = new ArrayList<>();
+      long month = -1;
+      for (int i = 0; i < klineStrList.size(); i++) {
+        String[] values = klineStrList.get(i).split("\t");
+        long date = Integer.valueOf(values[0].trim().replace("/", ""));
+        if (month == -1) {
+          month = date / 100;
+        } else if (month != date / 100){
+          month = date / 100;
+          klineList.add(new Kline(monthKlineList, hasTime, klineList.size(), klineType));
+          monthKlineList = new ArrayList<>();
+        }
+        monthKlineList.add(klineStrList.get(i));
+      }
+      if (monthKlineList.size() > 0) {
+        klineList.add(new Kline(monthKlineList, hasTime, klineList.size(), klineType));
+      }
     } else if (klineType == KlineType.WEEK_LINE) {
-
+      List<String> weekKlineList = new ArrayList<>();
+      int prevWeek = -1;
+      int prevYear = -1;
+      for (int i = 0; i < klineStrList.size(); i++) {
+        String[] values = klineStrList.get(i).split("\t");
+        String dateStr = values[0].trim().replace("/", "");
+        Date dateJava = dateFormat.parse(dateStr);
+        calendar.setTime(dateJava);
+        int currYear = Integer.valueOf(yearFormat.format(dateJava));
+        int currWeek = calendar.get(Calendar.WEEK_OF_YEAR);
+        if (prevWeek != -1 && prevYear != -1 && prevWeek != currWeek) {
+          klineList.add(new Kline(weekKlineList, hasTime, klineList.size(), klineType));
+          weekKlineList = new ArrayList<>();
+        }
+        prevWeek = currWeek;
+        prevYear = currYear;
+        weekKlineList.add(klineStrList.get(i));
+      }
+      if (weekKlineList.size() > 0) {
+        klineList.add(new Kline(weekKlineList, hasTime, klineList.size(), klineType));
+      }
     }
     this.klineList = klineList;
   }
 
-  private void setKlineList(String path, KlineType klineType) throws IOException {
+  private void setKlineList(String path, KlineType klineType) throws IOException, ParseException {
     File file = new File(KLineDrawService.class.getResource(path).getFile());
     setKlineList(file, klineType);
   }
@@ -137,8 +176,7 @@ public class KlineApplicationContext {
   }
 
   private void setMatrixKlineList() {
-    MatrixKlineProcessor matrixKlineProcessor = new MatrixKlineProcessor(matrixKlineRowList);
-
+    MatrixKlineProcessor matrixKlineProcessor = new MatrixKlineProcessor(this);
   }
 
   public List<Kline> getKlineList() {
@@ -153,10 +191,10 @@ public class KlineApplicationContext {
     return mergeKlineList;
   }
 
-  public void printPeakKlineList() {
-      System.out.println("peakKlineList: " + JacksonUtils.toJson(
-      breakPeakKlineList.stream().map(PeakKlinePrint::new).filter(PeakKlinePrint::isTendencyPeak).collect(Collectors.toList())));
-  }
+//  public void printPeakKlineList() {
+//      System.out.println("peakKlineList: " + JacksonUtils.toJson(
+//      breakPeakKlineList.stream().map(PeakKlinePrint::new).filter(PeakKlinePrint::isTendencyPeak).collect(Collectors.toList())));
+//  }
 
 //  public void printMergeKlineList() {
 //    System.out.println("mergeKlineList: " + JacksonUtils.toJson(
@@ -244,4 +282,9 @@ public class KlineApplicationContext {
   public List<MatrixKlineRow> getMatrixKlineRowList() {
     return matrixKlineRowList;
   }
+
+  public String getKlineCode() {
+    return klineCode;
+  }
+
 }

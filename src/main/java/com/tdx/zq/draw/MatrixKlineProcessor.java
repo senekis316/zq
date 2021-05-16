@@ -5,13 +5,17 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.stream.Collectors;
 
+import com.tdx.zq.context.KlineApplicationContext;
 import com.tdx.zq.draw.PeakKlineProcessor.MatrixKlineRow;
+import com.tdx.zq.enums.KlineType;
 import com.tdx.zq.enums.PeakShapeEnum;
 import com.tdx.zq.enums.TendencyTypeEnum;
 import lombok.Data;
 
 public class MatrixKlineProcessor {
 
+    private String klineCode;
+    private KlineType klineType;
     private List<MatrixKlineRow> matrixKlineRowList;
     private List<MatrixKlineRow> upMatrixKlineRowList;
     private List<MatrixKlineRow> downMatrixKlineRowList;
@@ -20,8 +24,10 @@ public class MatrixKlineProcessor {
     private List<MatrixRange> matrixRangeList;
     private List<Matrix> matrixList;
 
-    public MatrixKlineProcessor(List<MatrixKlineRow> matrixKlineRowList) {
-        this.matrixKlineRowList = matrixKlineRowList;
+    public MatrixKlineProcessor(KlineApplicationContext klineApplicationContext) {
+        this.klineType = klineApplicationContext.getKlineType();
+        this.klineCode = klineApplicationContext.getKlineCode();
+        this.matrixKlineRowList = klineApplicationContext.getMatrixKlineRowList();
         this.upMatrixList = new ArrayList<>();
         this.downMatrixList = new ArrayList<>();
         setMatrixTendency();
@@ -310,10 +316,10 @@ public class MatrixKlineProcessor {
             }
         }
 
-        System.out.println();
-        System.out.println("---------- Tendency Range List ----------");
-        matrixRangeList.stream().forEach(matrixRange -> System.out.println(matrixRange));
-        System.out.println("-------------- END --------------");
+//        System.out.println();
+//        System.out.println("---------- Tendency Range List ----------");
+//        matrixRangeList.stream().forEach(matrixRange -> System.out.println(matrixRange));
+//        System.out.println("-------------- END --------------");
 
         this.matrixRangeList = matrixRangeList;
     }
@@ -381,10 +387,10 @@ public class MatrixKlineProcessor {
         }
         this.matrixList = matrixList;
 
-        System.out.println();
-        System.out.println("---------- Matrix List ----------");
-        matrixList.stream().forEach(matrix -> System.out.println(matrix));
-        System.out.println("-------------- END --------------");
+//        System.out.println();
+//        System.out.println("---------- Matrix List ----------");
+//        matrixList.stream().forEach(matrix -> System.out.println(matrix));
+//        System.out.println("-------------- END --------------");
 
     }
 
@@ -414,11 +420,11 @@ public class MatrixKlineProcessor {
         if (hasMerge) {
             setMatrixMerge();
         } else {
-            System.out.println();
-            System.out.println("---------- Merge Matrix List ----------");
-            matrixList.stream().forEach(matrix -> System.out.println(matrix));
-            System.out.println("-------------- END --------------");
-            System.out.println();
+//            System.out.println();
+//            System.out.println("---------- Merge Matrix List ----------");
+//            matrixList.stream().forEach(matrix -> System.out.println(matrix));
+//            System.out.println("-------------- END --------------");
+//            System.out.println();
         }
 
     }
@@ -450,7 +456,7 @@ public class MatrixKlineProcessor {
         // 获取假设的MatrixRange
         mockMatrixRange();
 
-        System.out.println("---------- Last BSPoints ----------");
+        System.out.println(String.format("---------- %s %s Last BSPoints ----------", klineCode, klineType));
 
         // 最后的BSPoint
         MatrixRange prevRange = matrixRangeList.get(matrixRangeList.size() - 2);

@@ -1,6 +1,8 @@
 package com.tdx.zq.model;
 
 import java.util.List;
+
+import com.tdx.zq.enums.KlineType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -141,7 +143,7 @@ public class Kline {
         this.code = kline.getCode();
     }
 
-    public Kline(List<String> lines, boolean hasTime, int index) {
+    public Kline(List<String> lines, boolean hasTime, int index, KlineType klineType) {
         this.low = Integer.MAX_VALUE;
         for (int i = 0; i < lines.size(); i++) {
             String[] values = lines.get(i).split("\t");
@@ -155,13 +157,27 @@ public class Kline {
                 this.volume = Integer.valueOf(values[6].trim());
                 this.amount = Float.valueOf(values[7].trim());
             } else {
-                this.date = Integer.valueOf(values[0].trim().replace("/", ""));
-                this.open = Integer.valueOf(values[1].trim().replace(".", ""));
-                this.high = Integer.valueOf(values[2].trim().replace(".", ""));
-                this.low = Integer.valueOf(values[3].trim().replace(".", ""));
-                this.close = Integer.valueOf(values[4].trim().replace(".", ""));
-                this.volume = Integer.valueOf(values[5].trim());
-                this.amount = Float.valueOf(values[6].trim());
+                if (klineType == KlineType.MONTH_LINE || klineType == KlineType.WEEK_LINE) {
+                    if (i == 0) {
+                        this.open = Integer.valueOf(values[1].trim().replace(".", ""));
+                    }
+                    if (i == lines.size() - 1) {
+                        this.date = Integer.valueOf(values[0].trim().replace("/", ""));
+                        this.close = Integer.valueOf(values[4].trim().replace(".", ""));
+                    }
+                    this.high = Math.max(high, Integer.valueOf(values[2].trim().replace(".", "")));
+                    this.low = Math.min(low, Integer.valueOf(values[3].trim().replace(".", "")));
+                    this.volume += Integer.valueOf(values[5].trim());
+                    this.amount += Float.valueOf(values[6].trim());
+                } else {
+                    this.date = Integer.valueOf(values[0].trim().replace("/", ""));
+                    this.open = Integer.valueOf(values[1].trim().replace(".", ""));
+                    this.high = Integer.valueOf(values[2].trim().replace(".", ""));
+                    this.low = Integer.valueOf(values[3].trim().replace(".", ""));
+                    this.close = Integer.valueOf(values[4].trim().replace(".", ""));
+                    this.volume = Integer.valueOf(values[5].trim());
+                    this.amount = Float.valueOf(values[6].trim());
+                }
             }
         }
         this.index = index;
