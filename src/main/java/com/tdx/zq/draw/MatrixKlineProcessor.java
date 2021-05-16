@@ -549,6 +549,71 @@ public class MatrixKlineProcessor {
             }
         }
 
+        // 3.查找第三类买卖点
+        MatrixRange matrixRange = matrixRangeList.get(matrixRangeList.size() - 1);
+        List<Matrix> matrixList = matrixRange.getMatrixs();
+        List<MatrixKlineRow> matrixKlineRowList = matrixRange.getRows();
+
+        if (matrixList.size() == 0) {
+            matrixRange = matrixRangeList.get(matrixRangeList.size() - 2);
+            matrixList = matrixRange.getMatrixs();
+            matrixKlineRowList = new ArrayList<>();
+            matrixKlineRowList.addAll(matrixRange.getRows());
+            matrixKlineRowList.addAll(matrixRangeList.get(matrixRangeList.size() - 1).getRows());
+        }
+
+        if (matrixList.size() > 0) {
+
+            Matrix head = matrixList.get(0);
+            Matrix tail = matrixList.get(matrixList.size() - 1);
+
+            // 3.1 查找上升趋势点买点和下降趋势的卖点
+            if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
+                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                    MatrixKlineRow row = matrixKlineRowList.get(i);
+                    if (row.getDate() > head.endDate
+                            && row.getShape() == PeakShapeEnum.FLOOR
+                            && row.getLow() > head.getHigh()) {
+                        bsPoints.add(new BSPoint(row.getDate(), PointType.B3));
+                        break;
+                    }
+                }
+            } else {
+                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                    MatrixKlineRow row = matrixKlineRowList.get(i);
+                    if (row.getDate() > head.endDate
+                            && row.getShape() == PeakShapeEnum.TOP
+                            && row.getHigh() < head.getLow()) {
+                        bsPoints.add(new BSPoint(row.getDate(), PointType.S3));
+                        break;
+                    }
+                }
+            }
+
+            // 3.2 查找上升趋势的卖点和下降趋势的买点
+            if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
+                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                    MatrixKlineRow row = matrixKlineRowList.get(i);
+                    if (row.getDate() > tail.endDate
+                            && row.getShape() == PeakShapeEnum.TOP
+                            && row.getHigh() < tail.getLow()) {
+                        bsPoints.add(new BSPoint(row.getDate(), PointType.S3));
+                        break;
+                    }
+                }
+            } else {
+                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                    MatrixKlineRow row = matrixKlineRowList.get(i);
+                    if (row.getDate() > tail.endDate
+                            && row.getShape() == PeakShapeEnum.FLOOR
+                            && row.getLow() > tail.getHigh()) {
+                        bsPoints.add(new BSPoint(row.getDate(), PointType.B3));
+                        break;
+                    }
+                }
+            }
+        }
+
         int length = bsPoints.size();
         for (int i = 0; i < length; i++) {
             System.out.println(bsPoints.poll());
@@ -608,7 +673,7 @@ public class MatrixKlineProcessor {
 
     public enum PointType {
         WEAK_B1, B1, B2, WEAK_S1, S1, S2,
-        SIMILAR_WEAK_B2, SIMILAR_B2, SIMILAR_WEAK_S2, SIMILAR_S2;
+        SIMILAR_WEAK_B2, SIMILAR_B2, SIMILAR_WEAK_S2, SIMILAR_S2, B3, S3;
     }
 
     @Data

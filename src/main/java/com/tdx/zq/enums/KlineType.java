@@ -1,6 +1,5 @@
 package com.tdx.zq.enums;
 
-import lombok.Getter;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
@@ -8,6 +7,8 @@ import java.util.List;
 
 public enum KlineType {
 
+  WEEK_LINE("day", "week"),
+  MONTH_LINE("day", "month"),
   DAY_LINE("day", "day"),
   HOUR_LINE("five_minute", "one_hour"),
   ONE_MINUTES_LINE("one_minute", "one_minute"),

@@ -99,6 +99,10 @@ public class KlineApplicationContext {
         dayKlineList.add(klineStr);
         klineList.add(new Kline(dayKlineList, hasTime, klineList.size()));
       }
+    } else if (klineType == KlineType.MONTH_LINE) {
+
+    } else if (klineType == KlineType.WEEK_LINE) {
+
     }
     this.klineList = klineList;
   }
