@@ -16,20 +16,14 @@ public class MatrixKlineProcessor {
 
     private String klineCode;
     private KlineType klineType;
-    private List<MatrixKlineRow> matrixKlineRowList;
-    private List<MatrixKlineRow> upMatrixKlineRowList;
-    private List<MatrixKlineRow> downMatrixKlineRowList;
-    private List<List<MatrixKlineRow>> upMatrixList;
-    private List<List<MatrixKlineRow>> downMatrixList;
-    private List<MatrixRange> matrixRangeList;
     private List<Matrix> matrixList;
+    private List<MatrixRange> matrixRangeList;
+    private List<MatrixKlineRow> matrixKlineRowList;
 
     public MatrixKlineProcessor(KlineApplicationContext klineApplicationContext) {
         this.klineType = klineApplicationContext.getKlineType();
         this.klineCode = klineApplicationContext.getKlineCode();
         this.matrixKlineRowList = klineApplicationContext.getMatrixKlineRowList();
-        this.upMatrixList = new ArrayList<>();
-        this.downMatrixList = new ArrayList<>();
         setMatrixTendency();
         setMatrixList();
         setMatrixMerge();
@@ -387,11 +381,11 @@ public class MatrixKlineProcessor {
         }
         this.matrixList = matrixList;
 
-        System.out.println();
-        System.out.println("---------- Matrix List ----------");
-        matrixList.stream().forEach(matrix -> System.out.println(matrix));
-        System.out.println("-------------- END --------------");
-        System.out.println();
+//        System.out.println();
+//        System.out.println("---------- Matrix List ----------");
+//        matrixList.stream().forEach(matrix -> System.out.println(matrix));
+//        System.out.println("-------------- END --------------");
+//        System.out.println();
 
     }
 
@@ -672,6 +666,15 @@ public class MatrixKlineProcessor {
             matrixRangeList.add(matrixRange2);
 
         }
+
+        System.out.println();
+        System.out.println("---------- Merge Matrix List ----------");
+        for (MatrixRange matrixRange : matrixRangeList) {
+            matrixRange.getMatrixs().stream().forEach(matrix -> System.out.println(matrix));
+        }
+        System.out.println("-------------- END --------------");
+        System.out.println();
+
     }
 
     public enum PointType {
