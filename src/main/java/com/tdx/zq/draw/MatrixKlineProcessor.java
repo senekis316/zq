@@ -387,10 +387,11 @@ public class MatrixKlineProcessor {
         }
         this.matrixList = matrixList;
 
-//        System.out.println();
-//        System.out.println("---------- Matrix List ----------");
-//        matrixList.stream().forEach(matrix -> System.out.println(matrix));
-//        System.out.println("-------------- END --------------");
+        System.out.println();
+        System.out.println("---------- Matrix List ----------");
+        matrixList.stream().forEach(matrix -> System.out.println(matrix));
+        System.out.println("-------------- END --------------");
+        System.out.println();
 
     }
 
@@ -399,10 +400,11 @@ public class MatrixKlineProcessor {
         for (int i = 1; i < matrixList.size();) {
             Matrix prev = matrixList.get(i - 1);
             Matrix curr = matrixList.get(i);
+
             if (prev.getTendency() == curr.getTendency()
                     && prev.getRangeIndex() == curr.getRangeIndex()
                     && (!(prev.getRangeHigh() < curr.getRangeLow() || prev.getRangeLow() > curr.getRangeHigh())
-                        || !(prev.getRangeHigh() < curr.getTailRow().getLow() || prev.getRangeLow() > curr.getTailRow().getHigh()))) {
+                    || !(curr.getTailRow() != null && (prev.getRangeHigh() < curr.getTailRow().getLow() || prev.getRangeLow() > curr.getTailRow().getHigh())))) {
                 Matrix matrix = new Matrix(
                         Math.max(prev.getHigh(), curr.getHigh()),
                         Math.min(prev.getLow(), curr.getLow()),
@@ -415,16 +417,11 @@ public class MatrixKlineProcessor {
             } else {
                 i++;
             }
+
         }
 
         if (hasMerge) {
             setMatrixMerge();
-        } else {
-//            System.out.println();
-//            System.out.println("---------- Merge Matrix List ----------");
-//            matrixList.stream().forEach(matrix -> System.out.println(matrix));
-//            System.out.println("-------------- END --------------");
-//            System.out.println();
         }
 
     }
