@@ -19,11 +19,12 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
+import com.tdx.zq.draw.MatrixKlineProcessor.BSPoint;
 
 
 public class KlineApplicationContext {
 
-  private String outputPath;
+  //private String outputPath;
   private String klineCode;
   private KlineType klineType;
   private List<Kline> klineList;
@@ -37,10 +38,12 @@ public class KlineApplicationContext {
   private Calendar calendar = Calendar.getInstance();
   private SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
   private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
+  private Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap;
 
-  public KlineApplicationContext(String path, KlineType klineType, String outputPath) throws IOException, ParseException {
+  public KlineApplicationContext(String path, KlineType klineType, Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap) throws IOException, ParseException {
     this.klineType = klineType;
-    this.outputPath = outputPath;
+    //this.outputPath = outputPath;
+    this.bsPointMap = bsPointMap;
     File file = new File(path);
     setKlineList(file, klineType);
     setKlineMap(klineList);
@@ -49,9 +52,10 @@ public class KlineApplicationContext {
     setMatrixKlineList();
   }
 
-  public KlineApplicationContext(File file, KlineType klineType, String outputPath) throws IOException, ParseException {
+  public KlineApplicationContext(File file, KlineType klineType, Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap) throws IOException, ParseException {
     this.klineType = klineType;
-    this.outputPath = outputPath;
+    //this.outputPath = outputPath;
+    this.bsPointMap = bsPointMap;
     setKlineList(file, klineType);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
@@ -69,7 +73,8 @@ public class KlineApplicationContext {
     if (klineType == KlineType.HOUR_LINE && klineStrList.size() < 15);
     if (klineType == KlineType.TEN_MINUTES_LINE && klineStrList.size() < 5);
     klineStrList.remove(klineStrList.size() - 1);
-    klineCode = klineStrList.get(0).split(" ")[0];
+    klineCode = file.getName().split("\\.")[0].replace("#", "");
+    //klineCode = klineStrList.get(0).split(" ")[0];
     klineStrList.remove(0);
     boolean hasTime = klineStrList.get(0).split("\t")[1].trim().equals("时间");
     klineStrList.remove(0);
@@ -255,9 +260,9 @@ public class KlineApplicationContext {
 //
 //  }
 
-  public String getOutputPath() {
-    return outputPath;
-  }
+//  public String getOutputPath() {
+//    return outputPath;
+//  }
 
   public KlineType getKlineType() {
     return klineType;
@@ -285,6 +290,10 @@ public class KlineApplicationContext {
 
   public String getKlineCode() {
     return klineCode;
+  }
+
+  public Map<String, Map<KlineType, PriorityQueue<BSPoint>>> getBsPointMap() {
+    return bsPointMap;
   }
 
 }
