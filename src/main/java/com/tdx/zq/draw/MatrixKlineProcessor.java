@@ -28,6 +28,7 @@ public class MatrixKlineProcessor {
         this.klineCode = klineApplicationContext.getKlineCode();
         this.bsPointMap = klineApplicationContext.getBsPointMap();
         this.matrixKlineRowList = klineApplicationContext.getMatrixKlineRowList();
+        if (matrixKlineRowList == null || matrixKlineRowList.size() < 3) return;
         setMatrixTendency();
         setMatrixList();
         setMatrixMerge();
@@ -286,7 +287,7 @@ public class MatrixKlineProcessor {
                 }
             }
             if (idx > 0) {
-                for (int i = idx; i >= 0; i--) {
+                for (int i = idx - 1; i >= 0; i--) {
                     headRows.remove(i);
                 }
             }
@@ -308,7 +309,7 @@ public class MatrixKlineProcessor {
                 }
             }
             if (idx > 0) {
-                for (int i = idx; i >= 0; i--) {
+                for (int i = idx - 1; i >= 0; i--) {
                     headRows.remove(i);
                 }
             }
@@ -458,47 +459,89 @@ public class MatrixKlineProcessor {
         System.out.println(String.format("---------- %s %s Last BSPoints ----------", klineCode, klineType));
 
         // 最后的BSPoint
-        MatrixRange prevRange = matrixRangeList.get(matrixRangeList.size() - 2);
+
+        MatrixRange prevRange = matrixRangeList.size() > 1 ? matrixRangeList.get(matrixRangeList.size() - 2) : null;
         MatrixRange currRange = matrixRangeList.get(matrixRangeList.size() - 1);
-        List<Matrix> prevMatrixs = currRange.matrixs.size() == 0 ? prevRange.matrixs : currRange.matrixs;
 
-        if (prevRange.getMatrixs().size() > 0) {
-            if (currRange.getTendency() == TendencyTypeEnum.UP) {
-                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.B1, prevMatrixs));
-            } else {
-                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.S1, prevMatrixs));
-            }
-        } else {
-            if (currRange.getTendency() == TendencyTypeEnum.UP) {
-                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_B1, prevMatrixs));
-            } else {
-                bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_S1, prevMatrixs));
-            }
-        }
+        List<Matrix> currMatrixList = this.matrixList.stream().filter(matrix ->
+                matrix.getStartDate() >= currRange.startDate && matrix.getEndDate() <= currRange.endDate)
+                .collect(Collectors.toList());
 
-        if (currRange.getMatrixs().size() > 0) {
-            if (currRange.getTendency() == TendencyTypeEnum.DOWN) {
-                bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1, prevMatrixs));
-            } else {
-                bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1, prevMatrixs));
-            }
-        } else {
-            if (currRange.getTendency() == TendencyTypeEnum.DOWN) {
-                if (currRange.lowerRow.getLow() < currRange.getRows().get(1).getLow()) {
-                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1, prevMatrixs));
+        if (prevRange == null) {
+            if (currMatrixList.size() == 0) {
+                if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_B1, currMatrixList));
+                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1, currMatrixList));
+                    if (currRange.getRows().size() >= 3) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2, currMatrixList));
+                    }
+                    if (currRange.getRows().size() > currRange.upperRowIdx + 2) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(currRange.upperRowIdx + 2).getDate(), PointType.S2, currMatrixList));
+                    }
+                } else {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_S1, currMatrixList));
+                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1, currMatrixList));
+                    if (currRange.getRows().size() >= 3) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2, currMatrixList));
+                    }
+                    if (currRange.getRows().size() > currRange.lowerRowIdx + 2) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(currRange.lowerRowIdx + 2).getDate(), PointType.B2, currMatrixList));
+                    }
                 }
             } else {
-                if (currRange.upperRow.getHigh() > currRange.getRows().get(1).getHigh()) {
-                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1, prevMatrixs));
+                if (currRange.getTendency() == TendencyTypeEnum.UP) {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.B1, currMatrixList));
+                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1, currMatrixList));
+                    if (currRange.getRows().size() >= 3) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2, currMatrixList));
+                    }
+                    if (currRange.getRows().size() > currRange.upperRowIdx + 2) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(currRange.upperRowIdx + 2).getDate(), PointType.S2, currMatrixList));
+                    }
+                } else {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.S1, currMatrixList));
+                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1, currMatrixList));
+                    if (currRange.getRows().size() >= 3) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2, currMatrixList));
+                    }
+                    if (currRange.getRows().size() > currRange.lowerRowIdx + 2) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(currRange.lowerRowIdx + 2).getDate(), PointType.B2, currMatrixList));
+                    }
                 }
             }
-        }
-
-        if (currRange.getRows().size() >= 3) {
-            if (currRange.getTendency() == TendencyTypeEnum.UP) {
-                bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2, prevMatrixs));
-            } else {
-                bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2, prevMatrixs));
+        } else {
+            List<Matrix> prevMatrixList = this.matrixList.stream().filter(matrix ->
+                    matrix.getStartDate() >= prevRange.startDate && matrix.getEndDate() <= prevRange.endDate)
+                    .collect(Collectors.toList());
+            if (prevRange.getTendency() == TendencyTypeEnum.DOWN && currRange.getTendency() == TendencyTypeEnum.UP) {
+                if (prevMatrixList.size() > 0) {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.B1, prevMatrixList));
+                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1, currMatrixList));
+                } else {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_B1, prevMatrixList));
+                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1, currMatrixList));
+                }
+                if (currRange.getRows().size() >= 3) {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2, prevMatrixList));
+                }
+                if (currRange.getRows().size() > currRange.upperRowIdx + 2) {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(currRange.upperRowIdx + 2).getDate(), PointType.S2, currMatrixList));
+                }
+            }
+            if (prevRange.getTendency() == TendencyTypeEnum.UP && currRange.getTendency() == TendencyTypeEnum.DOWN) {
+                if (prevMatrixList.size() > 0) {
+                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1, currMatrixList));
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.S1, prevMatrixList));
+                } else {
+                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1, currMatrixList));
+                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_S1, prevMatrixList));
+                }
+                if (currRange.getRows().size() >= 3) {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2, prevMatrixList));
+                }
+                if (currRange.getRows().size() > currRange.lowerRowIdx + 2) {
+                    bsPoints.add(new BSPoint(currRange.getRows().get(currRange.lowerRowIdx + 2).getDate(), PointType.B2, currMatrixList));
+                }
             }
         }
 
@@ -511,32 +554,32 @@ public class MatrixKlineProcessor {
             if (currRange.matrixs.size() > 0 && row2.getDate() == currRange.startDate) {
                 if (currRange.getTendency() == TendencyTypeEnum.UP) {
                     if (row4.getHigh() > row2.getHigh()) {
-                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_B2, prevMatrixs));
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_B2, currMatrixList));
                     } else {
-                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_B2, prevMatrixs));
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_B2, currMatrixList));
                     }
                 } else {
                     if (row4.getLow() < row2.getLow()) {
-                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_S2, prevMatrixs));
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_S2, currMatrixList));
                     } else {
-                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_S2, prevMatrixs));
+                        bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_S2, currMatrixList));
                     }
                 }
             } else {
                 if (currRange.getTendency() == TendencyTypeEnum.UP) {
                     if (row5.getLow() <= row2.getHigh()) {
                         if (row4.getHigh() > row2.getHigh()) {
-                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_B2, prevMatrixs));
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_B2, currMatrixList));
                         } else {
-                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_B2, prevMatrixs));
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_B2, currMatrixList));
                         }
                     }
                 } else {
                     if (row5.getHigh() >= row2.getLow()) {
                         if (row4.getLow() < row2.getLow()) {
-                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_S2, prevMatrixs));
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_S2, currMatrixList));
                         } else {
-                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_S2, prevMatrixs));
+                            bsPoints.add(new BSPoint(row5.getDate(), PointType.SIMILAR_WEAK_S2, currMatrixList));
                         }
                     }
                 }
@@ -561,7 +604,7 @@ public class MatrixKlineProcessor {
         List<Matrix> matrixList = matrixRange.getMatrixs();
         List<MatrixKlineRow> matrixKlineRowList = matrixRange.getRows();
 
-        if (matrixList.size() == 0) {
+        if (matrixList.size() == 0 && matrixRangeList.size() > 1) {
             matrixRange = matrixRangeList.get(matrixRangeList.size() - 2);
             matrixList = matrixRange.getMatrixs();
             matrixKlineRowList = new ArrayList<>();
@@ -576,17 +619,17 @@ public class MatrixKlineProcessor {
 
             // 3.1 查找上升趋势点买点和下降趋势的卖点
             if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
-                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > head.endDate
                             && row.getShape() == PeakShapeEnum.FLOOR
                             && row.getLow() > head.getHigh()) {
-                        bsPoints.add(new BSPoint(row.getDate(), PointType.B3, matrixList));
+                        bsPoints.add(new BSPoint(row.getDate(), PointType.B3, currMatrixList));
                         break;
                     }
                 }
             } else {
-                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > head.endDate
                             && row.getShape() == PeakShapeEnum.TOP
@@ -599,7 +642,7 @@ public class MatrixKlineProcessor {
 
             // 3.2 查找上升趋势的卖点和下降趋势的买点
             if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
-                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > tail.endDate
                             && row.getShape() == PeakShapeEnum.TOP
@@ -609,12 +652,12 @@ public class MatrixKlineProcessor {
                     }
                 }
             } else {
-                for (int i = 0; i < matrixKlineRowList.size(); i++) {
+                for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > tail.endDate
                             && row.getShape() == PeakShapeEnum.FLOOR
                             && row.getLow() > tail.getHigh()) {
-                        bsPoints.add(new BSPoint(row.getDate(), PointType.B3, matrixList));
+                        bsPoints.add(new BSPoint(row.getDate(), PointType.B3, currMatrixList));
                         break;
                     }
                 }

@@ -25,6 +25,9 @@ public class KLineDrawService implements InitializingBean {
     public void afterPropertiesSet() throws IOException, ParseException {
         String inputDirectory = "F:\\kline\\input";
         String outputDirectory = "F:\\kline\\output";
+
+//        String inputDirectory = "/Users/yufangxing/Downloads/zq/input";
+//        String outputDirectory = "/Users/yufangxing/Downloads/zq/output";
         File[] directories = new File(inputDirectory).listFiles();
 
         Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap = new HashMap<>();
@@ -33,9 +36,7 @@ public class KLineDrawService implements InitializingBean {
                 File[] files = directory.listFiles();
                 for (File file : files) {
                     String klineCode = file.getName().split("\\.")[0].replace("#", "");;
-                    if (bsPointMap.get(klineCode) == null) {
-                        bsPointMap.put(klineCode, new HashMap<>());
-                    }
+                    bsPointMap.put(klineCode, new HashMap<>());
                 }
             }
         }
@@ -47,7 +48,6 @@ public class KLineDrawService implements InitializingBean {
                     List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
                     for (KlineType klineType : klineTypes) {
                         new KlineApplicationContext(file, klineType, bsPointMap);
-                        //new KlineApplicationContext(file, klineType, outputPath, bsPointMap);
                     }
                 }
             }
@@ -75,7 +75,7 @@ public class KLineDrawService implements InitializingBean {
                     } else {
                         sb.append(",");
                     }
-                    sum += priorityQueue.size();
+                    sum += priorityQueue == null ? 0 : priorityQueue.size();
                 }
                 sb.append("\n");
                 hasValue = sum > 0;
@@ -84,7 +84,6 @@ public class KLineDrawService implements InitializingBean {
         }
 
         String outputPath = outputDirectory + File.separator + "result.csv";
-                //+ File.separator + file.getName().split("\\.")[0] + ".txt";
         log.info(outputPath);
 
         File file = new File(outputPath);
@@ -107,8 +106,8 @@ public class KLineDrawService implements InitializingBean {
 //            new KlineApplicationContext("src/main/resources/SZ002157.txt",
 //                KlineType.DAY_LINE, "src/main/resources/SZ002157.xlsx");
 //        KlineApplicationContext klineApplicationContext =
-//                new KlineApplicationContext("src/main/resources/SZ300181_1.txt",
-//                        KlineType.ONE_MINUTES_LINE, "src/main/resources/SZ300181_1.xlsx");
+//                new KlineApplicationContext("src/main/resources/SZ300663_D.txt",
+//                        KlineType.DAY_LINE, new HashMap<>());
 //        klineApplicationContext.printMergeKlineList();
 //        klineApplicationContext.printPeakKlineList();
 //        klineApplicationContext.printBreakPeakKlineList();
