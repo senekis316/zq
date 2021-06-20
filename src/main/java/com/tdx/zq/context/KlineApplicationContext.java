@@ -39,6 +39,7 @@ public class KlineApplicationContext {
   private SimpleDateFormat yearFormat = new SimpleDateFormat("yyyy");
   private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
   private Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap;
+  private Map<String, Map<KlineType, String>> enhanceMap;
 
   public KlineApplicationContext(String path, KlineType klineType, Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap) throws IOException, ParseException {
     this.klineType = klineType;
@@ -52,10 +53,11 @@ public class KlineApplicationContext {
     setMatrixKlineList();
   }
 
-  public KlineApplicationContext(File file, KlineType klineType, Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap) throws IOException, ParseException {
+  public KlineApplicationContext(File file, KlineType klineType, Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap, Map<String, Map<KlineType, String>> enhanceMap) throws IOException, ParseException {
     this.klineType = klineType;
     //this.outputPath = outputPath;
     this.bsPointMap = bsPointMap;
+    this.enhanceMap = enhanceMap;
     setKlineList(file, klineType);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
@@ -294,6 +296,10 @@ public class KlineApplicationContext {
 
   public Map<String, Map<KlineType, PriorityQueue<BSPoint>>> getBsPointMap() {
     return bsPointMap;
+  }
+
+  public Map<String, Map<KlineType, String>> getEnhanceMap() {
+    return enhanceMap;
   }
 
 }

@@ -11,6 +11,7 @@ import com.tdx.zq.draw.PeakKlineProcessor.MatrixKlineRow;
 import com.tdx.zq.enums.KlineType;
 import com.tdx.zq.enums.PeakShapeEnum;
 import com.tdx.zq.enums.TendencyTypeEnum;
+import com.tdx.zq.model.PeakKline;
 import lombok.Data;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -19,20 +20,87 @@ public class MatrixKlineProcessor {
     private String klineCode;
     private KlineType klineType;
     private List<Matrix> matrixList;
+    private List<PeakKline> peakKlineList;
     private List<MatrixRange> matrixRangeList;
     private List<MatrixKlineRow> matrixKlineRowList;
     private Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap;
+    private Map<String, Map<KlineType, String>> enhanceMap;
 
     public MatrixKlineProcessor(KlineApplicationContext klineApplicationContext) {
         this.klineType = klineApplicationContext.getKlineType();
         this.klineCode = klineApplicationContext.getKlineCode();
+        this.enhanceMap = klineApplicationContext.getEnhanceMap();
         this.bsPointMap = klineApplicationContext.getBsPointMap();
         this.matrixKlineRowList = klineApplicationContext.getMatrixKlineRowList();
+        this.peakKlineList = klineApplicationContext.getPeakKlineList();
         if (matrixKlineRowList == null || matrixKlineRowList.size() < 3) return;
         setMatrixTendency();
         setMatrixList();
         setMatrixMerge();
         setBSPoint();
+        setAngle();
+    }
+
+    private void setAngle() {
+
+        MatrixRange prevRange = matrixRangeList.size() > 1 ? matrixRangeList.get(matrixRangeList.size() - 2) : null;
+        MatrixRange currRange = matrixRangeList.get(matrixRangeList.size() - 1);
+
+        if (currRange.getRows().size() < 4) {
+            currRange = prevRange;
+        }
+
+        if (prevRange == null || prevRange.getRows().size() < 4) {
+            return;
+        }
+
+        List<MatrixKlineRow> rows = currRange.getRows();
+
+        float angle1 = 0;
+        float angle2 = 0;
+        boolean enhance = false;
+        if (currRange.getMatrixs().size() == 0) {
+            //currRange.getRows();
+        } else {
+            Matrix matrix = currRange.getMatrixs().get(currRange.getMatrixs().size() - 1);
+            for (int i = 0; i < rows.size(); i++) {
+                MatrixKlineRow row = rows.get(i);
+                if (row.getDate() == matrix.getStartDate()) {
+                    MatrixKlineRow row1 = rows.get(i - 1);
+                    MatrixKlineRow row2 = row;
+                    //long dayDiff = row2.getIdx() - row1.getIdx();
+                    float percent;
+                    long dayDiff = peakKlineList.stream()
+                            .filter(peak -> peak.getMergeKline().getMergeKline().getDate() >= row1.getDate())
+                            .filter(peak -> peak.getMergeKline().getMergeKline().getDate() <= row2.getDate()).count();
+                    if (matrix.tendency == TendencyTypeEnum.UP) {
+                        percent = ((float)(row2.getHigh() - row1.getLow())) / row1.getLow();
+                    } else {
+                        percent = ((float)(row1.getHigh() - row2.getLow())) / row1.getHigh();
+                    }
+                    angle1 = percent / dayDiff;
+                }
+                if (row.getDate() == matrix.getEndDate()) {
+                    if (matrix.tendency == TendencyTypeEnum.UP) {
+                        final MatrixRange matrixRange = currRange;
+                        long dayDiff = peakKlineList.stream()
+                                .filter(peak -> peak.getMergeKline().getMergeKline().getDate() >= matrix.getEndDate())
+                                .filter(peak -> peak.getMergeKline().getMergeKline().getDate() <= matrixRange.upperRow.getDate()).count();
+                        float percent = ((float)(currRange.upperRow.getHigh() - row.getLow())) / row.getLow();
+                        angle2 = percent / dayDiff;
+                    } else {
+                        final MatrixRange matrixRange = currRange;
+                        long dayDiff = peakKlineList.stream()
+                                .filter(peak -> peak.getMergeKline().getMergeKline().getDate() >= matrix.getEndDate())
+                                .filter(peak -> peak.getMergeKline().getMergeKline().getDate() <= matrixRange.lowerRow.getDate()).count();
+                        float percent = ((float)(row.getHigh() - currRange.lowerRow.getLow())) / row.getHigh();
+                        angle2 = percent / dayDiff;
+                    }
+                    enhance = angle1 <= angle2;
+                }
+            }
+        }
+        this.enhanceMap.get(klineCode).put(klineType, currRange.getTendency() + "趋势" + (enhance ? "增强" : "减弱") + ":" + angle1 + "->" + angle2);
     }
 
     public class MatrixSegment {
@@ -459,9 +527,31 @@ public class MatrixKlineProcessor {
         System.out.println(String.format("---------- %s %s Last BSPoints ----------", klineCode, klineType));
 
         // 最后的BSPoint
+        MatrixRange prevRange = matrixRangeList.size() > 2 ? matrixRangeList.get(matrixRangeList.size() - 3) : null;
+        MatrixRange currRange = matrixRangeList.size() > 1 ? matrixRangeList.get(matrixRangeList.size() - 2) : null;
+        MatrixRange nextRange = matrixRangeList.get(matrixRangeList.size() - 1);
 
-        MatrixRange prevRange = matrixRangeList.size() > 1 ? matrixRangeList.get(matrixRangeList.size() - 2) : null;
-        MatrixRange currRange = matrixRangeList.get(matrixRangeList.size() - 1);
+        if (currRange != null) {
+            printBSPoints(bsPoints, prevRange, currRange);
+        }
+
+        if (nextRange != null) {
+            printBSPoints(bsPoints, currRange, nextRange);
+        }
+
+//        int length = bsPoints.size();
+//        for (int i = 0; i < length; i++) {
+//            System.out.println(bsPoints.poll());
+//        }
+
+        bsPointMap.get(klineCode).put(klineType, bsPoints);
+
+        System.out.println("-------------- END --------------");
+        System.out.println();
+    }
+
+    // Print BSPoint
+    private void printBSPoints(PriorityQueue<BSPoint> bsPoints, MatrixRange prevRange, MatrixRange currRange) {
 
         List<Matrix> currMatrixList = this.matrixList.stream().filter(matrix ->
                 matrix.getStartDate() >= currRange.startDate && matrix.getEndDate() <= currRange.endDate)
@@ -516,32 +606,32 @@ public class MatrixKlineProcessor {
             if (prevRange.getTendency() == TendencyTypeEnum.DOWN && currRange.getTendency() == TendencyTypeEnum.UP) {
                 if (prevMatrixList.size() > 0) {
                     bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.B1, prevMatrixList));
-                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1, currMatrixList));
+                    //bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1, currMatrixList));
                 } else {
                     bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_B1, prevMatrixList));
-                    bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1, currMatrixList));
+                    //bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1, currMatrixList));
                 }
                 if (currRange.getRows().size() >= 3) {
                     bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2, prevMatrixList));
                 }
-                if (currRange.getRows().size() > currRange.upperRowIdx + 2) {
-                    bsPoints.add(new BSPoint(currRange.getRows().get(currRange.upperRowIdx + 2).getDate(), PointType.S2, currMatrixList));
-                }
+//                if (currRange.getRows().size() > currRange.upperRowIdx + 2) {
+//                    bsPoints.add(new BSPoint(currRange.getRows().get(currRange.upperRowIdx + 2).getDate(), PointType.S2, currMatrixList));
+//                }
             }
             if (prevRange.getTendency() == TendencyTypeEnum.UP && currRange.getTendency() == TendencyTypeEnum.DOWN) {
                 if (prevMatrixList.size() > 0) {
-                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1, currMatrixList));
+                    //bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1, currMatrixList));
                     bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.S1, prevMatrixList));
                 } else {
-                    bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1, currMatrixList));
+                    //bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1, currMatrixList));
                     bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_S1, prevMatrixList));
                 }
                 if (currRange.getRows().size() >= 3) {
                     bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2, prevMatrixList));
                 }
-                if (currRange.getRows().size() > currRange.lowerRowIdx + 2) {
-                    bsPoints.add(new BSPoint(currRange.getRows().get(currRange.lowerRowIdx + 2).getDate(), PointType.B2, currMatrixList));
-                }
+//                if (currRange.getRows().size() > currRange.lowerRowIdx + 2) {
+//                    bsPoints.add(new BSPoint(currRange.getRows ().get(currRange.lowerRowIdx + 2).getDate(), PointType.B2, currMatrixList));
+//                }
             }
         }
 
@@ -600,7 +690,7 @@ public class MatrixKlineProcessor {
         }
 
         // 3.查找第三类买卖点
-        MatrixRange matrixRange = matrixRangeList.get(matrixRangeList.size() - 1);
+        MatrixRange matrixRange = currRange;//matrixRangeList.get(matrixRangeList.size() - 1);
         List<Matrix> matrixList = matrixRange.getMatrixs();
         List<MatrixKlineRow> matrixKlineRowList = matrixRange.getRows();
 
@@ -622,6 +712,8 @@ public class MatrixKlineProcessor {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > head.endDate
+                            && row.getDate() >= currRange.startDate
+                            && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.FLOOR
                             && row.getLow() > head.getHigh()) {
                         bsPoints.add(new BSPoint(row.getDate(), PointType.B3, currMatrixList));
@@ -632,6 +724,8 @@ public class MatrixKlineProcessor {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > head.endDate
+                            && row.getDate() >= currRange.startDate
+                            && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.TOP
                             && row.getHigh() < head.getLow()) {
                         bsPoints.add(new BSPoint(row.getDate(), PointType.S3, matrixList));
@@ -645,6 +739,8 @@ public class MatrixKlineProcessor {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > tail.endDate
+                            && row.getDate() >= currRange.startDate
+                            && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.TOP
                             && row.getHigh() < tail.getLow()) {
                         bsPoints.add(new BSPoint(row.getDate(), PointType.S3, matrixList));
@@ -655,6 +751,8 @@ public class MatrixKlineProcessor {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
                     if (row.getDate() > tail.endDate
+                            && row.getDate() >= currRange.startDate
+                            && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.FLOOR
                             && row.getLow() > tail.getHigh()) {
                         bsPoints.add(new BSPoint(row.getDate(), PointType.B3, currMatrixList));
@@ -663,16 +761,6 @@ public class MatrixKlineProcessor {
                 }
             }
         }
-
-//        int length = bsPoints.size();
-//        for (int i = 0; i < length; i++) {
-//            System.out.println(bsPoints.poll());
-//        }
-
-        bsPointMap.get(klineCode).put(klineType, bsPoints);
-
-        System.out.println("-------------- END --------------");
-        System.out.println();
     }
 
     // 创建假设MatrixRange
@@ -695,7 +783,7 @@ public class MatrixKlineProcessor {
         boolean split = range.matrixs.size() == 0 ? false : true;
 
         // 判断假设的分割点是否有效
-        if (row == rows.get(0) || row == rows.get(rows.size() - 1)) {
+        if (row == rows.get(0)) { // || row == rows.get(rows.size() - 1)) {
             split = false;
         }
 
@@ -707,7 +795,10 @@ public class MatrixKlineProcessor {
             for (int i = 0; i < rows.size(); i++) {
                 if (rows.get(i).getDate() < row.getDate()) {
                     rows1.add(rows.get(i));
+                } else if (rows.get(i).getDate() > row.getDate()) {
+                    rows2.add(rows.get(i));
                 } else {
+                    rows1.add(rows.get(i));
                     rows2.add(rows.get(i));
                 }
             }

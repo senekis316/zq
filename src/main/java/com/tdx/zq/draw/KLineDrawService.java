@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 
 @Slf4j
@@ -26,17 +27,20 @@ public class KLineDrawService implements InitializingBean {
         String inputDirectory = "F:\\kline\\input";
         String outputDirectory = "F:\\kline\\output";
 
-//        String inputDirectory = "/Users/yufangxing/Downloads/zq/input";
-//        String outputDirectory = "/Users/yufangxing/Downloads/zq/output";
+        //.DS_Store
+        //String inputDirectory = "/Users/yufangxing/Downloads/zq/input";
+        //String outputDirectory = "/Users/yufangxing/Downloads/zq/output";
         File[] directories = new File(inputDirectory).listFiles();
 
         Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap = new HashMap<>();
+        Map<String, Map<KlineType, String>> enhanceMap = new HashMap<>();
         for (File directory: directories) {
             if (directory.isDirectory()) {
                 File[] files = directory.listFiles();
                 for (File file : files) {
                     String klineCode = file.getName().split("\\.")[0].replace("#", "");;
                     bsPointMap.put(klineCode, new HashMap<>());
+                    enhanceMap.put(klineCode, new HashMap<>());
                 }
             }
         }
@@ -47,7 +51,7 @@ public class KLineDrawService implements InitializingBean {
                 for (File file: files) {
                     List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
                     for (KlineType klineType : klineTypes) {
-                        new KlineApplicationContext(file, klineType, bsPointMap);
+                        new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap);
                     }
                 }
             }
@@ -66,6 +70,16 @@ public class KLineDrawService implements InitializingBean {
             priorityQueueList.add(klinePointMap.get(KlineType.ONE_MINUTES_LINE));
             priorityQueueList.add(klinePointMap.get(KlineType.MONTH_LINE));
 
+            List<String> enhanceList = new ArrayList<>();
+            enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.DAY_LINE));
+            enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.HOUR_LINE));
+            enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.TEN_MINUTES_LINE));
+            enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.WEEK_LINE));
+            enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.ONE_MINUTES_LINE));
+            enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.MONTH_LINE));
+
+            Iterator<String> enhanceIterator = enhanceList.iterator();
+
             boolean hasValue = true;
             while (hasValue) {
                 int sum = 0;
@@ -80,6 +94,16 @@ public class KLineDrawService implements InitializingBean {
                 sb.append("\n");
                 hasValue = sum > 0;
             }
+            while (enhanceIterator.hasNext()) {
+                String enhance = enhanceIterator.next();
+                if (!StringUtils.isEmpty(enhance)) {
+                    sb.append(enhance);
+                }
+                if (enhanceIterator.hasNext()) {
+                    sb.append(",");
+                }
+            }
+            sb.append("\n");
             sb.append("----------------------------------------\n");
         }
 
