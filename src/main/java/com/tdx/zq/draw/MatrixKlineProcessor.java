@@ -553,9 +553,10 @@ public class MatrixKlineProcessor {
     // Print BSPoint
     private void printBSPoints(PriorityQueue<BSPoint> bsPoints, MatrixRange prevRange, MatrixRange currRange) {
 
-        List<Matrix> currMatrixList = this.matrixList.stream().filter(matrix ->
+        List<Matrix> currMatrixList = currRange.getMatrixs();
+        /*this.matrixList.stream().filter(matrix ->
                 matrix.getStartDate() >= currRange.startDate && matrix.getEndDate() <= currRange.endDate)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());*/
 
         if (prevRange == null) {
             if (currMatrixList.size() == 0) {
@@ -603,35 +604,37 @@ public class MatrixKlineProcessor {
             List<Matrix> prevMatrixList = this.matrixList.stream().filter(matrix ->
                     matrix.getStartDate() >= prevRange.startDate && matrix.getEndDate() <= prevRange.endDate)
                     .collect(Collectors.toList());
-            if (prevRange.getTendency() == TendencyTypeEnum.DOWN && currRange.getTendency() == TendencyTypeEnum.UP) {
-                if (prevMatrixList.size() > 0) {
-                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.B1, prevMatrixList));
-                    //bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1, currMatrixList));
-                } else {
-                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_B1, prevMatrixList));
-                    //bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1, currMatrixList));
+            if (currRange.getRows().size() > 1) {
+                if (prevRange.getTendency() == TendencyTypeEnum.DOWN && currRange.getTendency() == TendencyTypeEnum.UP) {
+                    if (prevMatrixList.size() > 0) {
+                        //bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.B1, prevMatrixList));
+                        bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.S1, currMatrixList));
+                    } else {
+                        //bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_B1, prevMatrixList));
+                        bsPoints.add(new BSPoint(currRange.upperRow.getDate(), PointType.WEAK_S1, currMatrixList));
+                    }
+                    if (currRange.getRows().size() >= 3) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2, prevMatrixList));
+                    }
+                    if (currRange.getRows().size() > currRange.upperRowIdx + 2) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(currRange.upperRowIdx + 2).getDate(), PointType.S2, currMatrixList));
+                    }
                 }
-                if (currRange.getRows().size() >= 3) {
-                    bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.B2, prevMatrixList));
+                if (prevRange.getTendency() == TendencyTypeEnum.UP && currRange.getTendency() == TendencyTypeEnum.DOWN) {
+                    if (prevMatrixList.size() > 0) {
+                        bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1, currMatrixList));
+                        //bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.S1, prevMatrixList));
+                    } else {
+                        bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1, currMatrixList));
+                        //bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_S1, prevMatrixList));
+                    }
+                    if (currRange.getRows().size() >= 3) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2, prevMatrixList));
+                    }
+                    if (currRange.getRows().size() > currRange.lowerRowIdx + 2) {
+                        bsPoints.add(new BSPoint(currRange.getRows().get(currRange.lowerRowIdx + 2).getDate(), PointType.B2, currMatrixList));
+                    }
                 }
-//                if (currRange.getRows().size() > currRange.upperRowIdx + 2) {
-//                    bsPoints.add(new BSPoint(currRange.getRows().get(currRange.upperRowIdx + 2).getDate(), PointType.S2, currMatrixList));
-//                }
-            }
-            if (prevRange.getTendency() == TendencyTypeEnum.UP && currRange.getTendency() == TendencyTypeEnum.DOWN) {
-                if (prevMatrixList.size() > 0) {
-                    //bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.B1, currMatrixList));
-                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.S1, prevMatrixList));
-                } else {
-                    //bsPoints.add(new BSPoint(currRange.lowerRow.getDate(), PointType.WEAK_B1, currMatrixList));
-                    bsPoints.add(new BSPoint(currRange.getRows().get(0).getDate(), PointType.WEAK_S1, prevMatrixList));
-                }
-                if (currRange.getRows().size() >= 3) {
-                    bsPoints.add(new BSPoint(currRange.getRows().get(2).getDate(), PointType.S2, prevMatrixList));
-                }
-//                if (currRange.getRows().size() > currRange.lowerRowIdx + 2) {
-//                    bsPoints.add(new BSPoint(currRange.getRows ().get(currRange.lowerRowIdx + 2).getDate(), PointType.B2, currMatrixList));
-//                }
             }
         }
 

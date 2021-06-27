@@ -24,12 +24,17 @@ public class KLineDrawService implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws IOException, ParseException {
-        String inputDirectory = "F:\\kline\\input";
-        String outputDirectory = "F:\\kline\\output";
 
-        //.DS_Store
-        //String inputDirectory = "/Users/yufangxing/Downloads/zq/input";
-        //String outputDirectory = "/Users/yufangxing/Downloads/zq/output";
+        String inputDirectory;
+        String outputDirectory;
+        if (!System.getProperty("os.name").contains("Mac OS X")) {
+            inputDirectory = "F:\\kline\\input";
+            outputDirectory = "F:\\kline\\output";
+        } else {
+            inputDirectory = "/Users/yufangxing/Downloads/zq/input";
+            outputDirectory = "/Users/yufangxing/Downloads/zq/output";
+        }
+
         File[] directories = new File(inputDirectory).listFiles();
 
         Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap = new HashMap<>();
@@ -38,24 +43,30 @@ public class KLineDrawService implements InitializingBean {
             if (directory.isDirectory()) {
                 File[] files = directory.listFiles();
                 for (File file : files) {
-                    String klineCode = file.getName().split("\\.")[0].replace("#", "");;
-                    bsPointMap.put(klineCode, new HashMap<>());
-                    enhanceMap.put(klineCode, new HashMap<>());
-                }
-            }
-        }
-
-        for (File directory: directories) {
-            if (directory.isDirectory()) {
-                File[] files = directory.listFiles();
-                for (File file: files) {
-                    List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
-                    for (KlineType klineType : klineTypes) {
-                        new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap);
+                    if (!file.getName().contains(".DS_Store")) {
+                        String klineCode = file.getName().split("\\.")[0].replace("#", "");
+                        bsPointMap.put(klineCode, new HashMap<>());
+                        enhanceMap.put(klineCode, new HashMap<>());
+                        List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
+                        for (KlineType klineType : klineTypes) {
+                            new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap);
+                        }
                     }
                 }
             }
         }
+
+//        for (File directory: directories) {
+//            if (directory.isDirectory()) {
+//                File[] files = directory.listFiles();
+//                for (File file: files) {
+//                    List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
+//                    for (KlineType klineType : klineTypes) {
+//                        new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap);
+//                    }
+//                }
+//            }
+//        }
 
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, Map<KlineType, PriorityQueue<BSPoint>>> entry : bsPointMap.entrySet()) {
