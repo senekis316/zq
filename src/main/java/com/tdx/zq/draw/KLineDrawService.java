@@ -3,9 +3,11 @@ package com.tdx.zq.draw;
 import com.tdx.zq.context.KlineApplicationContext;
 import com.tdx.zq.enums.KlineType;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.*;
@@ -24,6 +26,21 @@ public class KLineDrawService implements InitializingBean {
 
     @Override
     public void afterPropertiesSet() throws IOException, ParseException {
+
+//        InputStreamReader input = new InputStreamReader(System.in);
+//        //Taking the input data using the BufferedReader class
+//        BufferedReader reader = new BufferedReader(input);
+//        // Reading data using readLine
+//        System.out.print("请输入周期类型(D,W,M,H,T,O): ");
+//        String periods = reader.readLine();
+//
+//
+//        // Printing the read line
+//        System.out.print("请输入点类型(B1,B2,B3,S1,S2,S3): ");
+//        String points = reader.readLine();
+//
+//        System.out.println("输入的周期类型: " +  periods);
+//        System.out.println("输入的点类型: " + points);
 
         String inputDirectory;
         String outputDirectory;
@@ -47,6 +64,16 @@ public class KLineDrawService implements InitializingBean {
                         String klineCode = file.getName().split("\\.")[0].replace("#", "");
                         bsPointMap.put(klineCode, new HashMap<>());
                         enhanceMap.put(klineCode, new HashMap<>());
+                    }
+                }
+            }
+        }
+
+        for (File directory: directories) {
+            if (directory.isDirectory()) {
+                File[] files = directory.listFiles();
+                for (File file: files) {
+                    if (!file.getName().contains(".DS_Store")) {
                         List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
                         for (KlineType klineType : klineTypes) {
                             new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap);
@@ -55,18 +82,6 @@ public class KLineDrawService implements InitializingBean {
                 }
             }
         }
-
-//        for (File directory: directories) {
-//            if (directory.isDirectory()) {
-//                File[] files = directory.listFiles();
-//                for (File file: files) {
-//                    List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
-//                    for (KlineType klineType : klineTypes) {
-//                        new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap);
-//                    }
-//                }
-//            }
-//        }
 
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, Map<KlineType, PriorityQueue<BSPoint>>> entry : bsPointMap.entrySet()) {

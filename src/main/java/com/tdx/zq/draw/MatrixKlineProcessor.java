@@ -151,6 +151,7 @@ public class MatrixKlineProcessor {
         private int lowerRowIdx;
         private MatrixKlineRow upperRow;
         private MatrixKlineRow lowerRow;
+        private boolean tendencyConfirm = true;
         public MatrixRange(long startDate, long endDate, TendencyTypeEnum tendency) {
             this.startDate = startDate;
             this.endDate = endDate;
@@ -188,6 +189,12 @@ public class MatrixKlineProcessor {
         }
         public List<Matrix> getMatrixs() {
             return this.matrixs;
+        }
+        public void setTendencyConfirm(boolean tendencyConfirm) {
+            this.tendencyConfirm = tendencyConfirm;
+        }
+        public boolean getTendencyConfirm() {
+            return tendencyConfirm;
         }
 
         @Override
@@ -314,7 +321,11 @@ public class MatrixKlineProcessor {
                 if (tendency == PeakShapeEnum.FLOOR) {
                     matrixRangeList.add(new MatrixRange(lowerContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.DOWN));
                 } else {
-                    matrixRangeList.add(new MatrixRange(upperContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.UP));
+                    MatrixRange upMatrixRange = new MatrixRange(upperContext.startDate, matrixSegmentList.get(matrixSegmentList.size() - 1).endDate, TendencyTypeEnum.UP);
+                    if (tendency == PeakShapeEnum.NONE) {
+                        upMatrixRange.setTendencyConfirm(false);
+                    }
+                    matrixRangeList.add(upMatrixRange);
                 }
             }
         }
@@ -535,6 +546,10 @@ public class MatrixKlineProcessor {
 
         if (currRange != null) {
             printBSPoints(bsPoints, prevRange, currRange);
+        }
+
+        if (prevRange == null && currRange == null && nextRange != null && nextRange.getTendencyConfirm() == false) {
+            return;
         }
 
         if (nextRange != null) {
@@ -801,7 +816,7 @@ public class MatrixKlineProcessor {
         boolean split = range.matrixs.size() == 0 ? false : true;
 
         // 判断假设的分割点是否有效
-        if (row == rows.get(0)) { // || row == rows.get(rows.size() - 1)) {
+        if (row == rows.get(0) || range.getTendencyConfirm() == false) { // || row == rows.get(rows.size() - 1)) {
             split = false;
         }
 
