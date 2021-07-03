@@ -476,15 +476,15 @@ public class MatrixKlineProcessor {
     }
 
     private void setMatrixMerge() {
+        List<MatrixRange> matrixRangeList = this.matrixRangeList.stream().filter(matrixRange -> matrixRange.getRows().size() >= 5).collect(Collectors.toList());
         boolean hasMerge = false;
         for (int i = 1; i < matrixList.size();) {
             Matrix prev = matrixList.get(i - 1);
             Matrix curr = matrixList.get(i);
-
             if (prev.getTendency() == curr.getTendency()
                     && prev.getRangeIndex() == curr.getRangeIndex()
-                    && (!(prev.getRangeHigh() < curr.getRangeLow() || prev.getRangeLow() > curr.getRangeHigh()))) {
-                        //|| !(prev.getRangeHigh() < curr.getTailRow().getLow() || prev.getRangeLow() > curr.getTailRow().getHigh()))) {
+                    && ((!(prev.getRangeHigh() < curr.getRangeLow() || prev.getRangeLow() > curr.getRangeHigh()))
+                        || isExtendJoin(i, prev, curr, matrixRangeList))) {
                 Matrix matrix = new Matrix(
                         Math.max(prev.getHigh(), curr.getHigh()),
                         Math.min(prev.getLow(), curr.getLow()),
@@ -505,6 +505,27 @@ public class MatrixKlineProcessor {
         }
 
     }
+
+    private boolean isExtendJoin(int i, Matrix prev, Matrix curr, List<MatrixRange> matrixRangeList) {
+        final Matrix next = i < matrixList.size() - 1 ? matrixList.get(i + 1) : null;
+        if (next != null && next.rangeIndex != prev.rangeIndex) return false;
+        MatrixRange matrixRange = matrixRangeList.get(prev.getRangeIndex());
+        List<Long> prices;
+        if (curr.getTendency() == TendencyTypeEnum.UP) {
+            prices = matrixRange.getRows().stream().filter(row -> row.getShape() == PeakShapeEnum.FLOOR)
+                    .filter(row -> row.getDate() > curr.getEndDate())
+                    .filter(row -> row.getDate() < (next != null ? next.startDate : matrixRange.endDate))
+                    .map(row -> row.getLow()).collect(Collectors.toList());
+        } else {
+            prices = matrixRange.getRows().stream().filter(row -> row.getShape() == PeakShapeEnum.TOP)
+                    .filter(row -> row.getDate() > curr.getEndDate())
+                    .filter(row -> row.getDate() < (next != null ? next.startDate : matrixRange.endDate))
+                    .map(row -> row.getHigh()).collect(Collectors.toList());
+        }
+        return prices.stream().filter(price -> price >= prev.getLow() && price <= prev.getHigh()).count() > 0;
+    }
+
+
 
     public void setBSPoint() {
 
