@@ -9,13 +9,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.tdx.zq.context.KlineApplicationContext;
-import com.tdx.zq.draw.PeakKlineProcessor.MatrixKlineRow;
 import com.tdx.zq.enums.KlineType;
 import com.tdx.zq.enums.PeakShapeEnum;
+import com.tdx.zq.enums.PointType;
 import com.tdx.zq.enums.TendencyTypeEnum;
+import com.tdx.zq.model.BSPoint;
+import com.tdx.zq.model.Matrix;
+import com.tdx.zq.model.MatrixKlineRow;
 import com.tdx.zq.model.PeakKline;
-import lombok.Data;
-import org.apache.commons.collections4.CollectionUtils;
+
 
 public class MatrixKlineProcessor {
 
@@ -75,7 +77,7 @@ public class MatrixKlineProcessor {
                     long dayDiff = peakKlineList.stream()
                             .filter(peak -> peak.getMergeKline().getMergeKline().getDate() >= row1.getDate())
                             .filter(peak -> peak.getMergeKline().getMergeKline().getDate() <= row2.getDate()).count();
-                    if (matrix.tendency == TendencyTypeEnum.UP) {
+                    if (matrix.getTendency() == TendencyTypeEnum.UP) {
                         percent = ((float)(row2.getHigh() - row1.getLow())) / row1.getLow();
                     } else {
                         percent = ((float)(row1.getHigh() - row2.getLow())) / row1.getHigh();
@@ -83,7 +85,7 @@ public class MatrixKlineProcessor {
                     angle1 = percent / dayDiff;
                 }
                 if (row.getDate() == matrix.getEndDate()) {
-                    if (matrix.tendency == TendencyTypeEnum.UP) {
+                    if (matrix.getTendency() == TendencyTypeEnum.UP) {
                         final MatrixRange matrixRange = currRange;
                         long dayDiff = peakKlineList.stream()
                                 .filter(peak -> peak.getMergeKline().getMergeKline().getDate() >= matrix.getEndDate())
@@ -209,47 +211,7 @@ public class MatrixKlineProcessor {
         }
     }
 
-    @Data
-    public class Matrix {
-        private long high;
-        private long low;
-        private long startDate;
-        private long endDate;
-        private TendencyTypeEnum tendency;
-        private int rangeIndex;
-        private long rangeLow;
-        private long rangeHigh;
-        private MatrixKlineRow tailRow;
-        public Matrix(long high, long low, long startDate, long endDate,
-                      TendencyTypeEnum tendency, int rangeIndex, long rangeLow, long rangeHigh, MatrixKlineRow tailRow) {
-            this.high = high;
-            this.low = low;
-            this.startDate = startDate;
-            this.endDate = endDate;
-            this.tendency = tendency;
-            this.rangeIndex = rangeIndex;
-            this.rangeLow = rangeLow;
-            this.rangeHigh = rangeHigh;
-            this.tailRow = tailRow;
-        }
 
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder("{");
-            sb.append("\"tendency\":")
-                    .append(tendency);
-            sb.append(",\"startDate\":")
-                    .append(startDate);
-            sb.append(",\"endDate\":")
-                    .append(endDate);
-            sb.append(",\"high\":")
-                    .append(high);
-            sb.append(",\"low\":")
-                    .append(low);
-            sb.append('}');
-            return sb.toString();
-        }
-    }
 
     public void setMatrixTendency() {
 
@@ -488,9 +450,9 @@ public class MatrixKlineProcessor {
                 Matrix matrix = new Matrix(
                         Math.max(prev.getHigh(), curr.getHigh()),
                         Math.min(prev.getLow(), curr.getLow()),
-                        prev.getStartDate(), curr.getEndDate(), curr.getTendency(), prev.rangeIndex,
+                        prev.getStartDate(), curr.getEndDate(), curr.getTendency(), prev.getRangeIndex(),
                         Math.min(prev.getRangeLow(), curr.getRangeLow()),
-                        Math.max(prev.getRangeHigh(), curr.getRangeHigh()), curr.tailRow);
+                        Math.max(prev.getRangeHigh(), curr.getRangeHigh()), curr.getTailRow());
                 matrixList.set(i - 1, matrix);
                 matrixList.remove(i);
                 hasMerge = true;
@@ -508,18 +470,18 @@ public class MatrixKlineProcessor {
 
     private boolean isExtendJoin(int i, Matrix prev, Matrix curr, List<MatrixRange> matrixRangeList) {
         final Matrix next = i < matrixList.size() - 1 ? matrixList.get(i + 1) : null;
-        if (next != null && next.rangeIndex != prev.rangeIndex) return false;
+        if (next != null && next.getRangeIndex() != prev.getRangeIndex()) return false;
         MatrixRange matrixRange = matrixRangeList.get(prev.getRangeIndex());
         List<Long> prices;
         if (curr.getTendency() == TendencyTypeEnum.UP) {
             prices = matrixRange.getRows().stream().filter(row -> row.getShape() == PeakShapeEnum.FLOOR)
                     .filter(row -> row.getDate() > curr.getEndDate())
-                    .filter(row -> row.getDate() < (next != null ? next.startDate : matrixRange.endDate))
+                    .filter(row -> row.getDate() < (next != null ? next.getStartDate() : matrixRange.endDate))
                     .map(row -> row.getLow()).collect(Collectors.toList());
         } else {
             prices = matrixRange.getRows().stream().filter(row -> row.getShape() == PeakShapeEnum.TOP)
                     .filter(row -> row.getDate() > curr.getEndDate())
-                    .filter(row -> row.getDate() < (next != null ? next.startDate : matrixRange.endDate))
+                    .filter(row -> row.getDate() < (next != null ? next.getStartDate() : matrixRange.endDate))
                     .map(row -> row.getHigh()).collect(Collectors.toList());
         }
         return prices.stream().filter(price -> price >= prev.getLow() && price <= prev.getHigh()).count() > 0;
@@ -535,10 +497,10 @@ public class MatrixKlineProcessor {
 
         for (MatrixRange matrixRange : matrixRangeList) {
             for (Matrix matrix : matrixList) {
-                if (matrix.startDate > matrixRange.endDate) {
+                if (matrix.getStartDate() > matrixRange.endDate) {
                     break;
                 }
-                if (matrix.startDate > matrixRange.startDate && matrix.endDate < matrixRange.endDate) {
+                if (matrix.getStartDate() > matrixRange.startDate && matrix.getEndDate() < matrixRange.endDate) {
                     matrixRange.addMatrix(matrix);
                 }
             }
@@ -765,7 +727,7 @@ public class MatrixKlineProcessor {
             if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
-                    if (row.getDate() > head.endDate
+                    if (row.getDate() > head.getEndDate()
                             && row.getDate() >= currRange.startDate
                             && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.FLOOR
@@ -777,7 +739,7 @@ public class MatrixKlineProcessor {
             } else {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
-                    if (row.getDate() > head.endDate
+                    if (row.getDate() > head.getEndDate()
                             && row.getDate() >= currRange.startDate
                             && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.TOP
@@ -792,7 +754,7 @@ public class MatrixKlineProcessor {
             if (matrixRange.getTendency() == TendencyTypeEnum.UP) {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
-                    if (row.getDate() > tail.endDate
+                    if (row.getDate() > tail.getEndDate()
                             && row.getDate() >= currRange.startDate
                             && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.TOP
@@ -804,7 +766,7 @@ public class MatrixKlineProcessor {
             } else {
                 for (int i = matrixKlineRowList.size() - 1; i >= 0 ; i--) {
                     MatrixKlineRow row = matrixKlineRowList.get(i);
-                    if (row.getDate() > tail.endDate
+                    if (row.getDate() > tail.getEndDate()
                             && row.getDate() >= currRange.startDate
                             && row.getDate() <= currRange.endDate
                             && row.getShape() == PeakShapeEnum.FLOOR
@@ -883,33 +845,8 @@ public class MatrixKlineProcessor {
 
     }
 
-    public enum PointType {
-        WEAK_B1, B1, B2, WEAK_S1, S1, S2,
-        SIMILAR_WEAK_B2, SIMILAR_B2, SIMILAR_WEAK_S2, SIMILAR_S2, B3, S3;
-    }
 
-    @Data
-    public class BSPoint {
-        private long date;
-        private PointType pointType;
-        private List<Matrix> matrixs;
 
-        public BSPoint(long date, PointType pointType, List<Matrix> matrixs) {
-            this.date = date;
-            this.matrixs = matrixs;
-            this.pointType = pointType;
-        }
 
-        @Override
-        public String toString() {
-            final StringBuilder sb = new StringBuilder();
-            sb.append(pointType).append(": ").append(date);
-            if (CollectionUtils.isNotEmpty(matrixs)) {
-                sb.append("; Tendency: " + matrixs.get(0).getTendency());
-                sb.append(": " + matrixs.size());
-            }
-            return sb.toString();
-        }
-    }
 
 }

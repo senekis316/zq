@@ -4,9 +4,10 @@ import com.tdx.zq.draw.KLineDrawService;
 import com.tdx.zq.draw.MatrixKlineProcessor;
 import com.tdx.zq.draw.MergeKlineProcessor;
 import com.tdx.zq.draw.PeakKlineProcessor;
-import com.tdx.zq.draw.PeakKlineProcessor.*;
 import com.tdx.zq.enums.KlineType;
+import com.tdx.zq.model.BSPoint;
 import com.tdx.zq.model.Kline;
+import com.tdx.zq.model.MatrixKlineRow;
 import com.tdx.zq.model.MergeKline;
 import com.tdx.zq.model.PeakKline;
 import java.io.BufferedReader;
@@ -19,7 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.springframework.util.CollectionUtils;
-import com.tdx.zq.draw.MatrixKlineProcessor.BSPoint;
 
 
 public class KlineApplicationContext {

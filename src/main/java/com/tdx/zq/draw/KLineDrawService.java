@@ -11,8 +11,10 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.*;
-import com.tdx.zq.draw.MatrixKlineProcessor.BSPoint;
 
+import com.tdx.zq.enums.PointType;
+import com.tdx.zq.model.BSPoint;
+import com.tdx.zq.utils.JacksonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.InitializingBean;
@@ -27,20 +29,16 @@ public class KLineDrawService implements InitializingBean {
     @Override
     public void afterPropertiesSet() throws IOException, ParseException {
 
-//        InputStreamReader input = new InputStreamReader(System.in);
-//        //Taking the input data using the BufferedReader class
-//        BufferedReader reader = new BufferedReader(input);
-//        // Reading data using readLine
-//        System.out.print("请输入周期类型(D,W,M,H,T,O): ");
-//        String periods = reader.readLine();
-//
-//
-//        // Printing the read line
-//        System.out.print("请输入点类型(B1,B2,B3,S1,S2,S3): ");
-//        String points = reader.readLine();
-//
-//        System.out.println("输入的周期类型: " +  periods);
-//        System.out.println("输入的点类型: " + points);
+        InputStreamReader input = new InputStreamReader(System.in);
+        //Taking the input data using the BufferedReader class
+        BufferedReader reader = new BufferedReader(input);
+        // Reading data using readLine
+        System.out.print("请输入周期类型(D,W,M,H,T,O): ");
+        String[] periods = reader.readLine().replace(" ", "").split("");
+
+        // Printing the read line
+        System.out.print("请输入点类型(B1,B2,B3,S1,S2,S3): ");
+        String[] points = reader.readLine().split(" ");
 
         String inputDirectory;
         String outputDirectory;
@@ -83,10 +81,10 @@ public class KLineDrawService implements InitializingBean {
             }
         }
 
+        boolean permit = true;
         StringBuilder sb = new StringBuilder();
         for (Map.Entry<String, Map<KlineType, PriorityQueue<BSPoint>>> entry : bsPointMap.entrySet()) {
-            sb.append("----------" + entry.getKey() + "----------\n");
-            sb.append("日,小时,十分,周,分钟,月\n");
+
             Map<KlineType, PriorityQueue<BSPoint>> klinePointMap = entry.getValue();
             List<PriorityQueue<BSPoint>> priorityQueueList = new ArrayList<>();
             priorityQueueList.add(klinePointMap.get(KlineType.DAY_LINE));
@@ -105,6 +103,62 @@ public class KLineDrawService implements InitializingBean {
             enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.MONTH_LINE));
 
             Iterator<String> enhanceIterator = enhanceList.iterator();
+
+            if (!StringUtils.isEmpty(periods[0])) {
+                List<PriorityQueue<BSPoint>> queryPointList = new ArrayList<>();
+                queryPointList.add(klinePointMap.get(KlineType.DAY_LINE));
+                queryPointList.add(klinePointMap.get(KlineType.HOUR_LINE));
+                queryPointList.add(klinePointMap.get(KlineType.TEN_MINUTES_LINE));
+                queryPointList.add(klinePointMap.get(KlineType.WEEK_LINE));
+                queryPointList.add(klinePointMap.get(KlineType.ONE_MINUTES_LINE));
+                queryPointList.add(klinePointMap.get(KlineType.MONTH_LINE));
+
+                List<PointType> pointTypes = new ArrayList<>();
+                for (String point : points) {
+                    pointTypes.add(PointType.create(point));
+                }
+
+                List<KlineType> periodTypes = new ArrayList<>();
+                for (String period : periods) {
+                    periodTypes.add(KlineType.create(period));
+                }
+
+                PriorityQueue<BSPoint> bsPoints = new PriorityQueue<>((o1, o2) -> {
+                    if (o1.getDate() > o2.getDate()) {
+                        return -1;
+                    } else if (o1.getDate() < o2.getDate()) {
+                        return 1;
+                    } else {
+                        return 0;
+                    }
+                });
+
+                for (int i = 0; i < periodTypes.size(); i++) {
+                    if (klinePointMap.get(periodTypes.get(i)) == null) continue;
+                    bsPoints.addAll(klinePointMap.get(periodTypes.get(i)));
+                    if (bsPoints.size() == 0) continue;
+                    boolean isExist = false;
+                    for (int j = 0; j < 3; j++) {
+                        BSPoint bsPoint = bsPoints.poll();
+                        if (bsPoint != null && bsPoint.getPointType() == pointTypes.get(i)) {
+                            isExist = true;
+                        }
+                    }
+                    if (!isExist) {
+                        permit = false;
+                        break;
+                    }
+                    bsPoints.clear();
+                }
+
+            }
+
+            if (!permit) {
+                continue;
+            }
+
+            sb.append("----------" + entry.getKey() + "----------\n");
+            sb.append("日,小时,十分,周,分钟,月\n");
 
             boolean hasValue = true;
             while (hasValue) {
@@ -129,8 +183,21 @@ public class KLineDrawService implements InitializingBean {
                     sb.append(",");
                 }
             }
+
+            if (!StringUtils.isEmpty(periods[0])) {
+                sb.append("\n");
+                sb.append("输入的点类型: " + JacksonUtils.toJson(points).replace(",", ":") + ";");
+                sb.append("输入的周期类型: " + JacksonUtils.toJson(periods).replace(",", ":") + ";");
+                if (permit) {
+                    sb.append(entry.getKey() + "符合要求;");
+                } else {
+                    sb.append(entry.getKey() + "不符合要求;");
+                }
+            }
+
             sb.append("\n");
             sb.append("----------------------------------------\n");
+
         }
 
         String outputPath = outputDirectory + File.separator + "result.csv";
