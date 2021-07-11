@@ -29,20 +29,24 @@ public class MatrixKlineProcessor {
     private List<MatrixKlineRow> matrixKlineRowList;
     private Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap;
     private Map<String, Map<KlineType, String>> enhanceMap;
+    private Map<String, Map<KlineType, String>> matrixThresholdBreakMap;
 
     public MatrixKlineProcessor(KlineApplicationContext klineApplicationContext) {
         this.klineType = klineApplicationContext.getKlineType();
         this.klineCode = klineApplicationContext.getKlineCode();
         this.enhanceMap = klineApplicationContext.getEnhanceMap();
         this.bsPointMap = klineApplicationContext.getBsPointMap();
+        this.matrixThresholdBreakMap = klineApplicationContext.getMatrixThresholdBreakMap();
         this.matrixKlineRowList = klineApplicationContext.getMatrixKlineRowList();
         this.peakKlineList = klineApplicationContext.getPeakKlineList();
+
         if (matrixKlineRowList == null || matrixKlineRowList.size() < 3) return;
         setMatrixTendency();
         setMatrixList();
         setMatrixMerge();
         setBSPoint();
         setAngle();
+        setMatrixThresholdBreak();
     }
 
     private void setAngle() {
@@ -845,8 +849,61 @@ public class MatrixKlineProcessor {
 
     }
 
-
-
-
+    private void setMatrixThresholdBreak() {
+        // 上边界 0.191 0.382 0.5 0.618 0.809 下边界
+        Map<KlineType, String> matrixThresholdBreak = matrixThresholdBreakMap.get(klineCode);
+        int ms = matrixList.size();
+        int mkrs = matrixKlineRowList.size();
+        if (ms > 0 && mkrs > 0) {
+            Matrix lastMatrix = matrixList.get(ms - 1);
+            MatrixKlineRow lastRow1 = matrixKlineRowList.get(mkrs - 1);
+            MatrixKlineRow lastRow2 = matrixKlineRowList.get(mkrs - 2);
+            if (lastMatrix.getTendency() == TendencyTypeEnum.UP) {
+                double threshold1 = lastMatrix.getHigh() - (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.191;
+                double threshold2 = lastMatrix.getHigh() - (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.382;
+                double threshold3 = lastMatrix.getHigh() - (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.5;
+                double threshold4 = lastMatrix.getHigh() - (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.618;
+                double threshold5 = lastMatrix.getHigh() - (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.809;
+                MatrixKlineRow lastRow = lastRow1.getShape() == PeakShapeEnum.FLOOR ? lastRow1 : lastRow2;
+                if (lastRow.getLow() <= threshold1) {
+                    matrixThresholdBreak.put(klineType, "回落上升矩阵0.191");
+                }
+                if (lastRow.getLow() <= threshold2) {
+                    matrixThresholdBreak.put(klineType, "回落上升矩阵0.382");
+                }
+                if (lastRow.getLow() <= threshold3) {
+                    matrixThresholdBreak.put(klineType, "回落上升矩阵0.5");
+                }
+                if (lastRow.getLow() <= threshold4) {
+                    matrixThresholdBreak.put(klineType, "回落上升矩阵0.618");
+                }
+                if (lastRow.getLow() <= threshold5) {
+                    matrixThresholdBreak.put(klineType, "回落上升矩阵0.809");
+                }
+            } else {
+                double threshold1 = lastMatrix.getHigh() + (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.191;
+                double threshold2 = lastMatrix.getHigh() + (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.382;
+                double threshold3 = lastMatrix.getHigh() + (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.5;
+                double threshold4 = lastMatrix.getHigh() + (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.618;
+                double threshold5 = lastMatrix.getHigh() + (lastMatrix.getHigh() - lastMatrix.getLow()) * 0.809;
+                MatrixKlineRow lastRow = lastRow1.getShape() == PeakShapeEnum.TOP ? lastRow1 : lastRow2;
+                if (lastRow.getHigh() >= threshold1) {
+                    matrixThresholdBreak.put(klineType, "回抽下降矩阵0.191");
+                }
+                if (lastRow.getHigh() >= threshold2) {
+                    matrixThresholdBreak.put(klineType, "回抽下降矩阵0.382");
+                }
+                if (lastRow.getHigh() >= threshold3) {
+                    matrixThresholdBreak.put(klineType, "回抽下降矩阵0.5");
+                }
+                if (lastRow.getHigh() >= threshold4) {
+                    matrixThresholdBreak.put(klineType, "回抽下降矩阵0.618");
+                }
+                if (lastRow.getHigh() >= threshold5) {
+                    matrixThresholdBreak.put(klineType, "回抽下降矩阵0.809");
+                }
+            }
+        }
+    }
 
 }

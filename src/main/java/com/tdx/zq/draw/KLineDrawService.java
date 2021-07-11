@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.text.ParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.tdx.zq.enums.PointType;
 import com.tdx.zq.model.BSPoint;
@@ -54,6 +55,7 @@ public class KLineDrawService implements InitializingBean {
 
         Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap = new HashMap<>();
         Map<String, Map<KlineType, String>> enhanceMap = new HashMap<>();
+        Map<String, Map<KlineType, String>> matrixThresholdBreakMap = new HashMap<>();
         for (File directory: directories) {
             if (directory.isDirectory()) {
                 File[] files = directory.listFiles();
@@ -62,6 +64,7 @@ public class KLineDrawService implements InitializingBean {
                         String klineCode = file.getName().split("\\.")[0].replace("#", "");
                         bsPointMap.put(klineCode, new HashMap<>());
                         enhanceMap.put(klineCode, new HashMap<>());
+                        matrixThresholdBreakMap.put(klineCode, new HashMap<>());
                     }
                 }
             }
@@ -74,7 +77,7 @@ public class KLineDrawService implements InitializingBean {
                     if (!file.getName().contains(".DS_Store")) {
                         List<KlineType> klineTypes = KlineType.getKlineType(directory.getName());
                         for (KlineType klineType : klineTypes) {
-                            new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap);
+                            new KlineApplicationContext(file, klineType, bsPointMap, enhanceMap, matrixThresholdBreakMap);
                         }
                     }
                 }
@@ -83,6 +86,16 @@ public class KLineDrawService implements InitializingBean {
 
         boolean permit = true;
         StringBuilder sb = new StringBuilder();
+
+        Map<KlineType, Set<String>> klineCodes = new HashMap<>();
+        klineCodes.put(KlineType.DAY_LINE, new HashSet<>());
+        klineCodes.put(KlineType.HOUR_LINE, new HashSet<>());
+        klineCodes.put(KlineType.TEN_MINUTES_LINE, new HashSet<>());
+        klineCodes.put(KlineType.WEEK_LINE, new HashSet<>());
+        klineCodes.put(KlineType.ONE_MINUTES_LINE, new HashSet<>());
+        klineCodes.put(KlineType.MONTH_LINE, new HashSet<>());
+
+
         for (Map.Entry<String, Map<KlineType, PriorityQueue<BSPoint>>> entry : bsPointMap.entrySet()) {
 
             Map<KlineType, PriorityQueue<BSPoint>> klinePointMap = entry.getValue();
@@ -94,6 +107,42 @@ public class KLineDrawService implements InitializingBean {
             priorityQueueList.add(klinePointMap.get(KlineType.ONE_MINUTES_LINE));
             priorityQueueList.add(klinePointMap.get(KlineType.MONTH_LINE));
 
+            for (BSPoint bsPoint : klinePointMap.getOrDefault(KlineType.DAY_LINE, new PriorityQueue<>())) {
+                if (bsPoint.getMatrixs().size() >= 2) {
+                    klineCodes.get(KlineType.DAY_LINE).add(entry.getKey());
+                }
+            }
+
+            for (BSPoint bsPoint : klinePointMap.getOrDefault(KlineType.HOUR_LINE, new PriorityQueue<>())) {
+                if (bsPoint.getMatrixs().size() >= 2) {
+                    klineCodes.get(KlineType.HOUR_LINE).add(entry.getKey());
+                }
+            }
+
+            for (BSPoint bsPoint : klinePointMap.getOrDefault(KlineType.TEN_MINUTES_LINE, new PriorityQueue<>())) {
+                if (bsPoint.getMatrixs().size() >= 2) {
+                    klineCodes.get(KlineType.TEN_MINUTES_LINE).add(entry.getKey());
+                }
+            }
+
+            for (BSPoint bsPoint : klinePointMap.getOrDefault(KlineType.WEEK_LINE, new PriorityQueue<>())) {
+                if (bsPoint.getMatrixs().size() >= 2) {
+                    klineCodes.get(KlineType.WEEK_LINE).add(entry.getKey());
+                }
+            }
+
+            for (BSPoint bsPoint : klinePointMap.getOrDefault(KlineType.ONE_MINUTES_LINE, new PriorityQueue<>())) {
+                if (bsPoint.getMatrixs().size() >= 2) {
+                    klineCodes.get(KlineType.ONE_MINUTES_LINE).add(entry.getKey());
+                }
+            }
+
+            for (BSPoint bsPoint : klinePointMap.getOrDefault(KlineType.MONTH_LINE, new PriorityQueue<>())) {
+                if (bsPoint.getMatrixs().size() >= 2) {
+                    klineCodes.get(KlineType.MONTH_LINE).add(entry.getKey());
+                }
+            }
+
             List<String> enhanceList = new ArrayList<>();
             enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.DAY_LINE));
             enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.HOUR_LINE));
@@ -101,6 +150,14 @@ public class KLineDrawService implements InitializingBean {
             enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.WEEK_LINE));
             enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.ONE_MINUTES_LINE));
             enhanceList.add(enhanceMap.get(entry.getKey()).get(KlineType.MONTH_LINE));
+
+            List<String> thresholdList = new ArrayList<>();
+            thresholdList.add(matrixThresholdBreakMap.get(entry.getKey()).get(KlineType.DAY_LINE));
+            thresholdList.add(matrixThresholdBreakMap.get(entry.getKey()).get(KlineType.HOUR_LINE));
+            thresholdList.add(matrixThresholdBreakMap.get(entry.getKey()).get(KlineType.TEN_MINUTES_LINE));
+            thresholdList.add(matrixThresholdBreakMap.get(entry.getKey()).get(KlineType.WEEK_LINE));
+            thresholdList.add(matrixThresholdBreakMap.get(entry.getKey()).get(KlineType.ONE_MINUTES_LINE));
+            thresholdList.add(matrixThresholdBreakMap.get(entry.getKey()).get(KlineType.MONTH_LINE));
 
             Iterator<String> enhanceIterator = enhanceList.iterator();
 
@@ -183,6 +240,18 @@ public class KLineDrawService implements InitializingBean {
                     sb.append(",");
                 }
             }
+            sb.append("\n");
+
+            Iterator<String> thresholdIterator = thresholdList.iterator();
+            while (thresholdIterator.hasNext()) {
+                String threshold = thresholdIterator.next();
+                if (!StringUtils.isEmpty(threshold)) {
+                    sb.append(threshold);
+                }
+                if (thresholdIterator.hasNext()) {
+                    sb.append(",");
+                }
+            }
 
             if (!StringUtils.isEmpty(periods[0])) {
                 sb.append("\n");
@@ -197,7 +266,38 @@ public class KLineDrawService implements InitializingBean {
 
             sb.append("\n");
             sb.append("----------------------------------------\n");
+        }
 
+        if (klineCodes != null) {
+            if (klineCodes.entrySet().stream().count() > 0) {
+                sb.append("\n");
+                sb.append("矩阵数量超过两个以上股票编码: \n");
+                if (klineCodes.get(KlineType.DAY_LINE).size() > 0) {
+                    sb.append("D,");
+                    sb.append(klineCodes.get(KlineType.DAY_LINE).stream().collect(Collectors.joining(";")));
+                }
+                if (klineCodes.get(KlineType.HOUR_LINE).size() > 0) {
+                    sb.append("H,");
+                    sb.append(klineCodes.get(KlineType.HOUR_LINE).stream().collect(Collectors.joining(";")));
+                }
+                if (klineCodes.get(KlineType.TEN_MINUTES_LINE).size() > 0) {
+                    sb.append("T,");
+                    sb.append(klineCodes.get(KlineType.TEN_MINUTES_LINE).stream().collect(Collectors.joining(";")));
+                }
+                if (klineCodes.get(KlineType.WEEK_LINE).size() > 0) {
+                    sb.append("W,");
+                    sb.append(klineCodes.get(KlineType.WEEK_LINE).stream().collect(Collectors.joining(";")));
+                }
+                if (klineCodes.get(KlineType.ONE_MINUTES_LINE).size() > 0) {
+                    sb.append("O,");
+                    sb.append(klineCodes.get(KlineType.ONE_MINUTES_LINE).stream().collect(Collectors.joining(";")));
+                }
+                if (klineCodes.get(KlineType.MONTH_LINE).size() > 0) {
+                    sb.append("M,");
+                    sb.append(klineCodes.get(KlineType.MONTH_LINE).stream().collect(Collectors.joining(";")));
+                }
+                sb.append("\n");
+            }
         }
 
         String outputPath = outputDirectory + File.separator + "result.csv";

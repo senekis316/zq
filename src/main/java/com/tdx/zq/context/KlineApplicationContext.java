@@ -40,6 +40,7 @@ public class KlineApplicationContext {
   private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd");
   private Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap;
   private Map<String, Map<KlineType, String>> enhanceMap;
+  private Map<String, Map<KlineType, String>> matrixThresholdBreakMap;
 
   public KlineApplicationContext(String path, KlineType klineType, Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap) throws IOException, ParseException {
     this.klineType = klineType;
@@ -53,11 +54,15 @@ public class KlineApplicationContext {
     setMatrixKlineList();
   }
 
-  public KlineApplicationContext(File file, KlineType klineType, Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap, Map<String, Map<KlineType, String>> enhanceMap) throws IOException, ParseException {
+  public KlineApplicationContext(File file, KlineType klineType,
+                                 Map<String, Map<KlineType, PriorityQueue<BSPoint>>> bsPointMap,
+                                 Map<String, Map<KlineType, String>> enhanceMap,
+                                 Map<String, Map<KlineType, String>> matrixThresholdBreakMap) throws IOException, ParseException {
     this.klineType = klineType;
     //this.outputPath = outputPath;
     this.bsPointMap = bsPointMap;
     this.enhanceMap = enhanceMap;
+    this.matrixThresholdBreakMap = matrixThresholdBreakMap;
     setKlineList(file, klineType);
     setKlineMap(klineList);
     setMergeKlineList(klineList);
@@ -300,6 +305,10 @@ public class KlineApplicationContext {
 
   public Map<String, Map<KlineType, String>> getEnhanceMap() {
     return enhanceMap;
+  }
+
+  public Map<String, Map<KlineType, String>> getMatrixThresholdBreakMap() {
+    return matrixThresholdBreakMap;
   }
 
 }
