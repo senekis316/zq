@@ -275,28 +275,32 @@ public class KLineDrawService implements InitializingBean {
                 if (klineCodes.get(KlineType.DAY_LINE).size() > 0) {
                     sb.append("D,");
                     sb.append(klineCodes.get(KlineType.DAY_LINE).stream().collect(Collectors.joining(";")));
+                    sb.append("\n");
                 }
                 if (klineCodes.get(KlineType.HOUR_LINE).size() > 0) {
                     sb.append("H,");
                     sb.append(klineCodes.get(KlineType.HOUR_LINE).stream().collect(Collectors.joining(";")));
+                    sb.append("\n");
                 }
                 if (klineCodes.get(KlineType.TEN_MINUTES_LINE).size() > 0) {
                     sb.append("T,");
                     sb.append(klineCodes.get(KlineType.TEN_MINUTES_LINE).stream().collect(Collectors.joining(";")));
+                    sb.append("\n");
                 }
                 if (klineCodes.get(KlineType.WEEK_LINE).size() > 0) {
                     sb.append("W,");
                     sb.append(klineCodes.get(KlineType.WEEK_LINE).stream().collect(Collectors.joining(";")));
+                    sb.append("\n");
                 }
                 if (klineCodes.get(KlineType.ONE_MINUTES_LINE).size() > 0) {
                     sb.append("O,");
                     sb.append(klineCodes.get(KlineType.ONE_MINUTES_LINE).stream().collect(Collectors.joining(";")));
+                    sb.append("\n");
                 }
                 if (klineCodes.get(KlineType.MONTH_LINE).size() > 0) {
                     sb.append("M,");
                     sb.append(klineCodes.get(KlineType.MONTH_LINE).stream().collect(Collectors.joining(";")));
                 }
-                sb.append("\n");
             }
         }
 
