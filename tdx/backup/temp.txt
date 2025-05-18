@@ -1,0 +1,40 @@
+CMAH := COUNT(C >= MA(C,24), N) = N;
+VMAH := COUNT(VOL >= MA(VOL,120), N) = N;
+
+CMAH AND VMAH;
+ 
+---------------------------------------------------------------------------------------------
+
+CMAH := COUNT(C >= MA(C,24), 7) = 7;
+VMAH := COUNT(VOL >= MA(VOL,120) OR (C - DYNAINFO(3)) >= 0.1, 7) = 7;
+
+CMAH AND VMAH;
+
+------------------------------------------------------------------------------------------
+
+CMAH := C >= MA(C,24) AND C > REF(C,1)
+     AND REF(C,1) >= MA(REF(C,1),24) AND REF(C,1) >= REF(C,2)
+     AND REF(C,2) >= MA(REF(C,2),24) AND REF(C,2) >= REF(C,3)
+     AND REF(C,3) >= MA(REF(C,3),24);
+
+VMAH := VOL >= MA(VOL, 120)
+     AND REF(VOL, 1) >= MA(REF(VOL, 1), 120)
+     AND REF(VOL, 2) >= MA(REF(VOL, 2), 120)
+     AND REF(VOL, 3) >= MA(REF(VOL, 3), 120);
+
+CMAL := C <= MA(C, 24)
+	 AND REF(C, 1) <= MA(REF(C, 1), 24)
+	 AND REF(C, 2) <= MA(REF(C, 2), 24)
+	 AND REF(C, 3) <= MA(REF(C, 3), 24);
+
+XGCVH := CMAH AND VMAH;
+
+ENTERLONG := XGCVH AND NOT(REF(XGCVH, 1));
+EXITLONG := CMAL AND NOT(REF(CMAL, 1));
+
+LIMITUP = (C - DYNAINFO(3)) >= 0.1;
+
+DRAWTEXT(ENTERLONG, L * 1, '多'), COLORRED;
+DRAWTEXT(EXITLONG, H * 1, '空'), COLORGREEN;
+
+DRAWTEXT(ENTERLONG, L * 1, '多'), COLORRED;

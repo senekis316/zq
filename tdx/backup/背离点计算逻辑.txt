@@ -1,0 +1,833 @@
+1.前一根的DIF > DEA，后一根DIF < DEA 情况1
+   前一根的DIF < DEA，后一根DIF > DEA 情况2
+以上两种情况作为区域的划分。
+
+2.我会去掉，区域中大小只有1，该区域本身不检测背离，只用于其他区域背离的参考使用
+
+3.底背离 （600148）
+(1) 找到当前底部区域的第二个收盘价开始，寻找比前一个底部区域最低收盘价更低的收盘价。
+(2) 如果找到了这个更低的收盘价，就从当前区域这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF
+(3) 如果这个DIF也找到了，那么标注为底钝化
+(4) 从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况，标注底结构形成-70%
+(5) 如果在钝化之后，只要出现一次DIF低于前区域的最低DIF，则底背离消失，并转而比较更前一个的底部区域。
+(6) 如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%
+
+
+4.顶背离
+(1) 找到当前顶部区域的第二个收盘价开始，寻找比前一个顶部区域最高收盘价更高的收盘价。
+(2) 如果找到了这个更高的收盘价，就从当前区域这个收盘价开始寻找一个DIF比前区域最高DIF更低的DIF
+(3) 如果这个DIF也找到了，那么标注为顶钝化
+(4) 从钝化往后开始，只要找到一个DIF比前一根DIF更小的情况，标注顶结构形成-70%
+(5) 如果在钝化之后，只要出现一次DIF高于前区域的最高DIF，则顶背离消失，并转而比较更前一个的顶部区域。
+(6) 如果未出现钝化消失，则在CROSS(DEA, DIF))时，标注结构形成-100%
+
+
+5.底背离消失
+
+当最近一个背离区域是底背离区域，如果出现一个底部区域中存在一个收盘价格小于前一个低背离区域的最低收盘价格，则标注背离消失
+当最近一个背离区域是顶背离区域，如果出现一个顶部区域中存在一个收盘价格大于前一个顶背离区域的最高收盘价格，则标注背离消失
+
+
+DIF:100*(EMA(CLOSE,SHORT)-EMA(CLOSE,LONG));
+DEA:EMA(DIF,MID);
+MACD:(DIF-DEA)*2,COLORSTICK;
+
+{底部结构预警}
+死叉:=CROSS(DEA,DIF);
+N1:=BARSLAST(死叉),NODRAW;{最近一次死叉的位置}
+N2:=REF(BARSLAST(死叉),N1+1),NODRAW;{倒数第二次死叉与倒数第一次死叉的区间}
+N3:=REF(BARSLAST(死叉),N2+N1+2),NODRAW;{倒数第三次死叉与倒数第二次死叉的区间}
+CL1:=LLV(C,N1+1),NODRAW;{最近一次死叉后，最低收盘价}
+DIFL1:=LLV(DIF,N1+1),NODRAW;
+
+CL2:=REF(CL1,N1+1),NODRAW;{倒数第二次死叉与倒数第一次死叉之间的最低收盘价}
+DIFL2:=REF(DIFL1,N1+1),NODRAW;
+CL3:=REF(CL2,N1+1),NODRAW;{倒数第三次死叉与倒数第二次死叉之间的最低收盘价}
+DIFL3:=REF(DIFL2,N1+1),NODRAW;
+PDIFL2:=IF(DIFL2>0,INTPART(LOG(DIFL2))-1,INTPART(LOG(-DIFL2))-1);
+MDIFL2:=INTPART(DIFL2/POW(10,PDIFL2));
+PDIFL3:=IF(DIFL3>0,INTPART(LOG(DIFL3))-1,INTPART(LOG(-DIFL3))-1);
+MDIFL3:=INTPART(DIFL3/POW(10,PDIFL3));
+MDIFB2:=INTPART(DIF/POW(10,PDIFL2));
+MDIFB3:=INTPART(DIF/POW(10,PDIFL3));
+直接底背离:=(CL1<CL2 ) AND (MDIFB2>MDIFL2) AND (MACD<0 AND REF(MACD,1)<0) AND MDIFB2<=REF(MDIFB2,1);
+隔峰底背离:=(CL1<CL3 AND CL3<CL2 ) AND (MDIFB3>MDIFL3) AND (MACD<0 AND REF(MACD,1)<0) AND MDIFB3<=REF(MDIFB3,1);
+B:直接底背离 OR 隔峰底背离,NODRAW;
+BG:((MDIFB2>REF(MDIFB2,1))*REF(直接底背离,1)) OR ((MDIFB3>REF(MDIFB3,1))*REF(隔峰底背离,1)),NODRAW;
+底背离消失:=(REF(直接底背离,1) AND DIFL1<=DIFL2 ) OR (REF(隔峰底背离,1) AND DIFL1<=DIFL3);
+DRAWTEXT(TFILTER(B,MACD>0,1),(DIF+MACD),'钝化'),COLORRED;
+STICKLINE(B OR BG,DIF,DEA,1,0),COLORRED;
+DRAWTEXT(TFILTER(底背离消失,B,1),(DIF+MACD),'消失'),COLORYELLOW;
+DRAWTEXT(TFILTER(BG,MACD>0,1),DIF*1.1,'结构形成'),COLORMAGENTA;
+
+{顶部结构预警}
+
+金叉:=CROSS(DIF,DEA);
+M1:=BARSLAST(金叉),NODRAW;{最近一次金叉的位置}
+M2:=REF(BARSLAST(金叉),M1+1),NODRAW;{倒数第二次金叉与倒数第一次金叉的区间}
+M3:=REF(BARSLAST(金叉),M2+M1+2),NODRAW;{倒数第三次金叉与倒数第二次金叉的区间}
+CH1:=HHV(C,M1+1),NODRAW;{最近一次金叉后，最高收盘价}
+DIFH1:=HHV(DIF,M1+1),NODRAW;
+
+CH2:=REF(CH1,M1+1),NODRAW;{倒数第二次金叉与倒数第一次金叉之间的最高收盘价}
+DIFH2:=REF(DIFH1,M1+1),NODRAW;
+CH3:=REF(CH2,M1+1),NODRAW;{倒数第三次金叉与倒数第二次金叉之间的最高收盘价}
+DIFH3:=REF(DIFH2,M1+1),NODRAW;
+PDIFH2:=IF(DIFH2>0,INTPART(LOG(DIFH2))-1,INTPART(LOG(-DIFH2))-1);
+MDIFH2:=INTPART(DIFH2/POW(10,PDIFH2));
+PDIFH3:=IF(DIFH3>0,INTPART(LOG(DIFH3))-1,INTPART(LOG(-DIFH3))-1);
+MDIFH3:=INTPART(DIFH3/POW(10,PDIFH3));
+MDIFT2:=INTPART(DIF/POW(10,PDIFH2));
+MDIFT3:=INTPART(DIF/POW(10,PDIFH3));
+直接顶背离:=(CH1>CH2 ) AND (MDIFT2<MDIFH2) AND (MACD>0 AND REF(MACD,1)>0) AND MDIFT2>=REF(MDIFT2,1);
+隔峰顶背离:=(CH1>CH3 AND CH3>CH2 ) AND (MDIFT3<MDIFH3) AND (MACD>0 AND REF(MACD,1)>0) AND MDIFT3>=REF(MDIFT3,1);
+T:直接顶背离 OR 隔峰顶背离,NODRAW;
+TG:((MDIFT2<REF(MDIFT2,1))*REF(直接顶背离,1)) OR ((MDIFT3<REF(MDIFT3,1))*REF(隔峰顶背离,1)),NODRAW;
+顶背离消失:=(REF(直接顶背离,1) AND DIFH1>=DIFH2 ) OR (REF(隔峰顶背离,1) AND DIFH1>=DIFH3);
+DRAWTEXT(TFILTER(T,MACD<0,1),(DIF+MACD),'钝化'),COLORGREEN;
+DRAWTEXT(TFILTER(顶背离消失,T,1),(DIF+MACD),'消失'),COLORYELLOW;
+STICKLINE(T OR TG,DIF,DEA,1,0),COLORGREEN;
+DRAWTEXT(TFILTER(TG,MACD<0,1),DIF*1.02,'结构形成'),COLORMAGENTA;
+
+-----------------------------------------------------------------------------
+
+DIF := EMA(CLOSE,12) - EMA(CLOSE,26);
+DEA := EMA(DIF,9);
+金叉日期 := CROSS(DIF,DEA);
+死叉日期 := CROSS(DEA,DIF);
+金叉信号 := BARSLAST(金叉日期);
+死叉信号 := BARSLAST(死叉日期);
+金叉范围 := IF(金叉信号<死叉信号,金叉信号,0);
+死叉范围 := IF(死叉信号<金叉信号,死叉信号,0);
+日期范围 := 金叉范围 + 死叉范围;
+
+600371
+
+
+DIF:=100*(EMA(CLOSE,12)-EMA(CLOSE,29));
+DEA:=EMA(DIF,9);
+
+JC:=CROSS(DIF,DEA);
+SC:=CROSS(DIF,DEA);
+
+LASTJCDAY:= BARSLAST(JC);
+LASTSCDAY:= BARSLAST(SC);
+
+
+-------------------------------------------------------------
+
+DIF:100*(EMA(CLOSE,SHORT)-EMA(CLOSE,LONG));
+DEA:EMA(DIF,MID);
+MACD:(DIF-DEA)*2,COLORSTICK;
+
+金叉:=CROSS(DIF,DEA);
+死叉:=CROSS(DEA,DIF);
+
+死叉1:=BARSLAST(死叉);{最近一次死叉的位置}
+死叉2:=REF(BARSLAST(死叉),死叉1+1);{倒数第二次死叉与倒数第一次死叉的区间}
+死叉3:=REF(BARSLAST(死叉),死叉2+死叉1+2);{倒数第三次死叉与倒数第二次死叉的区间}
+
+金叉1:=BARSLAST(金叉);{最近一次金叉的位置}
+金叉2:=REF(BARSLAST(金叉),金叉1+1);{倒数第二次金叉与倒数第一次金叉的区间}
+金叉3:=REF(BARSLAST(金叉),金叉2+金叉1+2);{倒数第三次金叉与倒数第二次金叉的区间}
+
+BOTTOM:=死叉1<金叉1; {判断最近的区域是不是底背离区域}
+
+当前K线位置:=BARSCOUNT(CLOSE); 
+
+
+{1.构建整个顶背离判断逻辑}
+
+{1.1 找到比上一个底部区域更低的收盘价}
+CL1:=LLV(C,死叉1+1);{最近一次死叉后，最低收盘价}
+DIFL1:=LLV(DIF,死叉1+1);
+
+CL2:=REF(LLV(C,死叉2-死叉1), 死叉1+1);
+DIFL2:=REF(LLV(DIF,死叉2-死叉1),死叉1+1);
+
+{1.2 找到钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
+
+底钝化信号:=CL1<CL2 AND DIF>DIFL2 AND BOTTOM;
+底钝化次数:=COUNT(底钝化信号, 死叉1);
+底钝化开始:=BARSLAST(CL1 < CL2 AND DIF > DIFL2 AND BOTTOM AND 底钝化次数=1);
+DRAWTEXT(底钝化信号 AND 底钝化次数=1, DIF,'底钝化'), COLORGREEN;
+
+{1.3 找到钝化消失点(找到比上一个底部区域更低的DIF)}
+
+底钝化消失:=COUNT(DIF-DIFL2 < 0 AND BOTTOM, 死叉1);
+DRAWTEXT(DIF-DIFL2 < 0 AND BOTTOM AND 底钝化消失=1 AND 底钝化次数>1, DIF, '钝消'), COLORYELLOW;
+
+{1.4 标注底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
+
+底结构形成70:=COUNT(BOTTOM AND DIF> REF(DIF, 1) AND 底钝化次数 >= 1, 死叉1);
+DRAWTEXT(底结构形成70=1, DIF,'底结构形成-70%'), COLORGREEN;
+
+{1.5 标注底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)}
+
+底结构形成100:=BOTTOM AND DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数 >=1 AND 底钝化消失=0;
+DRAWTEXT(底结构形成100, DIF, '底结构形成-100%'), COLORGREEN;
+
+底结构消失:=BOTTOM AND DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数 >=1 AND 底钝化消失>=1;
+DRAWTEXT(底结构消失, DIF, '结消'), COLORYELLOW;
+
+{2.构建整个顶背离判断逻辑};
+
+{2.1 找到比上一个顶部区域更高的收盘价}
+CH1:=HHV(C,金叉1+1);{最近一次金叉后，最高收盘价}
+DIFH1:=HHV(DIF,金叉1+1);
+
+CH2:=REF(HHV(C,金叉2-金叉1), 金叉1+1);
+DIFH2:=REF(HHV(DIF,金叉2-金叉1),金叉1+1);
+
+{2.2 找到钝化点(寻找比前一个顶部区域最高收盘价更高的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最高DIF更低的DIF)}
+
+顶钝化信号:=CH1>CH2 AND DIF<DIFH2 AND (NOT BOTTOM);
+顶钝化次数:=COUNT(顶钝化信号, 金叉1);
+顶钝化开始:=BARSLAST(顶钝化信号 AND 顶钝化次数=1);
+DRAWTEXT(顶钝化信号 AND 顶钝化次数=1, DIF, '顶钝化');
+
+
+{2.3 找到钝化消失点(找到比上一个顶部区域更高的DIF)}
+
+顶钝化消失:=COUNT(DIF-DIFH2 > 0 AND (NOT BOTTOM), 金叉1);
+DRAWTEXT(DIF-DIFH2 > 0 AND (NOT BOTTOM) AND 顶钝化消失=1 AND 顶钝化次数>1, DIF, '消失');
+
+{2.4 标注顶结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更小的情况)}
+
+顶结构形成70:=COUNT((NOT BOTTOM) AND DIF < REF(DIF, 1) AND 顶钝化次数 >= 1, 金叉1);
+DRAWTEXT(顶结构形成70=1, DIF,'顶结构形成-70%');
+
+{2.5 标注顶结构形成-100% (如果未出现钝化消失，则在CROSS(DEA, DIF)时，标注结构形成-100%)}
+
+顶结构形成100:=DIF>DEA AND BARSCOUNT(死叉1) - BARSCOUNT(金叉1) = COUNT(DIF>DEA, 死叉1); {AND 底钝化消失=0;}
+DRAWTEXT(顶结构形成100, DIF, '顶结构形成-100%');
+
+------------------------------------------------------------
+
+DIF:100*(EMA(CLOSE,SHORT)-EMA(CLOSE,LONG));
+DEA:EMA(DIF,MID);
+MACD:(DIF-DEA)*2,COLORSTICK;
+
+BC:=CONST(BARSCOUNT(CLOSE));
+
+金叉:=CROSS(DIF,DEA);
+死叉:=CROSS(DEA,DIF);
+
+金叉1:=BARSLAST(金叉);{最近一次金叉的位置}
+金叉2:=REF(BARSLAST(金叉),金叉1+1);{倒数第二次金叉与倒数第一次金叉的区间}
+金叉3:=REF(BARSLAST(金叉),金叉2+金叉1+2);{倒数第三次金叉与倒数第二次金叉的区间}
+
+金叉1R:=CONST(BARSLAST(金叉)+1); {最近一次金叉距离当前最新日期的距离}
+金叉2R:=CONST(REF(BARSLAST(金叉),金叉1+1)+1);{倒数第二次金叉到倒数第一次金叉的距离}
+金叉3R:=CONST(REF(BARSLAST(金叉),金叉2+金叉1+2)+1);{倒数第三次金叉到倒数第二次金叉的距离}
+
+死叉1:=BARSLAST(死叉);{最近一次死叉的位置}
+死叉2:=REF(BARSLAST(死叉),死叉1+1);{倒数第二次死叉与倒数第一次死叉的区间}
+死叉3:=REF(BARSLAST(死叉),死叉2+死叉1+2);{倒数第三次死叉与倒数第二次死叉的区间}
+
+死叉1R:=CONST(BARSLAST(死叉)+1); {最近一次死叉距离当前最新日期的距离}
+死叉2R:=CONST(REF(BARSLAST(死叉),死叉1 + 1)+1); {倒数第二次死叉到倒数第一次死叉的距离}
+死叉3R:=CONST(REF(BARSLAST(死叉),死叉2+死叉1+2)+1); {倒数第三次死叉到倒数第二次死叉的距离}
+
+{DRAWNUMBER(金叉,HIGH,金叉1R);}
+{DRAWNUMBER(死叉,HIGH,死叉1R);}
+
+BOTTOM:=死叉1R<金叉1R;
+
+{DRAWTEXT(金叉 AND BOTTOM = 0,HIGH,'TOP');}
+
+{DRAWNUMBER(死叉,HIGH,死叉2R);}
+{DRAWNUMBER(死叉,HIGH,死叉1R);}
+
+死叉1C:=CONST(IF(BOTTOM, 死叉1R, 死叉1R - 金叉1R)); {最近一次死叉的区域长度}
+死叉2C:=CONST(IF(BOTTOM, 死叉1R + 死叉2R - 金叉1R, 死叉1R + 死叉2R - 金叉1R - 金叉2R));  {倒数第二次死叉的区域长度}
+死叉3C:=CONST(IF(BOTTOM, 死叉1R + 死叉2R + 死叉3R - 金叉1R - 金叉2R, 死叉1R + 死叉2R + 死叉3R - 金叉1R - 金叉2R - 金叉3R)); {倒数第三次死叉的区域长度}
+
+{DRAWNUMBER(死叉,HIGH,死叉3C);}
+
+死叉1P:=CONST(BC - 死叉1R + 1);  {最近一次死叉的开始K线位置}
+死叉2P:=CONST(BC - 死叉1R - 死叉2R + 1);  {倒数第二次死叉的开始K线位置}
+死叉3P:=CONST(BC - 死叉1R - 死叉2R - 死叉3R + 1); {倒数第三次死叉的开始K线位置}
+
+死叉1E:=CONST(死叉1P + 死叉1C - 1); {最近一次死叉的结束K线位置}
+死叉2E:=CONST(死叉2P + 死叉2C - 1);  {倒数第二次死叉的结束K线位置}
+死叉3E:=CONST(死叉3P + 死叉3C - 1);  {倒数第三次死叉的结束K线位置}
+
+{DRAWNUMBER(BARSCOUNT(CLOSE)=死叉1E,HIGH,死叉1E);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉2E,HIGH,死叉2E);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉3E,HIGH,死叉3E);}
+
+{DRAWNUMBER(金叉,HIGH,BC);
+DRAWNUMBER(死叉,HIGH,死叉3P);}
+{DRAWNUMBER(BC - 死叉1R + 1 = BARSCOUNT(CLOSE), HIGH, BARSCOUNT(CLOSE));}
+
+
+{DRAWNUMBER(BC-金叉1C=BARSCOUNT(CLOSE), DIF,BC-金叉1C);}
+
+
+金叉1C:=CONST(IF((NOT BOTTOM), 金叉1R, 死叉1R - 金叉1R)); {最近一次死叉的区域长度}
+金叉2C:=CONST(IF((NOT BOTTOM), 金叉1R + 金叉2R - 死叉1R, 金叉1R + 金叉2R - 死叉1R - 死叉2R));  {倒数第二次死叉的区域长度}
+金叉3C:=CONST(IF((NOT BOTTOM), 金叉1R + 金叉2R + 金叉3R - 死叉1R - 死叉2R, 金叉1R + 金叉2R + 金叉3R - 死叉1R - 死叉2R - 死叉3R)); {倒数第三次死叉的区域长度}
+
+金叉1P:=CONST(BC - 金叉1R + 1); {最近一次金叉的开始K线位置}
+金叉2P:=CONST(BC - 金叉1R - 金叉2R + 1);  {倒数第二次金叉的开始K线位置}
+金叉3P:=CONST(BC - 金叉1R - 金叉2R - 金叉3R + 1);  {倒数第三次金叉的开始K线位置}
+
+金叉1E:=CONST(金叉1P + 金叉1C - 1); {最近一次金叉的结束K线位置}
+金叉2E:=CONST(金叉2P + 金叉2C - 1);  {倒数第二次金叉的结束K线位置}
+金叉3E:=CONST(金叉3P + 金叉3C - 1);  {倒数第三次金叉的结束K线位置}
+
+{DRAWNUMBER(金叉,HIGH,金叉3C);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E,HIGH,金叉2E);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉3E,HIGH,金叉3E);}
+
+{DRAWNUMBER(死叉,HIGH,BC);
+DRAWNUMBER(金叉,HIGH,金叉1P);}
+
+{金叉2C:=CONST(REF(BARSLAST(金叉),金叉1+1)+1 + 金叉1C);}
+{DRAWNUMBER(金叉,LOW,金叉3C);}
+
+{当前K线位置:=BARSCOUNT(CLOSE); }
+
+{1.构建整个顶背离判断逻辑}
+
+{1.1 找到比上一个底部区域更低的收盘价}
+CL1:=IF(BARSCOUNT(CLOSE)=死叉1E,LLV(CLOSE, 死叉1C),0); {最近一次死叉后，最低收盘价}
+DIFL1:=IF(BARSCOUNT(DIF)=死叉1E,LLV(DIF, 死叉1C),0);  {最近一次死叉后，最低DIF}
+
+{DRAWNUMBER(BARSCOUNT(CLOSE)=死叉1E, HIGH, LLV(CLOSE, 死叉1C));
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉2E, HIGH, LLV(CLOSE, 死叉2C));
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉3E, HIGH, LLV(CLOSE, 死叉3C));}
+
+{DRAWNUMBER(BARSCOUNT(DIF)=死叉1E, HIGH, LLV(DIF, 死叉1C));}
+
+CL2:=IF(BARSCOUNT(CLOSE)=死叉2E,LLV(CLOSE, 死叉2C),0); {倒数第二次死叉后，最低收盘价}
+{DRAWNUMBER(BARSCOUNT(CLOSE)=死叉2E, HIGH, CL2);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉2E, HIGH, LLV(CLOSE, 死叉2C));}
+DIFL2:=IF(BARSCOUNT(DIF)=死叉2E,LLV(DIF, 死叉2C),0);  {倒数第二次死叉后，最低DIF}
+{DRAWNUMBER(BARSCOUNT(DIF)=死叉2E, HIGH, LLV(DIF, 死叉2C));}
+
+
+CL3:=IF(BARSCOUNT(CLOSE)=死叉3E,LLV(CLOSE, 死叉3C),0); {倒数第三次死叉后，最低收盘价}
+{DRAWNUMBER(BARSCOUNT(CLOSE)=死叉3E, HIGH, CL3);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉3E, HIGH, LLV(CLOSE, 死叉3C));}
+
+DIFL3:=IF(BARSCOUNT(DIF)=死叉3E,LLV(DIF, 死叉3C),0);  {倒数第二次死叉后，最低DIF}
+{DRAWNUMBER(BARSCOUNT(DIF)=死叉3E, HIGH, LLV(DIF, 死叉3C));}
+{DRAWNUMBER(金叉, DIF, DIFL1);
+DRAWNUMBER(ABS(-8.322 + DIFL1) < 0.000001, DIF, DIFL1);}
+
+{1.2 找到钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
+
+底钝化信号1:=CL1<CL2 AND DIF>DIFL2 AND BOTTOM;
+底钝化次数1:=COUNT(底钝化信号1, 死叉1);
+底钝化开始1:=BARSLAST(CL1 < CL2 AND DIF > DIFL2 AND BOTTOM AND 底钝化次数1=1);
+DRAWTEXT(底钝化信号1 AND 底钝化次数1=1, DIF,'底钝化'), COLORGREEN;
+
+底钝化信号2:=CL1<CL3 AND DIF>DIFL3 AND BOTTOM;
+底钝化次数2:=COUNT(底钝化信号2, 死叉1);
+底钝化开始2:=BARSLAST(CL1 < CL3 AND DIF > DIFL3 AND BOTTOM AND 底钝化次数2=1);
+DRAWTEXT(底钝化信号2 AND 底钝化次数2=1, DIF,'底钝化'), COLORRED;
+
+{1.3 找到钝化消失点(找到比上一个底部区域更低的DIF)}
+
+底钝化消失1:=COUNT(DIF-DIFL2 < 0 AND BOTTOM, 死叉1);
+DRAWTEXT(DIF-DIFL2 < 0 AND BOTTOM AND 底钝化消失1=1 AND 底钝化次数1>1, DIF, '钝消'), COLORYELLOW;
+
+底钝化消失2:=COUNT(DIF-DIFL3 < 0 AND BOTTOM, 死叉1);
+DRAWTEXT(DIF-DIFL3 < 0 AND BOTTOM AND 底钝化消失2=1 AND 底钝化次数2>1, DIF, '钝消'), COLORYELLOW;
+
+{1.4 标注底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
+
+底结构形成1P70:=COUNT(BOTTOM AND DIF> REF(DIF, 1) AND 底钝化次数1 >= 1, 死叉1);
+DRAWTEXT(底结构形成1P70=1, DIF,'底结构形成-70%'), COLORGREEN;
+
+{1.5 标注底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)}
+
+底结构形成1P100:=BOTTOM AND DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数1 >=1 AND 底钝化消失1=0;
+DRAWTEXT(底结构形成1P100, DIF, '底结构形成-100%'), COLORGREEN;
+
+底结构消失1:=BOTTOM AND DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数1 >=1 AND 底钝化消失1>=1;
+DRAWTEXT(底结构消失1, DIF, '结消'), COLORYELLOW;
+
+
+{2.构建整个顶背离判断逻辑};
+
+{2.1 找到比上一个顶部区域更高的收盘价}
+CH1:=REF(HHV(CLOSE, 金叉1C), BARSLAST(BARSCOUNT(CLOSE)=金叉1E));
+{CH1:=IF(BARSCOUNT(CLOSE)=金叉1E,HHV(CLOSE, 金叉1C),0); {最近一次金叉后，最高收盘价}
+{DIFH1:=IF(BARSCOUNT(DIF)=金叉1E,HHV(DIF, 金叉1C),0); {最近一次金叉后，最高DIF}
+DIFH1:=REF(HHV(DIF, 金叉1C), BARSLAST(BARSCOUNT(DIF)=金叉1E));
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH, CH1);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, DIF, DIFH1);}
+
+{CH2:=IF(BARSCOUNT(CLOSE)=金叉2E,HHV(CLOSE, 金叉2C),0);}
+{CH2:=REF(HHV(CLOSE, 金叉2C), 金叉1C + 死叉1C);}
+CH2:=REF(HHV(CLOSE, 金叉2C), BARSLAST(BARSCOUNT(CLOSE)=金叉2E));
+{DIFH2:=IF(BARSCOUNT(DIF)=金叉2E,HHV(DIF, 金叉2C),0);}
+DIFH2:=REF(HHV(DIF, 金叉2C), BARSLAST(BARSCOUNT(DIF)=金叉2E));
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E, HIGH, CH2);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E, DIF, DIFH2);}
+
+{CH3:=IF(BARSCOUNT(CLOSE)=金叉3E,HHV(CLOSE, 金叉3C),0);}
+CH3:=REF(HHV(CLOSE, 金叉3C), BARSLAST(BARSCOUNT(CLOSE)=金叉3E));
+{DIFH3:=IF(BARSCOUNT(DIF)=金叉3E,HHV(DIF, 金叉3C),0);}
+DIFH3:=REF(HHV(DIF, 金叉3C), BARSLAST(BARSCOUNT(DIF)=金叉3E));
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉3E, HIGH, CH3);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉3E, DIF, DIFH3);}
+
+{2.2 找到钝化点(寻找比前一个顶部区域最高收盘价更高的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最高DIF更低的DIF)}
+
+顶钝化信号1:=CH1>CH2 AND DIF<DIFH2 AND (NOT BOTTOM);
+顶钝化次数1:=COUNT(顶钝化信号1, 金叉1);
+顶钝化开始1:=BARSLAST(顶钝化信号1 AND 顶钝化次数1=1);
+DRAWTEXT(顶钝化信号1 AND 顶钝化次数1=1, DIF, '顶钝化');
+
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 1.8, CH1);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 1.4, CH2);}
+
+
+{2.3 找到钝化消失点(找到比上一个顶部区域更高的DIF)}
+
+顶钝化消失1:=COUNT(DIF-DIFH2 > 0 AND (NOT BOTTOM), 金叉1);
+DRAWTEXT(DIF-DIFH2 > 0 AND (NOT BOTTOM) AND 顶钝化消失1=1 AND 顶钝化次数1>1, DIF, '消失');
+
+{2.4 标注顶结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更小的情况)}
+
+顶结构形成170:=COUNT((NOT BOTTOM) AND DIF < REF(DIF, 1) AND 顶钝化次数1 >= 1, 金叉1);
+DRAWTEXT(顶结构形成170=1, DIF,'顶结构形成-70%');
+
+{2.5 标注顶结构形成-100% (如果未出现钝化消失，则在CROSS(DEA, DIF)时，标注结构形成-100%)}
+
+顶结构形成1100:=(NOT BOTTOM) AND DIF > DEA AND REFX(DIF, 1) < REFX(DEA, 1) AND 顶钝化次数1 >=1 AND 顶钝化消失1=0; {AND 底钝化消失=0;}
+DRAWTEXT(顶结构形成1100, DIF, '顶结构形成-100%');
+
+{如果顶钝化消失1为FALSE，则查找再前一个顶部区域}
+
+{2.6 找到钝化点(寻找比前一个顶部区域最高收盘价更高的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最高DIF更低的DIF)}
+
+顶钝化信号2:=CH1>CH3 AND DIF<DIFH3 AND (NOT BOTTOM);
+顶钝化次数2:=COUNT(顶钝化信号2, 金叉1);
+顶钝化开始2:=BARSLAST(顶钝化信号2 AND 顶钝化次数2=1);
+DRAWTEXT(顶钝化信号2 AND 顶钝化次数2=1, DIF, '顶钝化');
+
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 1.8, CH1);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 1.4, CH3);}
+
+
+{2.7 找到钝化消失点(找到比上一个顶部区域更高的DIF)}
+
+顶钝化消失2:=COUNT(DIF-DIFH3 > 0 AND (NOT BOTTOM), 金叉2);
+DRAWTEXT(DIF-DIFH3 > 0 AND (NOT BOTTOM) AND 顶钝化消失2=1 AND 顶钝化次数2>1, DIF, '消失');
+
+{2.8 标注顶结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更小的情况)}
+
+顶结构形成270:=COUNT((NOT BOTTOM) AND DIF < REF(DIF, 1) AND 顶钝化次数2 >= 1, 金叉2);
+DRAWTEXT(顶结构形成270=1, DIF,'顶结构形成-70%');
+
+{2.9 标注顶结构形成-100% (如果未出现钝化消失，则在CROSS(DEA, DIF)时，标注结构形成-100%)}
+
+顶结构形成2100:=(NOT BOTTOM) AND DIF > DEA AND REFX(DIF, 1) < REFX(DEA, 1) AND 顶钝化次数2 >=1 AND 顶钝化消失2=0; {AND 底钝化消失=0;}
+DRAWTEXT(顶结构形成2100, DIF, '顶结构形成-100%');
+
+-----------------------------------------------------
+
+DIF:100*(EMA(CLOSE,SHORT)-EMA(CLOSE,LONG));
+DEA:EMA(DIF,MID);
+MACD:(DIF-DEA)*2,COLORSTICK;
+
+BC:=CONST(BARSCOUNT(CLOSE));
+
+金叉:=CROSS(DIF,DEA);
+死叉:=CROSS(DEA,DIF);
+
+金叉1:=BARSLAST(金叉);{最近一次金叉的位置}
+金叉2:=REF(BARSLAST(金叉),金叉1+1);{倒数第二次金叉与倒数第一次金叉的区间}
+金叉3:=REF(BARSLAST(金叉),金叉2+金叉1+2);{倒数第三次金叉与倒数第二次金叉的区间}
+
+金叉1R:=CONST(BARSLAST(金叉)+1); {最近一次金叉距离当前最新日期的距离}
+金叉2R:=CONST(REF(BARSLAST(金叉),金叉1+1)+1);{倒数第二次金叉到倒数第一次金叉的距离}
+金叉3R:=CONST(REF(BARSLAST(金叉),金叉2+金叉1+2)+1);{倒数第三次金叉到倒数第二次金叉的距离}
+
+死叉1:=BARSLAST(死叉);{最近一次死叉的位置}
+死叉2:=REF(BARSLAST(死叉),死叉1+1);{倒数第二次死叉与倒数第一次死叉的区间}
+死叉3:=REF(BARSLAST(死叉),死叉2+死叉1+2);{倒数第三次死叉与倒数第二次死叉的区间}
+
+死叉1R:=CONST(BARSLAST(死叉)+1); {最近一次死叉距离当前最新日期的距离}
+死叉2R:=CONST(REF(BARSLAST(死叉),死叉1 + 1)+1); {倒数第二次死叉到倒数第一次死叉的距离}
+死叉3R:=CONST(REF(BARSLAST(死叉),死叉2+死叉1+2)+1); {倒数第三次死叉到倒数第二次死叉的距离}
+
+{DRAWNUMBER(金叉,HIGH,金叉1R);}
+{DRAWNUMBER(死叉,HIGH,死叉1R);}
+
+BOTTOM:=死叉1R<金叉1R;
+
+{DRAWTEXT(金叉 AND BOTTOM = 0,HIGH,'TOP');}
+
+{DRAWNUMBER(死叉,HIGH,死叉2R);}
+{DRAWNUMBER(死叉,HIGH,死叉1R);}
+
+死叉1C:=CONST(IF(BOTTOM, 死叉1R, 死叉1R - 金叉1R)); {最近一次死叉的区域长度}
+死叉2C:=CONST(IF(BOTTOM, 死叉1R + 死叉2R - 金叉1R, 死叉1R + 死叉2R - 金叉1R - 金叉2R));  {倒数第二次死叉的区域长度}
+死叉3C:=CONST(IF(BOTTOM, 死叉1R + 死叉2R + 死叉3R - 金叉1R - 金叉2R, 死叉1R + 死叉2R + 死叉3R - 金叉1R - 金叉2R - 金叉3R)); {倒数第三次死叉的区域长度}
+
+{DRAWNUMBER(死叉,HIGH,死叉3C);}
+
+死叉1P:=CONST(BC - 死叉1R + 1);  {最近一次死叉的开始K线位置}
+死叉2P:=CONST(BC - 死叉1R - 死叉2R + 1);  {倒数第二次死叉的开始K线位置}
+死叉3P:=CONST(BC - 死叉1R - 死叉2R - 死叉3R + 1); {倒数第三次死叉的开始K线位置}
+
+死叉1E:=CONST(死叉1P + 死叉1C - 1); {最近一次死叉的结束K线位置}
+死叉2E:=CONST(死叉2P + 死叉2C - 1);  {倒数第二次死叉的结束K线位置}
+死叉3E:=CONST(死叉3P + 死叉3C - 1);  {倒数第三次死叉的结束K线位置}
+
+{DRAWNUMBER(BARSCOUNT(CLOSE)=死叉1E,HIGH,死叉1E);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉2E,HIGH,死叉2E);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉3E,HIGH,死叉3E);}
+
+{DRAWNUMBER(金叉,HIGH,BC);
+DRAWNUMBER(死叉,HIGH,死叉3P);}
+{DRAWNUMBER(BC - 死叉1R + 1 = BARSCOUNT(CLOSE), HIGH, BARSCOUNT(CLOSE));}
+
+
+{DRAWNUMBER(BC-金叉1C=BARSCOUNT(CLOSE), DIF,BC-金叉1C);}
+
+
+金叉1C:=CONST(IF((NOT BOTTOM), 金叉1R, 死叉1R - 金叉1R)); {最近一次死叉的区域长度}
+金叉2C:=CONST(IF((NOT BOTTOM), 金叉1R + 金叉2R - 死叉1R, 金叉1R + 金叉2R - 死叉1R - 死叉2R));  {倒数第二次死叉的区域长度}
+金叉3C:=CONST(IF((NOT BOTTOM), 金叉1R + 金叉2R + 金叉3R - 死叉1R - 死叉2R, 金叉1R + 金叉2R + 金叉3R - 死叉1R - 死叉2R - 死叉3R)); {倒数第三次死叉的区域长度}
+
+金叉1P:=CONST(BC - 金叉1R + 1); {最近一次金叉的开始K线位置}
+金叉2P:=CONST(BC - 金叉1R - 金叉2R + 1);  {倒数第二次金叉的开始K线位置}
+金叉3P:=CONST(BC - 金叉1R - 金叉2R - 金叉3R + 1);  {倒数第三次金叉的开始K线位置}
+
+金叉1E:=CONST(金叉1P + 金叉1C - 1); {最近一次金叉的结束K线位置}
+金叉2E:=CONST(金叉2P + 金叉2C - 1);  {倒数第二次金叉的结束K线位置}
+金叉3E:=CONST(金叉3P + 金叉3C - 1);  {倒数第三次金叉的结束K线位置}
+
+{DRAWNUMBER(金叉,HIGH,金叉3C);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E,HIGH,金叉2E);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉3E,HIGH,金叉3E);}
+
+{DRAWNUMBER(死叉,HIGH,BC);
+DRAWNUMBER(金叉,HIGH,金叉1P);}
+
+{金叉2C:=CONST(REF(BARSLAST(金叉),金叉1+1)+1 + 金叉1C);}
+{DRAWNUMBER(金叉,LOW,金叉3C);}
+
+{当前K线位置:=BARSCOUNT(CLOSE); }
+
+{1.构建整个顶背离判断逻辑}
+
+{1.1 找到比上一个底部区域更低的收盘价}
+CL1:=REF(LLV(CLOSE, 死叉1C), BARSLAST(BARSCOUNT(CLOSE)=死叉1E)); {最近一次死叉后，最低收盘价}
+DIFL1:=REF(LLV(DIF, 死叉1C), BARSLAST(BARSCOUNT(DIF)=死叉1E)); {最近一次死叉后，最低DIF}
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉1E, HIGH * 1, CL1);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉1E, HIGH * 1.8, DIFL1);
+
+CL2:=REF(LLV(CLOSE, 死叉2C), BARSLAST(BARSCOUNT(CLOSE)=死叉2E)); {倒数第二次死叉后，最低收盘价}
+DIFL2:=REF(LLV(DIF, 死叉2C), BARSLAST(BARSCOUNT(DIF)=死叉2E)); {倒数第二次死叉后，最低DIF}
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉2E, HIGH * 1, CL2);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉2E, HIGH * 1.8, DIFL2);
+
+CL3:=REF(LLV(CLOSE, 死叉3C), BARSLAST(BARSCOUNT(CLOSE)=死叉3E)); {倒数第三次死叉后，最低收盘价}
+DIFL3:=REF(LLV(DIF, 死叉3C), BARSLAST(BARSCOUNT(DIF)=死叉3E)); {倒数第三次死叉后，最低DIF}
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉3E, HIGH * 1, CL3);
+DRAWNUMBER(BARSCOUNT(CLOSE)=死叉3E, HIGH * 1.8, DIFL3);
+
+{1.2 找到钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
+
+底钝化信号1:=CL1<CL2 AND DIF>DIFL2 AND BOTTOM;
+底钝化次数1:=COUNT(底钝化信号1, 死叉1);
+底钝化开始1:=BARSLAST(CL1 < CL2 AND DIF > DIFL2 AND BOTTOM AND 底钝化次数1=1);
+DRAWTEXT(底钝化信号1 AND 底钝化次数1=1, DIF,'底钝化'), COLORGREEN;
+
+底钝化信号2:=CL1<CL3 AND DIF>DIFL3 AND BOTTOM;
+底钝化次数2:=COUNT(底钝化信号2, 死叉1);
+底钝化开始2:=BARSLAST(CL1 < CL3 AND DIF > DIFL3 AND BOTTOM AND 底钝化次数2=1);
+DRAWTEXT(底钝化信号2 AND 底钝化次数2=1, DIF,'底钝化'), COLORRED;
+
+{1.3 找到钝化消失点(找到比上一个底部区域更低的DIF)}
+
+底钝化消失1:=COUNT(DIF-DIFL2 < 0 AND BOTTOM, 死叉1);
+DRAWTEXT(DIF-DIFL2 < 0 AND BOTTOM AND 底钝化消失1=1 AND 底钝化次数1>1, DIF, '钝消'), COLORYELLOW;
+
+底钝化消失2:=COUNT(DIF-DIFL3 < 0 AND BOTTOM, 死叉1);
+DRAWTEXT(DIF-DIFL3 < 0 AND BOTTOM AND 底钝化消失2=1 AND 底钝化次数2>1, DIF, '钝消'), COLORYELLOW;
+
+{1.4 标注底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
+
+底结构形成1P70:=COUNT(BOTTOM AND DIF> REF(DIF, 1) AND 底钝化次数1 >= 1, 死叉1);
+DRAWTEXT(底结构形成1P70=1, DIF,'底结构形成-70%'), COLORGREEN;
+
+{1.5 标注底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)}
+
+底结构形成1P100:=BOTTOM AND DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数1 >=1 AND 底钝化消失1=0;
+DRAWTEXT(底结构形成1P100, DIF, '底结构形成-100%'), COLORGREEN;
+
+底结构消失1:=BOTTOM AND DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数1 >=1 AND 底钝化消失1>=1;
+DRAWTEXT(底结构消失1, DIF, '结消'), COLORYELLOW;
+
+
+{2.构建整个顶背离判断逻辑};
+
+{2.1 找到比上一个顶部区域更高的收盘价}
+CH1:=REF(HHV(CLOSE, 金叉1C), BARSLAST(BARSCOUNT(CLOSE)=金叉1E));
+DIFH1:=REF(HHV(DIF, 金叉1C), BARSLAST(BARSCOUNT(DIF)=金叉1E));
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH, CH1);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, DIF, DIFH1);}
+
+CH2:=REF(HHV(CLOSE, 金叉2C), BARSLAST(BARSCOUNT(CLOSE)=金叉2E));
+DIFH2:=REF(HHV(DIF, 金叉2C), BARSLAST(BARSCOUNT(DIF)=金叉2E));
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E, HIGH, CH2);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E, DIF, DIFH2);}
+
+CH3:=REF(HHV(CLOSE, 金叉3C), BARSLAST(BARSCOUNT(CLOSE)=金叉3E));
+DIFH3:=REF(HHV(DIF, 金叉3C), BARSLAST(BARSCOUNT(DIF)=金叉3E));
+{DRAWNUMBER(BARSCOUNT(CLOSE)=金叉3E, HIGH, CH3);
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉3E, DIF, DIFH3);}
+
+{2.2 找到钝化点(寻找比前一个顶部区域最高收盘价更高的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最高DIF更低的DIF)}
+
+顶钝化信号1:=CH1>CH2 AND DIF<DIFH2 AND (NOT BOTTOM);
+顶钝化次数1:=COUNT(顶钝化信号1, 金叉1);
+顶钝化开始1:=BARSLAST(顶钝化信号1 AND 顶钝化次数1=1);
+DRAWTEXT(顶钝化信号1 AND 顶钝化次数1=1, DIF, '顶钝化');
+
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 7.0, DIF),COLORGREEN;
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 6.2, DIFH2),COLORGREEN;
+
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 5.4, CH1),COLORGREEN;
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉1E, HIGH * 4.6, CH2),COLORGREEN;
+
+
+{2.3 找到钝化消失点(找到比上一个顶部区域更高的DIF)}
+
+顶钝化消失1:=COUNT(DIF-DIFH2 > 0 AND (NOT BOTTOM), 金叉1);
+DRAWTEXT(DIF-DIFH2 > 0 AND (NOT BOTTOM) AND 顶钝化消失1=1 AND 顶钝化次数1 > 1, DIF, '消失');
+
+{2.4 标注顶结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更小的情况)}
+
+顶结构形成170:=COUNT((NOT BOTTOM) AND DIF < REF(DIF, 1) AND 顶钝化次数1 >= 1, 金叉1);
+DRAWTEXT(顶结构形成170=1, DIF,'顶结构形成-70%');
+
+{2.5 标注顶结构形成-100% (如果未出现钝化消失，则在CROSS(DEA, DIF)时，标注结构形成-100%)}
+
+顶结构形成1100:=(NOT BOTTOM) AND DIF > DEA AND REFX(DIF, 1) < REFX(DEA, 1) AND 顶钝化次数1 >=1 AND 顶钝化消失1=0; {AND 底钝化消失=0;}
+DRAWTEXT(顶结构形成1100, DIF, '顶结构形成-100%');
+
+{如果顶钝化消失1为FALSE，则查找再前一个顶部区域}
+
+{2.6 找到钝化点(寻找比前一个顶部区域最高收盘价更高的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最高DIF更低的DIF)}
+
+顶钝化信号2:=CH2>CH3 AND DIF<DIFH3 AND (NOT BOTTOM);
+顶钝化次数2:=COUNT(顶钝化信号2, 金叉2);
+顶钝化开始2:=BARSLAST(顶钝化信号2 AND 顶钝化次数2=1);
+DRAWTEXT(顶钝化信号2 AND 顶钝化次数2=1, DIF, '顶钝化');
+
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E, HIGH * 6.2, CH2),COLORGREEN;
+DRAWNUMBER(BARSCOUNT(CLOSE)=金叉2E, HIGH * 5.4, CH3),COLORGREEN;
+
+
+{2.7 找到钝化消失点(找到比上一个顶部区域更高的DIF)}
+
+顶钝化消失2:=COUNT(DIF-DIFH3 > 0 AND (NOT BOTTOM), 金叉2);
+DRAWTEXT(DIF-DIFH3 > 0 AND (NOT BOTTOM) AND 顶钝化消失2=1 AND 顶钝化次数2>1, DIF, '消失');
+
+{2.8 标注顶结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更小的情况)}
+
+顶结构形成270:=COUNT((NOT BOTTOM) AND DIF < REF(DIF, 1) AND 顶钝化次数2 >= 1, 金叉2);
+DRAWTEXT(顶结构形成270=1, DIF,'顶结构形成-70%');
+
+{2.9 标注顶结构形成-100% (如果未出现钝化消失，则在CROSS(DEA, DIF)时，标注结构形成-100%)}
+
+顶结构形成2100:=(NOT BOTTOM) AND DIF > DEA AND REFX(DIF, 1) < REFX(DEA, 1) AND 顶钝化次数2 >=1 AND 顶钝化消失2=0; {AND 底钝化消失=0;}
+DRAWTEXT(顶结构形成2100, DIF, '顶结构形成-100%');
+
+--------------------------------------------
+
+DIF:100*(EMA(CLOSE,SHORT)-EMA(CLOSE,LONG));
+DEA:EMA(DIF,MID);
+MACD:(DIF-DEA)*2,COLORSTICK;
+
+BC:=CONST(BARSCOUNT(CLOSE));
+
+金叉:=CROSS(DIF,DEA);
+死叉:=CROSS(DEA,DIF);
+
+金叉1:=BARSLAST(金叉);{最近一次金叉的位置}
+金叉2:=REF(BARSLAST(金叉),金叉1+1);{倒数第二次金叉与倒数第一次金叉的区间}
+金叉3:=REF(BARSLAST(金叉),金叉2+金叉1+2);{倒数第三次金叉与倒数第二次金叉的区间}
+
+金叉1R:=CONST(BARSLAST(金叉)+1); {最近一次金叉距离当前最新日期的距离}
+金叉2R:=CONST(REF(BARSLAST(金叉),金叉1+1)+1);{倒数第二次金叉到倒数第一次金叉的距离}
+金叉3R:=CONST(REF(BARSLAST(金叉),金叉2+金叉1+2)+1);{倒数第三次金叉到倒数第二次金叉的距离}
+
+死叉1:=BARSLAST(死叉);{最近一次死叉的位置}
+死叉2:=REF(BARSLAST(死叉),死叉1+1);{倒数第二次死叉与倒数第一次死叉的区间}
+死叉3:=REF(BARSLAST(死叉),死叉2+死叉1+2);{倒数第三次死叉与倒数第二次死叉的区间}
+
+死叉1R:=CONST(BARSLAST(死叉)+1); {最近一次死叉距离当前最新日期的距离}
+死叉2R:=CONST(REF(BARSLAST(死叉),死叉1 + 1)+1); {倒数第二次死叉到倒数第一次死叉的距离}
+死叉3R:=CONST(REF(BARSLAST(死叉),死叉2+死叉1+2)+1); {倒数第三次死叉到倒数第二次死叉的距离}
+
+BOTTOM:=死叉1R<金叉1R;
+
+金叉1C:=CONST(IF((NOT BOTTOM), 金叉1R, 死叉1R - 金叉1R)); {最近一次死叉的区域长度}
+金叉2C:=CONST(IF((NOT BOTTOM), 金叉1R + 金叉2R - 死叉1R, 金叉1R + 金叉2R - 死叉1R - 死叉2R));  {倒数第二次死叉的区域长度}
+金叉3C:=CONST(IF((NOT BOTTOM), 金叉1R + 金叉2R + 金叉3R - 死叉1R - 死叉2R, 金叉1R + 金叉2R + 金叉3R - 死叉1R - 死叉2R - 死叉3R)); {倒数第三次死叉的区域长度}
+
+金叉1P:=CONST(BC - 金叉1R + 1); {最近一次金叉的开始K线位置}
+金叉2P:=CONST(BC - 金叉1R - 金叉2R + 1); {倒数第二次金叉的开始K线位置}
+金叉3P:=CONST(BC - 金叉1R - 金叉2R - 金叉3R + 1); {倒数第三次金叉的开始K线位置}
+
+金叉1E:=CONST(金叉1P + 金叉1C - 1); {最近一次金叉的结束K线位置}
+金叉2E:=CONST(金叉2P + 金叉2C - 1); {倒数第二次金叉的结束K线位置}
+金叉3E:=CONST(金叉3P + 金叉3C - 1); {倒数第三次金叉的结束K线位置}
+
+死叉1C:=CONST(IF(BOTTOM, 死叉1R, 死叉1R - 金叉1R)); {最近一次死叉的区域长度}
+死叉2C:=CONST(IF(BOTTOM, 死叉1R + 死叉2R - 金叉1R, 死叉1R + 死叉2R - 金叉1R - 金叉2R));  {倒数第二次死叉的区域长度}
+死叉3C:=CONST(IF(BOTTOM, 死叉1R + 死叉2R + 死叉3R - 金叉1R - 金叉2R, 死叉1R + 死叉2R + 死叉3R - 金叉1R - 金叉2R - 金叉3R)); {倒数第三次死叉的区域长度}
+
+死叉1P:=CONST(BC - 死叉1R + 1);  {最近一次死叉的开始K线位置}
+死叉2P:=CONST(BC - 死叉1R - 死叉2R + 1);  {倒数第二次死叉的开始K线位置}
+死叉3P:=CONST(BC - 死叉1R - 死叉2R - 死叉3R + 1); {倒数第三次死叉的开始K线位置}
+
+死叉1E:=CONST(死叉1P + 死叉1C - 1); {最近一次死叉的结束K线位置}
+死叉2E:=CONST(死叉2P + 死叉2C - 1);  {倒数第二次死叉的结束K线位置}
+死叉3E:=CONST(死叉3P + 死叉3C - 1);  {倒数第三次死叉的结束K线位置}
+
+{当前K线位置:=BARSCOUNT(CLOSE); }
+
+{1.构建整个顶背离判断逻辑}
+
+{1.1 找到比上一个底部区域更低的收盘价}
+CL1:=CONST(REF(LLV(CLOSE, 死叉1C), BARSLAST(BARSCOUNT(CLOSE)=死叉1E))); {最近一次死叉后，最低收盘价}
+DIFL1:=CONST(REF(LLV(DIF, 死叉1C), BARSLAST(BARSCOUNT(DIF)=死叉1E))); {最近一次死叉后，最低DIF}
+
+CL2:=CONST(REF(LLV(CLOSE, 死叉2C), BARSLAST(BARSCOUNT(CLOSE)=死叉2E))); {倒数第二次死叉后，最低收盘价}
+DIFL2:=CONST(REF(LLV(DIF, 死叉2C), BARSLAST(BARSCOUNT(DIF)=死叉2E))); {倒数第二次死叉后，最低DIF}
+
+CL3:=CONST(REF(LLV(CLOSE, 死叉3C), BARSLAST(BARSCOUNT(CLOSE)=死叉3E))); {倒数第三次死叉后，最低收盘价}
+DIFL3:=CONST(REF(LLV(DIF, 死叉3C), BARSLAST(BARSCOUNT(DIF)=死叉3E))); {倒数第三次死叉后，最低DIF}
+
+{1.2 最近的底部区域与倒数第二个底部区域比较} 
+
+{1.2.1 找到钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
+
+底钝化起始位置1:=死叉1P + 1;
+底钝化结束位置1:=死叉1E;
+底钝化滑动窗口1:=BARSCOUNT(CLOSE) - 底钝化起始位置1;
+底钝化信号1:=CL1 < CL2 AND DIF > DIFL2 AND DIF < DEA;
+底钝化条件1:=BARSCOUNT(CLOSE) >= 底钝化起始位置1 AND BARSCOUNT(CLOSE) <= 底钝化结束位置1 AND 底钝化信号1 AND COUNT(底钝化信号1, 底钝化滑动窗口1) = 1;
+底钝化次数1:=COUNT(底钝化条件1, BARSCOUNT(CLOSE) - 底钝化起始位置1);
+底钝化位置1:=CONST(BARSCOUNT(CLOSE) - BARSLAST(底钝化条件1));
+
+{1.2.2 找到钝化消失点(找到比上一个底部区域更低的DIF)}
+
+底消起始位置1:=底钝化位置1 + 1;
+底消结束位置1:=死叉1E - 1;
+底消滑动窗口1:=BARSCOUNT(CLOSE) - 底消起始位置1;
+底消条件1:=BARSCOUNT(CLOSE) >= 底消起始位置1 AND BARSCOUNT(CLOSE) <= 底消结束位置1 AND DIF-DIFL2 < 0 AND COUNT(DIF-DIFL2 < 0, 底消滑动窗口1) = 1;
+底消次数1:=COUNT(底消条件1, BARSCOUNT(CLOSE) - 底消起始位置1);
+底消位置1:=CONST(BARSCOUNT(CLOSE) - BARSLAST(底消条件1));
+
+{1.2.3 找到底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
+
+底70起始位置1:=底钝化位置1 + 1; {底结构查找的起始位置 - START POSITION}
+底70结束位置1:=死叉1E - 1; {底结构查找的结束位置 - END POSITION}
+底70滑动窗口1:=BARSCOUNT(CLOSE)-底70起始位置1;
+底70条件1:=BARSCOUNT(CLOSE) >= 底70起始位置1 AND BARSCOUNT(CLOSE) <= 底70结束位置1 AND DIF> REF(DIF, 1) AND COUNT(DIF> REF(DIF, 1),底70滑动窗口1) = 1;
+底70位置1:=CONST(BARSCOUNT(CLOSE) - BARSLAST(底70条件1));
+
+{1.2.4 找到底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)}
+
+底100形成1:=DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数1 >=1 AND 底消次数1 = 0 ; {AND  底钝化次数2 >=1 AND 底钝化消失2=0;}
+
+{1.2.5 标注底结构点位，如果存在顿消，则不标注 }
+
+DRAWNUMBER(BARSCOUNT(CLOSE)=底钝化位置1, HIGH * 6, 底钝化位置1);
+
+DRAWTEXT(BARSCOUNT(CLOSE)=底钝化位置1 AND 底钝化位置1, HIGH, '底钝化'), COLORGREEN;
+DRAWTEXT(BARSCOUNT(CLOSE)=底消位置1 AND 底消次数1 = 0, DIF, '钝消'), COLORYELLOW;
+DRAWTEXT(BARSCOUNT(C)=底70位置1 AND 底消次数1 = 0, LOW * -4,'底结构形成-70%'), COLORGREEN;
+DRAWTEXT(底100形成1 AND 底消次数1=0, HIGH * 1.5,'底结构形成-100%'), COLORMAGENTA;
+
+{1.3 最近的底部区域与倒数第三个底部区域比较 (当最近底部区域与倒数第二个底部区域比较结果为底消)} 
+
+{1.3.1 找到钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
+                从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
+
+底钝化起始位置2:=死叉1P + 1;
+底钝化结束位置2:=死叉1E;
+底钝化滑动窗口2:=BARSCOUNT(CLOSE) - 底钝化起始位置2;
+底钝化信号2:=CL1 < CL3 AND DIF > DIFL3 AND DIF < DEA;
+底钝化条件2:=BARSCOUNT(CLOSE) >= 底钝化起始位置2 AND BARSCOUNT(CLOSE) <= 底钝化结束位置2 AND 底钝化信号2 AND COUNT(底钝化信号2, 底钝化滑动窗口2) = 1;
+底钝化次数2:=COUNT(底钝化条件2, BARSCOUNT(CLOSE) - 底钝化起始位置2);
+底钝化位置2:=CONST(BARSCOUNT(CLOSE) - BARSLAST(底钝化条件2));
+
+{1.3.2 找到钝化消失点(找到比上一个底部区域更低的DIF)}
+
+底消起始位置2:=底钝化位置2 + 1;
+底消结束位置2:=死叉1E - 1;
+底消滑动窗口2:=BARSCOUNT(CLOSE) - 底消起始位置2;
+底消条件2:=BARSCOUNT(CLOSE) >= 底消起始位置2 AND BARSCOUNT(CLOSE) <= 底消结束位置2 AND DIF-DIFL3 < 0 AND COUNT(DIF-DIFL3 < 0, 底消滑动窗口2) = 1;
+底消次数2:=COUNT(底消条件2, BARSCOUNT(CLOSE) - 底消起始位置2);
+底消位置2:=CONST(BARSCOUNT(CLOSE) - BARSLAST(底消条件2));
+
+{1.3.3 标注底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
+
+底70起始位置2:=底钝化位置2 + 1; {底结构查找的起始位置 - START POSITION}
+底70结束位置2:=死叉1E - 1; {底结构查找的结束位置 - END POSITION}
+底70滑动窗口2:=BARSCOUNT(CLOSE)-底70起始位置2;
+底70条件2:=BARSCOUNT(CLOSE) >= 底70起始位置2 AND BARSCOUNT(CLOSE) <= 底70结束位置2 AND DIF> REF(DIF, 1) AND COUNT(DIF> REF(DIF, 1),底70滑动窗口2) = 1;
+底70位置2:=CONST(BARSCOUNT(CLOSE) - BARSLAST(底70条件2));
+
+{1.3.4 标注底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)}
+
+底100形成2:=DIF<DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND 底钝化次数2 >=1 AND 底消次数2=0 ; {AND  底钝化次数2 >=1 AND 底钝化消失2=0;}
+
+DRAWTEXT(BARSCOUNT(CLOSE)=底钝化位置2 AND (NOT (底消位置1 > 底钝化位置1)) AND (NOT (底消位置2 > 底钝化位置2)), DIF,'底钝化2'), COLORGREEN;
+DRAWTEXT(BARSCOUNT(CLOSE)=底消位置2 AND 底消次数1>0 AND 底消次数2>0, DIF, '钝消'), COLORYELLOW;
+DRAWTEXT(BARSCOUNT(C)=底70位置2 AND 底消次数1>0 AND 底消次数2>0, DIF,'底结构形成-70%'), COLORGREEN;
+DRAWTEXT(底100形成2 AND 底消次数1>0 AND 底消次数2>0, LOW,'底结构形成-100%'), COLORMAGENTA;
+
+---------------------------------------------------------------------------------
+
+DIF:100*(EMA(CLOSE,SHORT)-EMA(CLOSE,LONG));
+DEA:EMA(DIF,MID);
+MACD:(DIF-DEA)*2,COLORSTICK;
+
+BC:=BARSCOUNT(CLOSE);
+
+金叉:=CROSS(DIF,DEA);
+死叉:=CROSS(DEA,DIF);
+
+
+{1.获取到每个死叉或者金叉区间的长度}
+C1:=IF(DIF > DEA, BARSLAST(金叉), BARSLAST(死叉)) + 1;
+C2:=REF(R1, R1);
+C3:=REF(R1, R1 + R2);
+C4:=REF(R1, R1 + R2 + R3);
+C5:=REF(R1, R1 + R2 + + R3 + R4);
+
+ZC:=CONST(BARSCOUNT(CLOSE));
+
+DRAWTEXT(金叉, HIGH, '金叉');
+DRAWTEXT(死叉, HIGH, '死叉');
+
+DRAWNUMBER(BARSCOUNT(CLOSE)=ZC, HIGH * 5, C1);
+DRAWNUMBER(BARSCOUNT(CLOSE)=ZC, HIGH * 10, C2);
+DRAWNUMBER(BARSCOUNT(CLOSE)=ZC, HIGH * 15, C3);
+DRAWNUMBER(BARSCOUNT(CLOSE)=ZC, HIGH * 20, C4);
+DRAWNUMBER(BARSCOUNT(CLOSE)=ZC, HIGH * 25, C5);
+DRAWNUMBER(BARSCOUNT(CLOSE)=ZC, HIGH * 30, BARSCOUNT(CLOSE));
