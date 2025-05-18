@@ -7,8 +7,8 @@ ZC:=CONST(BARSCOUNT(CLOSE)); { 总共K线的数量 }
 金叉:=CROSS(DIF,DEA);
 死叉:=CROSS(DEA,DIF);
 
-DRAWTEXT(金叉, HIGH * 10,'金叉');
-DRAWTEXT(死叉, HIGH * 5,'死叉');
+{DRAWTEXT(金叉, HIGH * 10,'金叉');
+DRAWTEXT(死叉, HIGH * 5,'死叉');}
 
 B1:=BARSLAST(死叉); {最近一次死叉的位置}
 B2:=REF(BARSLAST(死叉), B1 + 1) + B1 + 1; {倒数第二次死叉与倒数第一次死叉的区间}
@@ -70,9 +70,9 @@ TDL3:=REF(TDL1, B2 + 1); {倒数第三次金叉区间的最高DIF}
 底100形成1:=DIF > DEA AND REF(DIF, 1) < REF(DEA, 1) AND REF(底钝化次数1, 1) >= 1;
 
 {1.2.7 标记所有与倒数第二个底部区域比较的标记点}
-DRAWTEXT(底钝化有效1 AND 底钝化次数1=1, HIGH, '底钝化'), COLORGREEN;
-DRAWTEXT(真底70信号1 AND REF(底钝化次数1, 1) >= 1, LOW * -2, '底结构形成-70%'), COLORGREEN;
-DRAWTEXT(底100形成1, HIGH * 1.5, '底结构形成-100%'), COLORMAGENTA;
+DRAWTEXT(底钝化有效1 AND 底钝化次数1=1, HIGH * 0.3, '底钝化'), COLORGREEN;
+DRAWTEXT(真底70信号1 AND REF(底钝化次数1, 1) >= 1, DIF * 1.1, '底结构形成-70%'), COLORYELLOW;
+DRAWTEXT(底100形成1, HIGH * -0.3, '底结构形成-100%'), COLORMAGENTA;
 
 {1.3 最近的底部区域与倒数第三个底部区域比较} 
 
@@ -106,10 +106,8 @@ DRAWTEXT(底100形成1, HIGH * 1.5, '底结构形成-100%'), COLORMAGENTA;
 底100形成2:=DIF > DEA AND REF(DIF, 1) < REF(DEA, 1) AND REF(底钝化次数2, 1) >= 1;
 
 {1.3.7 标记所有与倒数第三个底部区域比较的标记点}
-DRAWTEXT(底钝化有效2 AND 底钝化次数2=1, HIGH, '底钝化'), COLORGREEN;
-DRAWTEXT(真底70信号2 AND REF(底钝化次数2, 1) >= 1, LOW * -2, '底结构形成-70%'), COLORGREEN;
-DRAWTEXT(底100形成2, HIGH * 1.5, '底结构形成-100%'), COLORMAGENTA;
-
-
+DRAWTEXT(底钝化有效2 AND 底钝化次数2=1, HIGH * 0.3, '底钝化'), COLORGREEN;
+DRAWTEXT(真底70信号2 AND REF(底钝化次数2, 1) >= 1, DIF * 1.1, '底结构形成-70%'), COLORYELLOW;
+DRAWTEXT(底100形成2, HIGH * -0.3, '底结构形成-100%'), COLORMAGENTA;
 
 
