@@ -36,77 +36,80 @@ TDL3:=REF(TDL1, B2 + 1); {倒数第三次金叉区间的最高DIF}
 
 {1.2 最近的底部区域与倒数第二个底部区域比较} 
 
-{后区域存在2:=ISVALID(BARSNEXT(金叉 OR 死叉));}
-{剩余区域长度:=IF(ISVALID(BARSNEXT(金叉 OR 死叉)), BARSNEXT(金叉 OR 死叉) - 1, ZC - BARSCOUNT(C));}
 剩余区域长度:= BARSNEXT(金叉 OR 死叉);
+区域最低DIF:=REFX(LLV(DIF, B1), 剩余区域长度);
 没有更低的DIF:=DIF < REFX(LLV(DIF, 剩余区域长度), 剩余区域长度 - 1);
 
 {1.2.1 找到钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
-                从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
-底钝化信号1:=B1 >= 1 AND DIF < DEA AND BCL1 < BCL2 AND DIF > BDL2 AND REF(DIF, 1) < REF(DEA, 1);
-底钝化次数1:=COUNT(底钝化信号1, B1);
-底钝化形成1:=底钝化信号1 AND 底钝化次数1=1;
-{DRAWTEXT(B1 >= 1 AND DIF < DEA AND BCL1 < BCL2  AND REF(DIF, 1) < REF(DEA, 1) AND DIF > BDL2, HIGH,'底钝化'), COLORGREEN;}
-{DRAWNUMBER(B1 >= 1 AND DIF < DEA AND BCL1 < BCL2 AND REF(DIF, 1) < REF(DEA, 1) AND COUNT(B1 >= 1 AND DIF < DEA AND BCL1 < BCL2 AND REF(DIF, 1) < REF(DEA, 1), B1) = 1, HIGH * 2, DIF), COLORGREEN;
-DRAWNUMBER(B1 >= 1 AND DIF < DEA AND BCL1 < BCL2 AND REF(DIF, 1) < REF(DEA, 1) AND COUNT(B1 >= 1 AND DIF < DEA AND BCL1 < BCL2 AND REF(DIF, 1) < REF(DEA, 1), B1) = 1, HIGH * 1, BDL2), COLORGREEN;}
-
+                  从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
+底钝化信号1:=B1 >= 1 AND DIF < DEA AND BCL1 < BCL2 AND DIF > BDL2;
 
 {1.2.2 找到钝化消失点(找到比上一个底部区域更低的DIF)}
-底消信号1:=底钝化次数1 >= 1 AND DIF < BDL2 AND DIF < DEA;
-底消次数1:=COUNT(底消信号1, B1);
-底消形成1:=底消信号1 AND 底消次数1=1;
-后底消次数1:=REFX(底消次数1, 剩余区域长度);
+底钝消信号1:=B1 >= 2 AND DIF < BDL2 AND DIF < DEA AND REF(COUNT(底钝化信号1, B1), 1) >= 1;
 
 {1.2.3 找到底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
-底70信号1:=REF(底钝化次数1, 1) >= 1 AND DIF > REF(DIF, 1) AND DIF < DEA AND REFX(DIF, 1) < REFX(DEA, 1) AND 没有更低的DIF;
-底70次数1:=COUNT(底70信号1, B1);
-底70形成1:=底70信号1 AND 底70次数1=1 AND 底消次数1=0;
-{DRAWNUMBER(底70信号1 AND 底70次数1=1, HIGH * 4, 剩余区域长度), COLORGREEN;
-DRAWNUMBER(底70信号1 AND 底70次数1=1, HIGH * 6, LLV(DIF, 剩余区域长度)), COLORGREEN;
-DRAWNUMBER(底70信号1 AND 底70次数1=1, HIGH * 8, DIF > REFX(LLV(DIF, 剩余区域长度 + 1), 剩余区域长度 - 1)), COLORGREEN;
-DRAWNUMBER(底70信号1 AND 底70次数1=1, HIGH * 10, REFX(LLV(DIF, 剩余区域长度), 剩余区域长度 - 1)), COLORGREEN;
-DRAWNUMBER(底70信号1 AND 底70次数1=1, HIGH * 12, DIF), COLORGREEN;
-DRAWNUMBER(底70信号1 AND 底70次数1=1, HIGH * 14, DIF < REFX(LLV(DIF, 剩余区域长度), 剩余区域长度 - 1)), COLORGREEN;
-DRAWNUMBER(底70信号1 AND 底70次数1=1, HIGH * 16, 没有更低的DIF), COLORGREEN;}
-{DRAWNUMBER(BARSCOUNT(C)=ZC-1, HIGH * 4, 剩余区域长度), COLORGREEN;
-DRAWNUMBER(BARSCOUNT(C)=ZC-24, HIGH * 8, 剩余区域长度), COLORGREEN;
-DRAWNUMBER(BARSCOUNT(C)=ZC-12, HIGH * 8, BARSNEXT(金叉 OR 死叉)), COLORGREEN;}
+真底70信号1:=B1 >= 2 AND DIF > REF(DIF, 1) AND DIF < DEA AND DIF > BDL2 AND REF(DIF, 1) = 区域最低DIF;
+真底70存在1:=ISVALID(REFX(BARSNEXT(真底70信号1), 1));
+真底70不存在1:=真底70存在1=0;
 
-{1.2.4 找到底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)};
-底100形成1:=DIF < DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND REF(底钝化次数1, 1) >= 1 AND 底消次数1 = 0 AND B1 >= 2;
+虚底70信号1:=B1 >= 2 AND DIF > REF(DIF, 1) AND DIF < DEA AND DIF > BDL2 AND REF(DIF, 1) > 区域最低DIF;
+虚底70存在1:=ISVALID(REFX(BARSNEXT(虚底70信号1), 1));
+虚底70不存在1:=虚底70存在1=0;
 
-{1.2.5 标记所有与倒数第二个底部区域比较的标记点}
-DRAWTEXT(底钝化形成1 AND 后底消次数1=0, HIGH,'底钝化'), COLORGREEN;
-DRAWTEXT(底消形成1, DIF, '钝消'), COLORYELLOW;
-DRAWTEXT(底70形成1, LOW * -2, '底结构形成-70%'), COLORGREEN;
-DRAWTEXT(底100形成1, HIGH * 1.5,'底结构形成-100%'), COLORMAGENTA;
+{1.2.4 判断顿消情况是否存在}
+前底钝消次数1:=REF(COUNT(底钝消信号1, B1), 1);
+后底钝消存在1:=ISVALID(REFX(BARSNEXT(底钝消信号1), 1)) AND REFX(DIF, 1) < REFX(DEA, 1);
+底钝消不存在1:=前底钝消次数1=0 AND 后底钝消存在1=0;
 
+{1.2.5 找到第一个有效的钝化点(钝化点之后如何存在结构反转的情况, 则钝化无效)
+	   结构反转: 在出现底结构-70%之后，出现更小的DIF, 则视为结构反转}
+底钝化有效1:=底钝化信号1 AND 底钝消不存在1 AND (真底70不存在1 OR (真底70存在1 AND 虚底70不存在1) OR BARSNEXT(虚底70信号1) < BARSNEXT(真底70存在1));
+底钝化次数1:=COUNT(底钝化有效1, B1);
 
-{1.3 最近的底部区域与倒数第二个底部区域比较} 
+{1.2.6 找到底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)};
+底100形成1:=DIF > DEA AND REF(DIF, 1) < REF(DEA, 1) AND REF(底钝化次数1, 1) >= 1;
 
-{1.3.1 找到钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
-                从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
+{1.2.7 标记所有与倒数第二个底部区域比较的标记点}
+DRAWTEXT(底钝化有效1 AND 底钝化次数1=1, HIGH, '底钝化'), COLORGREEN;
+DRAWTEXT(真底70信号1 AND REF(底钝化次数1, 1) >= 1, LOW * -2, '底结构形成-70%'), COLORGREEN;
+DRAWTEXT(底100形成1, HIGH * 1.5, '底结构形成-100%'), COLORMAGENTA;
 
+{1.3 最近的底部区域与倒数第三个底部区域比较} 
+
+{1.3.1 找到钝化点(寻找比倒数第三个底部区域最低收盘价更低的收盘价, 
+                  从这个收盘价开始寻找一个DIF比倒数第三个区域最低DIF更高的DIF)}
 底钝化信号2:=B1 >= 1 AND DIF < DEA AND BCL1 < BCL3 AND DIF > BDL3;
-底钝化次数2:=COUNT(底钝化信号2, B1);
-底钝化形成2:=底钝化信号2 AND 底钝化次数2=1;
 
-{1.3.2 找到钝化消失点(找到比上一个底部区域更低的DIF)}
-底消信号2:=底钝化次数2 >= 1 AND DIF < BDL3 AND DIF < DEA;
-底消次数2:=COUNT(底消信号2, B1);
-底消形成2:=底消信号2 AND 底消次数2=1;
-后底消次数2:=REFX(底消次数2, 剩余区域长度);
+{1.3.2 找到钝化消失点(找到比倒数第三个部区域更低的DIF)}
+底钝消信号2:=B1 >= 2 AND DIF < BDL3 AND DIF < DEA AND REF(COUNT(底钝化信号2, B1), 1) >= 1;
 
-{1.3.3 找到底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
-底70信号2:=REF(底钝化次数2, 1) >= 1 AND DIF > REF(DIF, 1) AND DIF < DEA AND REFX(DIF, 1) < REFX(DEA, 1) AND 没有更低的DIF;
-底70次数2:=COUNT(底70信号2, B1);
-底70形成2:=底70信号2 AND 底70次数2=1 AND 底消次数2 = 0;
+{1.3.3 标注底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
+真底70信号2:=B1 >= 2 AND DIF > REF(DIF, 1) AND DIF < DEA AND DIF > BDL3 AND REF(DIF, 1) = 区域最低DIF;
+真底70存在2:=ISVALID(REFX(BARSNEXT(真底70信号2), 1));
+真底70不存在2:=真底70存在2=0;
 
-{1.3.4 找到底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)};
-底100形成2:=DIF < DEA AND REFX(DIF, 1) > REFX(DEA, 1) AND REF(底钝化次数2, 1) >= 1 AND 底消次数2 = 0 AND B2 >= 2;
+虚底70信号2:=B1 >= 2 AND DIF > REF(DIF, 1) AND DIF < DEA AND DIF > BDL3 AND REF(DIF, 1) > 区域最低DIF;
+虚底70存在2:=ISVALID(REFX(BARSNEXT(虚底70信号2), 1));
+虚底70不存在2:=虚底70存在2=0;
 
-{1.3.5 标记所有与倒数第三个底部区域比较的标记点}
-DRAWTEXT(底钝化形成2 AND 后底消次数2=0 AND (底消次数1 > 0 OR 后底消次数1 > 0), HIGH,'底钝化'), COLORGREEN;
-DRAWTEXT(底消形成2 AND (底消次数1 > 0 OR 后底消次数1 > 0), DIF, '钝消'), COLORYELLOW;
-DRAWTEXT(底70形成2 AND 后底消次数2=0 AND (底消次数1 > 0 OR 后底消次数1 > 0), LOW * -2, '底结构形成-70%'), COLORGREEN;
-DRAWTEXT(底100形成2 AND 底消次数1 > 0, HIGH * 1.5,'底结构形成-100%'), COLORMAGENTA;
+{1.3.4 判断顿消情况是否存在}
+前底钝消次数2:=REF(COUNT(底钝消信号2, B1), 1);
+后底钝消存在2:=ISVALID(REFX(BARSNEXT(底钝消信号2), 1)) AND REFX(DIF, 1) < REFX(DEA, 1);
+底钝消不存在2:=前底钝消次数2=0 AND 后底钝消存在2=0;
+
+{1.3.5 找到第一个有效的钝化点(钝化点之后如何存在结构反转的情况, 则钝化无效)
+	   结构反转: 在出现底结构-70%之后，出现更小的DIF, 则视为结构反转}
+底钝化有效2:=底钝化信号2 AND 底钝消不存在2 AND (真底70不存在2 OR (真底70存在2 AND 虚底70不存在2) OR BARSNEXT(虚底70信号2) < BARSNEXT(真底70存在2));
+底钝化次数2:=COUNT(底钝化有效2, B1);
+
+{1.3.6 找到底结构形成-100% (如果未出现钝化消失，则在CROSS(DIF,DEA)时，标注结构形成-100%)};
+底100形成2:=DIF > DEA AND REF(DIF, 1) < REF(DEA, 1) AND REF(底钝化次数2, 1) >= 1;
+
+{1.3.7 标记所有与倒数第三个底部区域比较的标记点}
+DRAWTEXT(底钝化有效2 AND 底钝化次数2=1, HIGH, '底钝化'), COLORGREEN;
+DRAWTEXT(真底70信号2 AND REF(底钝化次数2, 1) >= 1, LOW * -2, '底结构形成-70%'), COLORGREEN;
+DRAWTEXT(底100形成2, HIGH * 1.5, '底结构形成-100%'), COLORMAGENTA;
+
+
+
+
