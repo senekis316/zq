@@ -301,7 +301,7 @@ DRAWTEXT(顶结消不存在1 AND 顶有效范围1 AND 顶平衡形成1, 0, '顶�
 
 {1.3.2.9 标记所有与倒数第三个顶部区域比较的标记点}
 DRAWTEXT(顶钝化有效2 AND 顶钝化次数2=1, DIF * 0.7, IF(顶钝化信号E2, '重顶钝化', '顶钝化')), COLORGREEN;
-DRAWTEXT(真顶70信号2 AND REF(顶钝化次数1, 1) >= 1, DIF * 1.1, '顶结构形成-70%'), COLORYELLOW;
+DRAWTEXT(真顶70信号2 AND REF(顶钝化次数2, 1) >= 1, DIF * 1.1, '顶结构形成-70%'), COLORYELLOW;
 DRAWTEXT(顶100形成2, DIF * 0.3, '顶结构形成-100%'), COLORMAGENTA;
 
 DRAWTEXT(顶结构消失形成2 , DIF * 0.4, '顶结构消失');
