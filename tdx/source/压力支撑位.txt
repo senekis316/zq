@@ -1,0 +1,30 @@
+{
+	昨日的均价(通达信有函数)
+	昨日收盘价格的*1.0286
+	昨日收盘价格的*1.0714
+	昨日收盘价格的*（1-0.0286）
+	昨日收盘价格的*（1-0.0714）
+	昨日如果收盘价格>开盘价格则,(昨日的最高价格-昨日的收盘价格)/2+昨日的收盘价格
+	昨日如果收盘价格>开盘价格则,(昨日的开盘价格-昨日的最低价格)/2+昨日的最低价格
+	昨日如果收盘价格<开盘价格则,(昨日的最高价格-昨日的开盘价格)/2+昨日的开盘价格
+	昨日如果收盘价格<开盘价格则,(昨日的收盘价格-昨日的最低价格)/2+昨日的最低价格
+}
+
+ZC:=CONST(BARSCOUNT(CLOSE)); { 总共K线的数量 }
+
+{均价: REF(AMO/(VOL* 100), 1), COLORRED;}
+
+均价: CONST(REF(AMO/(VOL* 100), 1)), COLORRED;
+第一压力: CONST(REF(CLOSE * 1.0286, 1)), COLORLIBLUE;
+第二压力: CONST(REF(CLOSE * 1.0714, 1)), COLORGREEN;
+第一支撑: CONST(REF(CLOSE * (1-0.0286), 1)), COLORYELLOW;
+第二支撑: CONST(REF(CLOSE * (1-0.0714), 1)), COLORCYAN;
+
+P_HIGH:=CONST(REF(HIGH, 1));
+P_LOW:=CONST(REF(LOW, 1));
+P_OPEN:=CONST(REF(OPEN, 1));
+P_CLOSE:=CONST(REF(CLOSE, 1));
+
+上影线:IF(P_CLOSE > P_OPEN, (P_HIGH - P_CLOSE) / 2 + P_CLOSE, (P_HIGH - P_OPEN) / 2 + P_OPEN), COLORMAGENTA;
+下影线:IF(P_CLOSE > P_OPEN, (P_OPEN - P_LOW) / 2 + P_LOW, (P_CLOSE - P_LOW) / 2 + P_LOW), COLORWHITE;
+
