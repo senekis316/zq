@@ -53,6 +53,9 @@ TEH3:=REF(TEH1, T2 + 1); {倒数第三次金叉区间的最高DEA}
 钝化区域BIL:=LLV(DIF, B1); {最近一次金叉区间的钝化区间的最低DIF, 钝化区间是第二根K线开始的区间}
 钝化最低DIF:=IF(剩余区域长度 < 0, 钝化区域BIL, REFX(LLV(DIF, B1), 剩余区域长度));
 
+钝化区域BCL:=LLV(CLOSE, B1);
+钝化最低CLOSE:=IF(剩余区域长度 < 0, 钝化区域BCL, REFX(LLV(CLOSE, B1), 剩余区域长度));
+
 {1.2.1.1 找到底钝化点(寻找比前一个底部区域最低收盘价更低的收盘价, 
                       从这个收盘价开始寻找一个DIF比前区域最低DIF更高的DIF)}
 底钝化信号I1:=B1 >= 1 AND DIF < DEA AND BCL1 < BCL2 AND DIF > BIL2 AND BIL1 >= BIL2;
@@ -62,7 +65,12 @@ TEH3:=REF(TEH1, T2 + 1); {倒数第三次金叉区间的最高DEA}
 底钝消信号1:=B1 >= 2 AND DIF < DEA AND DIF < BIL2  AND REF(COUNT(底钝化信号I1, B1), 1) >= 1;
 
 {1.2.1.3 找到底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
-真底70信号1:=B1 >= 2 AND REF(DIF, 1) < REF(DEA, 1) AND REF(DIF, 1) > BIL2 AND REF(DIF, 1) = 钝化最低DIF;
+DIF底70信号1:=B1 >= 2 AND REF(DIF, 1) < REF(DEA, 1) AND REF(DIF, 1) > BIL2 AND REF(DIF, 1) = 钝化最低DIF;
+DIF底70位置1:=REFX(BARSLAST(DIF = 钝化最低DIF), 剩余区域长度);
+CLOSE底70信号1:=B1 >= 2 AND REF(DIF, 1) < REF(DEA, 1) AND REF(DIF, 1) > BIL2 AND REF(CLOSE, 1) = 钝化最低CLOSE;
+CLOSE底70位置1:=REFX(BARSLAST(CLOSE = 钝化最低CLOSE), 剩余区域长度);
+
+真底70信号1:=IF((DIF底70信号1 OR CLOSE底70信号1) AND DIF底70位置1 < CLOSE底70位置1, DIF底70信号1, CLOSE底70信号1);
 前真底70存在1:=ISVALID(BARSLAST(真底70信号1)) AND BARSLAST(真底70信号1) < B1;
 前真底70不存在1:=前真底70存在1==0;
 后真底70存在1:=ISVALID(REFX(BARSNEXT(真底70信号1), 1));
@@ -108,7 +116,7 @@ TEH3:=REF(TEH1, T2 + 1); {倒数第三次金叉区间的最高DEA}
 
 {1.2.1.10 标记所有与倒数第二个底部区域比较的标记点}
 DRAWTEXT(底钝化有效1 AND 底钝化次数1=1, DIF * 0.7, IF(底钝化信号E1, '重底钝化', '底钝化')), COLORGREEN;
-DRAWTEXT(真底70信号1 AND REF(底钝化次数1, 1) >= 1 AND DIF < DEA , DIF * 1.1, '底结构形成-70%'), COLORYELLOW;
+DRAWTEXT(真底70信号1 AND REF(底钝化次数1, 1) >= 1 AND DIF < DEA, DIF * 0.2, '底结构形成-70%'), COLORYELLOW;
 DRAWTEXT(底100形成1, DIF * 0.3, '底结构形成-100%'), COLORMAGENTA;
 
 DRAWTEXT(底结构消失形成1, DIF * 0.4, '底结构消失');
@@ -126,7 +134,12 @@ DRAWTEXT(底结消不存在1 AND 底有效范围1 AND 底平衡形成1, 0, '底�
 底钝消信号2:=B1 >= 2 AND DIF < DEA AND DIF < BIL3 AND REF(COUNT(底钝化信号I2, B1), 1) >= 1;
 
 {1.2.2.3 标注底结构形成-70% (从钝化往后开始，只要找到一个DIF比前一根DIF更大的情况)}
-真底70信号2:=B1 >= 2 AND REF(DIF, 1) < REF(DEA, 1) AND REF(DIF, 1) > BIL3 AND REF(DIF, 1) = 钝化最低DIF;
+DIF底70信号2:=B1 >= 2 AND REF(DIF, 1) < REF(DEA, 1) AND REF(DIF, 1) > BIL3 AND REF(DIF, 1) = 钝化最低DIF;
+DIF底70位置2:=REFX(BARSLAST(DIF = 钝化最低DIF), 剩余区域长度);
+CLOSE底70信号2:=B1 >= 2 AND REF(DIF, 1) < REF(DEA, 1) AND REF(DIF, 1) > BIL3 AND REF(CLOSE, 1) = 钝化最低CLOSE;
+CLOSE底70位置2:=REFX(BARSLAST(CLOSE = 钝化最低CLOSE), 剩余区域长度);
+
+真底70信号2:=IF((DIF底70信号2 OR CLOSE底70信号2) AND DIF底70位置2 < CLOSE底70位置2, DIF底70信号2, CLOSE底70信号2);
 前真底70存在2:=ISVALID(BARSLAST(真底70信号2)) AND BARSLAST(真底70信号2) < B1;
 前真底70不存在2:=前真底70存在2==0;
 后真底70存在2:=ISVALID(REFX(BARSNEXT(真底70信号2), 1));
@@ -183,6 +196,9 @@ DRAWTEXT(底结消不存在2 AND 底有效范围2 AND 底平衡形成2, 0, '底�
 钝化区域TIH:=HHV(DIF, T1); {最近一次金叉区间的钝化区间的最高DIF, 钝化区间是第二根K线开始的区间}
 钝化最高DIF:=IF(剩余区域长度 < 0, 钝化区域TIH, REFX(HHV(DIF, T1), 剩余区域长度));
 
+钝化区域TCH:=HHV(CLOSE, T1);
+钝化最高CLOSE:=IF(剩余区域长度 < 0, 钝化区域TCH, REFX(HHV(CLOSE, T1), 剩余区域长度));
+
 {1.3.1.1 找到顶钝化点(寻找比前一个顶部区域最高收盘价更高的收盘价, 
                       从这个收盘价开始寻找一个DIF比前区域最高DIF更低的DIF)}
 顶钝化信号I1:=T1 >= 1 AND DIF > DEA AND TCH1 > TCH2 AND DIF < TIH2 AND TIH1 <= TIH2;
@@ -192,7 +208,12 @@ DRAWTEXT(底结消不存在2 AND 底有效范围2 AND 底平衡形成2, 0, '底�
 顶钝消信号1:=T1 >= 2 AND DIF > DEA AND DIF > TIH2 AND REF(COUNT(顶钝化信号I1, T1), 1) >= 1;
 
 {1.3.1.3 找到顶结构形成-70% (从顶钝化往后开始，只要找到一个DIF比前一根DIF更小的情况)}
-真顶70信号1:=T1 >= 2 AND REF(DIF, 1) > REF(DEA, 1) AND REF(DIF, 1) < TIH2 AND REF(DIF, 1) = 钝化最高DIF;
+DIF顶70信号1:=T1 >= 2 AND REF(DIF, 1) > REF(DEA, 1) AND REF(DIF, 1) < TIH2 AND REF(DIF, 1) = 钝化最高DIF;
+DIF顶70位置1:=REFX(BARSLAST(DIF = 钝化最高DIF), 剩余区域长度);
+CLOSE顶70信号1:=T1 >= 2 AND REF(DIF, 1) > REF(DEA, 1) AND REF(DIF, 1) < TIH2 AND REF(CLOSE, 1) = 钝化最高CLOSE;
+CLOSE顶70位置1:=REFX(BARSLAST(CLOSE = 钝化最高CLOSE), 剩余区域长度);
+
+真顶70信号1:=IF((DIF顶70信号1 OR CLOSE顶70信号1) AND DIF顶70位置1 < CLOSE顶70位置1, DIF顶70信号1, CLOSE顶70信号1);
 前真顶70存在1:=ISVALID(BARSLAST(真顶70信号1)) AND BARSLAST(真顶70信号1) < T1;
 前真顶70不存在1:=前真顶70存在1==0;
 后真顶70存在1:=ISVALID(REFX(BARSNEXT(真顶70信号1), 1));
@@ -257,7 +278,12 @@ DRAWTEXT(顶结消不存在1 AND 顶有效范围1 AND 顶平衡形成1, 0, '顶�
 顶钝消信号2:=T1 >= 2 AND DIF > DEA AND DIF > TIH3 AND REF(COUNT(顶钝化信号I2, T1), 1) >= 1;
 
 {1.3.2.3 找到顶结构形成-70% (从顶钝化往后开始，只要找到一个DIF比前一根DIF更小的情况)}
-真顶70信号2:=T1 >= 2 AND REF(DIF, 1) > REF(DEA, 1) AND REF(DIF, 1) < TIH3 AND REF(DIF, 1) = 钝化最高DIF;
+DIF顶70信号2:=T1 >= 2 AND REF(DIF, 1) > REF(DEA, 1) AND REF(DIF, 1) < TIH3 AND REF(DIF, 1) = 钝化最高DIF;
+DIF顶70位置2:=REFX(BARSLAST(DIF = 钝化最高DIF), 剩余区域长度);
+CLOSE顶70信号2:=T1 >= 2 AND REF(DIF, 1) > REF(DEA, 1) AND REF(DIF, 1) < TIH3 AND REF(CLOSE, 1) = 钝化最高CLOSE;
+CLOSE顶70位置2:=REFX(BARSLAST(CLOSE = 钝化最高CLOSE), 剩余区域长度);
+
+真顶70信号2:=IF((DIF顶70信号2 OR CLOSE顶70信号2) AND DIF顶70位置2 < CLOSE顶70位置2, DIF顶70信号2, CLOSE顶70信号2);
 前真顶70存在2:=ISVALID(BARSLAST(真顶70信号2)) AND BARSLAST(真顶70信号2) < T1;
 前真顶70不存在2:=前真顶70存在2==0;
 后真顶70存在2:=ISVALID(REFX(BARSNEXT(真顶70信号2), 1));
